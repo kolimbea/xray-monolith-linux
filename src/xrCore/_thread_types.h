@@ -1,8 +1,27 @@
 #pragma once
 
+#ifdef __linux__
+// PPL (Concurrency Runtime) is MSVC-only; oneTBB provides the same primitives.
+#include <oneapi/tbb/task_group.h>
+#include <oneapi/tbb/concurrent_unordered_map.h>
+#include <oneapi/tbb/concurrent_vector.h>
+#include <oneapi/tbb/parallel_for.h>
+#include <oneapi/tbb/parallel_for_each.h>
+#include <oneapi/tbb/parallel_sort.h>
+namespace concurrency
+{
+using tbb::task_group;
+using tbb::concurrent_unordered_map;
+using tbb::concurrent_vector;
+using tbb::parallel_for_each;
+using tbb::parallel_sort;
+template <typename I, typename F> inline void parallel_for(I b, I e, F f) { tbb::parallel_for(b, e, f); }
+}
+#else
 #include <ppl.h>
 #include <concurrent_unordered_map.h>
 #include <concurrent_vector.h>
+#endif
 #include <atomic>
 
 // Atomic types

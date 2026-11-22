@@ -30,3 +30,37 @@ inline int _fpclass(double x)
     default: return neg ? _FPCLASS_NN : _FPCLASS_PN;
     }
 }
+
+#include <cerrno>
+#include <cctype>
+#include <cstring>
+#include <type_traits>
+
+typedef uint8_t BYTE;
+typedef int errno_t;
+
+inline char* strlwr(char* s) { for (char* p = s; *p; ++p) *p = (char)tolower((unsigned char)*p); return s; }
+inline char* strupr(char* s) { for (char* p = s; *p; ++p) *p = (char)toupper((unsigned char)*p); return s; }
+
+// Win32 lock API over the standard library. CRITICAL_SECTION is recursive on Windows, so it maps to
+// std::recursive_mutex. Storage may come from raw xr_alloc, hence placement-new in Initialize*.
+#include <mutex>
+#include <new>
+#include <shared_mutex>
+
+typedef std::recursive_mutex CRITICAL_SECTION;
+inline void InitializeCriticalSection(CRITICAL_SECTION* cs) { new (cs) std::recursive_mutex(); }
+inline void DeleteCriticalSection(CRITICAL_SECTION* cs) { cs->~recursive_mutex(); }
+inline void EnterCriticalSection(CRITICAL_SECTION* cs) { cs->lock(); }
+inline void LeaveCriticalSection(CRITICAL_SECTION* cs) { cs->unlock(); }
+inline BOOL TryEnterCriticalSection(CRITICAL_SECTION* cs) { return cs->try_lock() ? TRUE : FALSE; }
+
+// SRWLOCK is a member (constructed with its owner), so no placement-new is needed.
+typedef std::shared_mutex SRWLOCK;
+inline void InitializeSRWLock(SRWLOCK*) {}
+inline void AcquireSRWLockExclusive(SRWLOCK* l) { l->lock(); }
+inline void ReleaseSRWLockExclusive(SRWLOCK* l) { l->unlock(); }
+inline void AcquireSRWLockShared(SRWLOCK* l) { l->lock_shared(); }
+inline void ReleaseSRWLockShared(SRWLOCK* l) { l->unlock_shared(); }
+inline BOOL TryAcquireSRWLockExclusive(SRWLOCK* l) { return l->try_lock() ? TRUE : FALSE; }
+inline BOOL TryAcquireSRWLockShared(SRWLOCK* l) { return l->try_lock_shared() ? TRUE : FALSE; }
