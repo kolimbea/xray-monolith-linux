@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "ui_base.h"
 #include "UIDosimeter.h"
 #include "HUDManager.h"
@@ -9,7 +9,7 @@
 #include "ui/UIMainIngameWnd.h"
 #include "ui/UIXmlInit.h"
 #include "Dosimeter.h"
-#include "ui\UIStatic.h"
+#include "ui/UIStatic.h"
 #include "Actor.h"
 
 #define MAX_RAD 5000.f

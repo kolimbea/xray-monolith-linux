@@ -416,7 +416,7 @@ extern MTL_EXPORT_API CGameMtlLibrary GMLib;
 //#ifdef _EDITOR
 //extern MTL_EXPORT_API CGameMtlLibrary* PGMLib;
 //#else
-#include "../include/xrapi/xrapi.h"
+#include "../Include/xrAPI/xrAPI.h"
 //#endif
 
 #endif

@@ -1,12 +1,12 @@
 #pragma once
-#include "Iscript_attachment.h"
+#include "iscript_attachment.h"
 #include "script_export_space.h"
 #include "script_game_object.h"
 #include "script_light_inline.h"
 #include "physics_shell_scripted.h"
-#include "../xrcdb/ispatial.h"
+#include "../xrCDB/ISpatial.h"
 #include "../xrEngine/IRenderable.h"
-#include "../xrEngine/icollidable.h"
+#include "../xrEngine/ICollidable.h"
 #include "../xrEngine/xr_collide_form.h"
 
 class CHudItem;

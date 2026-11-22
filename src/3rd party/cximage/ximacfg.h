@@ -13,7 +13,7 @@ extern "C" void*	cxrealloc(void* ptr, size_t size);
 #pragma comment(lib,"xrCore.lib")
 
 #ifdef DEBUG
-#include "xrCore/ftimer.h"
+#include "xrCore/FTimer.h"
 #endif //#ifdef DEBUG
 
 #ifdef	CXIMAGE_BUILD

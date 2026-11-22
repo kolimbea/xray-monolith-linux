@@ -19,7 +19,7 @@
 #include "alife_schedule_registry.h"
 #include "alife_registry_container.h"
 #include "xrServer.h"
-#include "level.h"
+#include "Level.h"
 #include "game_graph.h"
 #include "level_graph.h"
 #include "game_level_cross_table.h"

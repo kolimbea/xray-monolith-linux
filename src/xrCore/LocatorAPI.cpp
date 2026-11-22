@@ -8,9 +8,9 @@
 #pragma warning(disable:4995)
 #include <direct.h>
 #include <fcntl.h>
-#include <sys\stat.h>
+#include <sys/stat.h>
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental\filesystem>
+#include <experimental/filesystem>
 #pragma warning(default:4995)
 
 #include "FS_internal.h"
@@ -1339,7 +1339,7 @@ bool CLocatorAPI::check_for_file(LPCSTR path, LPCSTR _fname, string_path& fname,
 	return (true);
 }
 
-#include "..\xrGame\Actor_Flags.h"
+#include "../xrGame/Actor_Flags.h"
 
 template <typename T>
 T* CLocatorAPI::r_open_impl(LPCSTR path, LPCSTR _fname)

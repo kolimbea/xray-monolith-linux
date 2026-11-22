@@ -14,15 +14,15 @@
 //#include "../xrEngine/eventapi.h"
 
 
-#include "../xrcdb/xrcdb.h"
-#include "../xrsound/sound.h"
+#include "../xrCDB/xrCDB.h"
+#include "../xrSound/Sound.h"
 //#include "../xrengine/IGame_Level.h"
 
 #pragma comment( lib, "xrCore.lib"	)
 
 #include "xrPhysics.h"
 
-#include "../include/xrapi/xrapi.h"
+#include "../Include/xrAPI/xrAPI.h"
 #ifdef	DEBUG
 #include "d3d9types.h"
 #endif

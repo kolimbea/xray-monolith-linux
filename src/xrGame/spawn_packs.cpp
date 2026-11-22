@@ -4,7 +4,7 @@
 //	Description : Level packs: extra all.spawn files whose new levels, objects and paths join the base spawn
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "spawn_packs.h"
 #include "game_graph.h"
 #include "game_graph_builder.h"
