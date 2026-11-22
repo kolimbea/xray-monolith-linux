@@ -3,6 +3,7 @@
 
 #ifdef __linux__
 #include "../Common/linux/PlatformLinux.inl"
+#include "../Common/linux/MonolithCompat.inl"
 #else
 #pragma once
 

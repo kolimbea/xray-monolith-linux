@@ -10,7 +10,11 @@
 
 #include <stdio.h>
 
+#ifdef __linux__
+#define _POSIX_ENVIRONMENT_
+#else
 #define _WIN32_ENVIRONMENT_
+#endif
 //#define _DOS32_ENVIRONMENT_
 //#define _POSIX_ENVIRONMENT_
 //#define _UNKNOWN_ENVIRONMENT_

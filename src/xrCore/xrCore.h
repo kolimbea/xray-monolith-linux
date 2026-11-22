@@ -158,6 +158,11 @@
 #define _RC_CHOP RC_CHOP
 #define _RC_NEAR RC_NEAR
 #define _MCW_EM MCW_EM
+#elif defined(__linux__)
+#define ALIGN(a) __attribute__((aligned(a)))
+#include <utime.h>
+#define _utimbuf utimbuf
+#define MODULE_NAME "libxrCore.so"
 #else
 #define ALIGN(a) __declspec(align(a))
 #include <sys/utime.h>
@@ -193,7 +198,7 @@
 #include <set>
 #include <map>
 
-#ifndef _EDITOR
+#if !defined(_EDITOR) && !defined(__linux__)
 # include <hash_map>
 # include <hash_set>
 #endif
