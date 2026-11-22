@@ -1,4 +1,5 @@
 #include "win32_file.h"
+#include "path_resolve.h"
 
 #include <cerrno>
 #include <fcntl.h>
@@ -39,7 +40,10 @@ HANDLE CreateFile(const char* path, uint32_t access, uint32_t, _SECURITY_ATTRIBU
     int flags = (access & GENERIC_WRITE) ? ((access & GENERIC_READ) ? O_RDWR : O_WRONLY) : O_RDONLY;
     if (disposition == CREATE_ALWAYS)
         flags |= O_CREAT | O_TRUNC;
-    const int fd = open(path, flags | O_CLOEXEC, 0644);
+    const std::string real = xr_resolve_path(path);
+    const int fd = open(real.c_str(), flags | O_CLOEXEC, 0644);
+    if (fd >= 0 && (flags & O_CREAT))
+        xr_resolve_invalidate(real.c_str());
     if (fd < 0)
         return INVALID_HANDLE_VALUE;
     struct stat sb;

@@ -1,4 +1,5 @@
 #include "io_compat.h"
+#include "path_resolve.h"
 
 #include <cerrno>
 #include <cstring>
@@ -49,6 +50,12 @@ intptr_t _findfirst(const char* pattern, _finddata_t* out)
     for (char& c : p)
         if (c == '\\')
             c = '/';
+    {
+        // resolve the directory part case-insensitively; the mask is matched with FNM_CASEFOLD
+        const size_t cut = p.rfind('/');
+        if (cut != std::string::npos)
+            p = xr_resolve_path(p.substr(0, cut + 1).c_str()) + p.substr(cut + 1);
+    }
     const size_t slash = p.rfind('/');
     auto* st = new FindState{nullptr, slash == std::string::npos ? "./" : p.substr(0, slash + 1),
                              slash == std::string::npos ? p : p.substr(slash + 1)};
@@ -83,7 +90,10 @@ int _findclose(intptr_t handle)
 
 int _sopen_s(int* fd, const char* path, int oflag, int, int pmode)
 {
-    *fd = open(path, oflag, pmode);
+    const std::string real = xr_resolve_path(path);
+    *fd = open(real.c_str(), oflag, pmode);
+    if (*fd >= 0 && (oflag & O_CREAT))
+        xr_resolve_invalidate(real.c_str());
     return *fd < 0 ? errno : 0;
 }
 
@@ -92,3 +102,58 @@ long _filelength(int fd)
     struct stat sb;
     return fstat(fd, &sb) == 0 ? (long)sb.st_size : -1L;
 }
+
+FILE* xr_linux_fopen(const char* path, const char* mode)
+{
+    const std::string real = xr_resolve_path(path);
+    FILE* f = ::fopen(real.c_str(), mode);
+    if (f && (strchr(mode, 'w') || strchr(mode, 'a')))
+        xr_resolve_invalidate(real.c_str());
+    return f;
+}
+
+int xr_linux_open(const char* path, int flags, int mode)
+{
+    const std::string real = xr_resolve_path(path);
+    const int fd = ::open(real.c_str(), flags, mode);
+    if (fd >= 0 && (flags & O_CREAT))
+        xr_resolve_invalidate(real.c_str());
+    return fd;
+}
+
+int xr_linux_access(const char* path, int mode) { return ::access(xr_resolve_path(path).c_str(), mode); }
+
+int xr_linux_unlink(const char* path)
+{
+    const std::string real = xr_resolve_path(path);
+    const int r = ::unlink(real.c_str());
+    xr_resolve_invalidate(real.c_str());
+    return r;
+}
+
+int xr_linux_mkdir(const char* path)
+{
+    const std::string real = xr_resolve_path(path);
+    const int r = ::mkdir(real.c_str(), 0755);
+    xr_resolve_invalidate(real.c_str());
+    return r;
+}
+
+int xr_linux_rmdir(const char* path)
+{
+    const std::string real = xr_resolve_path(path);
+    const int r = ::rmdir(real.c_str());
+    xr_resolve_invalidate(real.c_str());
+    return r;
+}
+
+int xr_linux_rename(const char* from, const char* to)
+{
+    const std::string a = xr_resolve_path(from), b = xr_resolve_path(to);
+    const int r = ::rename(a.c_str(), b.c_str());
+    xr_resolve_invalidate(a.c_str());
+    xr_resolve_invalidate(b.c_str());
+    return r;
+}
+
+int _stat(const char* path, struct _stat* out) { return ::stat(xr_resolve_path(path).c_str(), out); }

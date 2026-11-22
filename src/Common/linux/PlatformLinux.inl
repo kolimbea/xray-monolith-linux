@@ -1,5 +1,7 @@
 // Based on OpenXRay src/Common/PlatformLinux.inl (commit d1eb5d3), same GSC licence.
 #include <stdio.h>
+#include "io_compat.h" // xr_linux_* path-resolving file calls used below
+#include "path_resolve.h"
 #include <cstring>
 #include <stdlib.h> // for malloc
 #include <unistd.h> // for rmdir
@@ -344,28 +346,21 @@ inline int vsnprintf_s(char* buffer, size_t size, size_t, const char* format, va
 #define wcsicmp _wcsicmp
 #define _wcsicmp wcscasecmp // OpenXRay used wcscmp, which is case-sensitive
 #define _tempnam tempnam
-#define _access access
-#define _open open
+#define _access xr_linux_access
+#define _open xr_linux_open
 #define _close close
-inline int _sopen(const char* path, int flags, int /*share*/, int mode = 0644) { return open(path, flags, mode); }
+inline int _sopen(const char* path, int flags, int /*share*/, int mode = 0644) { return xr_linux_open(path, flags, mode); }
 #define _utime utime
 #define _utimbuf utimbuf
 // _sopen_s/_filelength: see io_compat.h (the OpenXRay macro never stored the handle).
 #define _fdopen fdopen
-inline int _rmdir(const char *path)
-{
-    char* conv_fn = strdup(path);
-    convert_path_separators(conv_fn);
-    int result = rmdir(conv_fn);
-    free(conv_fn);
-    return result;
-}
+inline int _rmdir(const char *path) { return xr_linux_rmdir(path); }
 #define _write write
 #define _strupr strupr
 #define _read xr_read
 #define _set_new_handler std::set_new_handler
 #define _finite isfinite
-inline int _mkdir(const char *dir) { return mkdir(dir, S_IRWXU); }
+inline int _mkdir(const char *dir) { return xr_linux_mkdir(dir); }
 
 #define _wtoi(arg) wcstol(arg, NULL, 10)
 #define _wtoi64(arg) wcstoll(arg, NULL, 10)
@@ -426,14 +421,7 @@ inline void convert_path_separators(char * path)
     while (char* sep = strchr(path, '\\')) *sep = '/';
 }
 
-inline int xr_unlink(const char *path)
-{
-    char* conv_fn = strdup(path);
-    convert_path_separators(conv_fn);
-    int result = unlink(conv_fn);
-    free(conv_fn);
-    return result;
-}
+inline int xr_unlink(const char *path) { return xr_linux_unlink(path); }
 
 inline tm* localtime_safe(const time_t *time, struct tm* result){ return localtime_r(time, result); }
 

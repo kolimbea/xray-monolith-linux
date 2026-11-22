@@ -200,8 +200,8 @@ inline LONG InterlockedExchange(volatile LONG* target, LONG value)
 #define INVALID_FILE_ATTRIBUTES 0xFFFFFFFFu
 inline DWORD GetFileAttributes(const char* path)
 {
-    struct stat sb;
-    if (stat(path, &sb) != 0)
+    struct _stat sb;
+    if (_stat(path, &sb) != 0)
         return INVALID_FILE_ATTRIBUTES;
     DWORD a = S_ISDIR(sb.st_mode) ? 0x10u : FILE_ATTRIBUTE_NORMAL;
     if (!(sb.st_mode & S_IWUSR))
@@ -210,11 +210,11 @@ inline DWORD GetFileAttributes(const char* path)
 }
 inline BOOL SetFileAttributes(const char* path, DWORD attr)
 {
-    struct stat sb;
-    if (stat(path, &sb) != 0)
+    struct _stat sb;
+    if (_stat(path, &sb) != 0)
         return FALSE;
     const mode_t m = (attr & FILE_ATTRIBUTE_READONLY) ? (sb.st_mode & ~(mode_t)0222) : (sb.st_mode | S_IWUSR);
-    return chmod(path, m) == 0 ? TRUE : FALSE;
+    return chmod(xr_resolve_path(path).c_str(), m) == 0 ? TRUE : FALSE;
 }
 #define GetFileAttributesA GetFileAttributes
 #define SetFileAttributesA SetFileAttributes
@@ -242,6 +242,8 @@ inline BOOL SetFileAttributes(const char* path, DWORD attr)
 inline int MessageBox(void*, const char* text, const char* caption, unsigned type)
 {
     fprintf(stderr, "[%s] %s\n", caption ? caption : "", text ? text : "");
+    if (getenv("XR_NO_MSGBOX")) // headless runs and tests: report on stderr only
+        return (type & 0xFu) == MB_YESNO ? IDNO : IDOK;
     const unsigned icon = type & 0xF0u;
     const SDL_MessageBoxFlags flags = icon == MB_ICONERROR ? SDL_MESSAGEBOX_ERROR
         : icon == MB_ICONWARNING ? SDL_MESSAGEBOX_WARNING : SDL_MESSAGEBOX_INFORMATION;
@@ -343,3 +345,7 @@ inline BOOL QueryPerformanceFrequency(PLARGE_INTEGER out)
     *out = 1000000000LL;
     return TRUE;
 }
+
+// All C stdio opens go through the case-insensitive resolver (std headers are already included).
+#define fopen xr_linux_fopen
+#define _unlink xr_linux_unlink

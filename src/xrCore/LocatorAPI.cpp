@@ -10,7 +10,13 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#ifdef __linux__
+#include <filesystem>
+namespace xrfs = std::filesystem;
+#else
 #include <experimental/filesystem>
+namespace xrfs = std::experimental::filesystem;
+#endif
 #pragma warning(default:4995)
 
 #include "FS_internal.h"
@@ -35,7 +41,7 @@ CLocatorAPI* xr_FS = NULL;
 # define FSLTX "fsgame.ltx"
 #endif
 
-std::experimental::filesystem::path fsRoot;
+xrfs::path fsRoot;
 
 struct _open_file
 {
@@ -678,18 +684,18 @@ static void searchForFsltx(const char* fs_name, string_path& fsltxPath)
 	}
 
 	//try in working dir
-	if (std::experimental::filesystem::exists(realFsltxName))
+	if (xrfs::exists(realFsltxName))
 	{
 		xr_strcpy(fsltxPath, realFsltxName);
 		return;
 	}
 
-	auto tryPathFunc = [realFsltxName](std::experimental::filesystem::path possibleLocationFsltx,
+	auto tryPathFunc = [realFsltxName](xrfs::path possibleLocationFsltx,
 	                                   string_path& fsltxPath) -> bool
 	{
 		possibleLocationFsltx.append(realFsltxName);
 
-		if (std::experimental::filesystem::exists(possibleLocationFsltx))
+		if (xrfs::exists(possibleLocationFsltx))
 		{
 			xr_strcpy(fsltxPath, possibleLocationFsltx.generic_string().c_str());
 			return true;
@@ -704,7 +710,7 @@ static void searchForFsltx(const char* fs_name, string_path& fsltxPath)
 	if (tryPathFunc(Core.ApplicationPath, fsltxPath)) return;
 
 	//parent directory again
-	std::experimental::filesystem::path test_path;
+	xrfs::path test_path;
 	test_path.assign(Core.ApplicationPath);
 	test_path.append("../");
 
@@ -720,7 +726,7 @@ IReader* CLocatorAPI::setup_fs_ltx(LPCSTR fs_name)
 	              make_string("Cannot find fsltx file: \"%s\"\nCheck your working directory", fs_name));
 	xr_strlwr(fs_path);
 	fsRoot = fs_path;
-	fsRoot = std::experimental::filesystem::absolute(fsRoot);
+	fsRoot = xrfs::absolute(fsRoot);
 	fsRoot = fsRoot.parent_path();
 
 	Msg("using fs-ltx %s", fs_path);

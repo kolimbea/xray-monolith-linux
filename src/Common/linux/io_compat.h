@@ -34,15 +34,28 @@ typedef _finddata64i32_t _finddata_t;
 
 #define _findfirst64i32 _findfirst
 #define _findnext64i32 _findnext
-#ifndef _stat
-#define _stat stat // both "struct _stat" and the _stat() call map to POSIX stat
-#endif
+// "struct _stat st; _stat(path, &st);" — a struct and a function may share a name in C++.
+struct _stat : stat
+{
+};
+int _stat(const char* path, struct _stat* out);
+#define _stat64i32 _stat
 
 // pattern is "<dir>/<mask>"; masks are matched case-insensitively (fnmatch), as on Windows,
 // and "*.*" matches every name. "." and ".." are reported like on Windows.
 intptr_t _findfirst(const char* pattern, _finddata_t* out);
 int _findnext(intptr_t handle, _finddata_t* out);
 int _findclose(intptr_t handle);
+
+#include <cstdio>
+// Path-resolving (case-insensitive, '\\'-tolerant) versions of the POSIX file calls.
+FILE* xr_linux_fopen(const char* path, const char* mode);
+int xr_linux_open(const char* path, int flags, int mode = 0644);
+int xr_linux_access(const char* path, int mode);
+int xr_linux_unlink(const char* path);
+int xr_linux_mkdir(const char* path);
+int xr_linux_rmdir(const char* path);
+int xr_linux_rename(const char* from, const char* to);
 
 int _sopen_s(int* fd, const char* path, int oflag, int shflag, int pmode);
 long _filelength(int fd);
