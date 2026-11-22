@@ -708,32 +708,32 @@ public:
 
 	IC SelfRef hud_to_world()
 	{
-		Device.hud_to_world(*this);
+		xr_device<T>().hud_to_world(*this);
 		return *this;
 	}
 
 	IC SelfRef world_to_hud()
 	{
-		Device.world_to_hud(*this);
+		xr_device<T>().world_to_hud(*this);
 		return *this;
 	}
 
 	IC SelfRef hud_to_world_dir()
 	{
-		Device.hud_to_world_dir(*this);
+		xr_device<T>().hud_to_world_dir(*this);
 		return *this;
 	}
 
 	IC SelfRef world_to_hud_dir()
 	{
-		Device.world_to_hud_dir(*this);
+		xr_device<T>().world_to_hud_dir(*this);
 		return *this;
 	}
 
     // demonized: EMA smoothing
     IC SelfRef ema(Self& target, unsigned int steps) {
         float smoothing_alpha = 2.0f / (steps + 1);
-        float delta = Device.dwTimeDelta;
+        float delta = xr_device<T>().dwTimeDelta;
 
         if (steps <= 1 || (fis_zero(x) && fis_zero(y) && fis_zero(z))) {
             x = target.x;

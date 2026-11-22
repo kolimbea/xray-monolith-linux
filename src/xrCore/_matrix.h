@@ -704,7 +704,7 @@ public:
 		Tvector vRight;
 		vRight.crossproduct(vUp, vView);
 
-		// Start building the Device.mView. The first three rows contains the basis
+		// Start building the xr_device<T>().mView. The first three rows contains the basis
 		// vectors used to rotate the view to point at the lookat point
 		_11 = vRight.x;
 		_12 = vUp.x;
@@ -741,7 +741,7 @@ public:
 		Tvector vRight;
 		vRight.crossproduct(vUp, vView);
 
-		// Start building the Device.mView. The first three rows contains the basis
+		// Start building the xr_device<T>().mView. The first three rows contains the basis
 		// vectors used to rotate the view to point at the lookat point
 		_11 = vRight.x;
 		_12 = vUp.x;
@@ -918,24 +918,24 @@ public:
 
 	IC SelfRef hud_to_world()
 	{
-		Device.hud_to_world(*this);
+		xr_device<T>().hud_to_world(*this);
 		return *this;
 	}
 
 	IC SelfRef cam_to_world()
 	{
-		Device.cam_to_world(*this);
+		xr_device<T>().cam_to_world(*this);
 		return *this;
 	}
 	IC SelfRef world_to_hud()
 	{
-		Device.world_to_hud(*this);
+		xr_device<T>().world_to_hud(*this);
 		return *this;
 	}
 
 	IC SelfRef custom_to_world(Self& proj)
 	{
-		Device.hud_to_world(*this, proj);
+		xr_device<T>().hud_to_world(*this, proj);
 		return *this;
 	}
 };

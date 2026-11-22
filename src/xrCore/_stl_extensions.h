@@ -156,6 +156,14 @@ private:
 
 public:
 	typedef allocator allocator_type;
+	typedef typename inherited::size_type size_type;
+	typedef typename inherited::reference reference;
+	typedef typename inherited::const_reference const_reference;
+	using inherited::begin;
+	using inherited::end;
+	using inherited::erase;
+	using inherited::capacity;
+	using inherited::reserve;
 
 public:
 	xr_vector() : inherited()
@@ -233,7 +241,7 @@ private:
 
 public:
 	u32 size() const { return (u32)inherited::size(); }
-	void clear() { erase(begin(), end()); }
+	void clear() { this->erase(this->begin(), this->end()); }
 };
 
 // deque
@@ -241,7 +249,7 @@ template <typename T, typename allocator = xalloc<T>>
 class xr_deque : public std::deque<T, allocator>
 {
 public:
-	typedef typename allocator allocator_type;
+	typedef allocator allocator_type;
 	typedef typename allocator_type::value_type value_type;
 	typedef typename allocator_type::size_type size_type;
 	u32 size() const { return (u32)__super::size(); }
