@@ -349,7 +349,7 @@ inline int vsnprintf_s(char* buffer, size_t size, size_t, const char* format, va
 #define _access access
 #define _open open
 #define _close close
-#define _sopen open
+inline int _sopen(const char* path, int flags, int /*share*/, int mode = 0644) { return open(path, flags, mode); }
 #define _utime utime
 #define _utimbuf utimbuf
 // _sopen_s/_filelength: see io_compat.h (the OpenXRay macro never stored the handle).

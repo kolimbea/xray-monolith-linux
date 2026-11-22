@@ -132,3 +132,89 @@ inline void* _aligned_realloc(void* p, size_t size, size_t align)
     return n;
 }
 #include "win32_file.h"
+
+// More MSVC CRT helpers.
+#include <atomic>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
+
+inline char* _strlwr(char* s) { return strlwr(s); }
+inline errno_t _strlwr_s(char* s, size_t) { strlwr(s); return 0; }
+inline long long _atoi64(const char* s) { return strtoll(s, nullptr, 10); }
+inline unsigned long long _strtoui64(const char* s, char** end, int base) { return strtoull(s, end, base); }
+inline errno_t _i64toa_s(long long v, char* buf, size_t size, int radix)
+{
+    if (radix != 10)
+        return EINVAL; // engine only formats decimal; other radices are not needed
+    return snprintf(buf, size, "%lld", v) < (int)size ? 0 : ERANGE;
+}
+inline errno_t _ui64toa_s(unsigned long long v, char* buf, size_t size, int radix)
+{
+    if (radix != 10)
+        return EINVAL;
+    return snprintf(buf, size, "%llu", v) < (int)size ? 0 : ERANGE;
+}
+
+// _splitpath_s: splits "dir/name.ext" (either slash). There are no drive letters on Linux, so
+// drive is always empty. Returns EINVAL on a too-small buffer, like the CRT.
+inline errno_t _splitpath_s(const char* path, char* drive, size_t drive_n, char* dir, size_t dir_n, char* fname,
+                            size_t fname_n, char* ext, size_t ext_n)
+{
+    const char* slash = nullptr;
+    for (const char* p = path; *p; ++p)
+        if (*p == '/' || *p == '\\')
+            slash = p;
+    const char* name = slash ? slash + 1 : path;
+    const char* dot = strrchr(name, '.');
+    if (!dot)
+        dot = name + strlen(name);
+    auto put = [](char* dst, size_t n, const char* b, const char* e) -> bool {
+        if (!dst)
+            return true;
+        const size_t len = (size_t)(e - b);
+        if (len + 1 > n)
+            return false;
+        memcpy(dst, b, len);
+        dst[len] = 0;
+        return true;
+    };
+    const bool ok = put(drive, drive_n, path, path) && put(dir, dir_n, path, name) && put(fname, fname_n, name, dot) &&
+                    put(ext, ext_n, dot, dot + strlen(dot));
+    return ok ? 0 : EINVAL;
+}
+
+// _sys_errlist[errno] is used only to print messages.
+struct xr_linux_errlist
+{
+    const char* operator[](int e) const { return strerror(e); }
+};
+inline constexpr xr_linux_errlist _sys_errlist{};
+
+inline LONG InterlockedExchange(volatile LONG* target, LONG value)
+{
+    return __atomic_exchange_n(target, value, __ATOMIC_SEQ_CST);
+}
+
+// File attributes: only the read-only bit is meaningful (owner write permission).
+#define INVALID_FILE_ATTRIBUTES 0xFFFFFFFFu
+inline DWORD GetFileAttributes(const char* path)
+{
+    struct stat sb;
+    if (stat(path, &sb) != 0)
+        return INVALID_FILE_ATTRIBUTES;
+    DWORD a = S_ISDIR(sb.st_mode) ? 0x10u : FILE_ATTRIBUTE_NORMAL;
+    if (!(sb.st_mode & S_IWUSR))
+        a |= FILE_ATTRIBUTE_READONLY;
+    return a;
+}
+inline BOOL SetFileAttributes(const char* path, DWORD attr)
+{
+    struct stat sb;
+    if (stat(path, &sb) != 0)
+        return FALSE;
+    const mode_t m = (attr & FILE_ATTRIBUTE_READONLY) ? (sb.st_mode & ~(mode_t)0222) : (sb.st_mode | S_IWUSR);
+    return chmod(path, m) == 0 ? TRUE : FALSE;
+}
+#define GetFileAttributesA GetFileAttributes
+#define SetFileAttributesA SetFileAttributes
