@@ -523,7 +523,7 @@ private:
 };
 
 extern ENGINE_API CRenderDevice Device;
-template <class T, class Dev> inline Dev& xr_device() { return Device; }
+template <class T, class Dev> inline Dev& xr_engine_device() { return Device; }
 
 #ifndef _EDITOR
 #define RDEVICE Device

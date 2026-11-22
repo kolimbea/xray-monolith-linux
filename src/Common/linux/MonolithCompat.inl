@@ -349,3 +349,16 @@ inline BOOL QueryPerformanceFrequency(PLARGE_INTEGER out)
 // All C stdio opens go through the case-insensitive resolver (std headers are already included).
 #define fopen xr_linux_fopen
 #define _unlink xr_linux_unlink
+
+// Opaque Win32 handle and fixed-width integer typedefs used in engine headers.
+typedef void* HMONITOR;
+typedef void* HINSTANCE;
+typedef void* HICON;
+typedef void* HCURSOR;
+typedef uint32_t UINT32;
+typedef int32_t INT32;
+typedef uint64_t DWORD64;
+typedef uint64_t ULONG_PTR;
+typedef unsigned long ULONG;
+typedef unsigned short USHORT;
+typedef unsigned char UCHAR;

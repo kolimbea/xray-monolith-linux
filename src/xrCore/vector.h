@@ -154,7 +154,7 @@ struct _quaternion;
 // dependent accessor defers the lookup to instantiation, after xrEngine/device.h is seen;
 // MSVC accepted the non-dependent use because it skips two-phase lookup.
 class CRenderDevice;
-template <class T, class Dev = CRenderDevice> Dev& xr_device();
+template <class T, class Dev = CRenderDevice> Dev& xr_engine_device();
 #include "_vector3d.h"
 #include "_vector2.h"
 #include "_vector4.h"

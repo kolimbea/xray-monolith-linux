@@ -34,4 +34,27 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     message(WARNING "Only clang is tested so far; gcc lacks -fms-extensions semantics such as __super.")
 endif()
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+# xr_module(<target> <vcxproj> [EXCLUDE substr...] [EXTRA files...])
+# Static library (all-in-one build) from the Release|x64 source list of a Visual Studio project.
+function(xr_module target vcxproj)
+    cmake_parse_arguments(XM "" "" "EXCLUDE;EXTRA" ${ARGN})
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/vcxproj_sources.py ${vcxproj} ${XM_EXCLUDE}
+        OUTPUT_VARIABLE _src RESULT_VARIABLE _rc ERROR_VARIABLE _err)
+    if(NOT _rc EQUAL 0)
+        message(FATAL_ERROR "${target}: ${_err}")
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${vcxproj})
+    string(REPLACE "\n" ";" _src "${_src}")
+    list(FILTER _src EXCLUDE REGEX "^$")
+    add_library(${target} STATIC ${_src} ${XM_EXTRA})
+    get_filename_component(_dir ${vcxproj} DIRECTORY)
+    target_include_directories(${target} PRIVATE ${_dir} ${XR_SRC}/xrCore ${XR_SRC}/xrEngine)
+    target_link_libraries(${target} PUBLIC xr_common xrCore)
+endfunction()
+
 add_subdirectory(src/xrCore)
+xr_module(xrCDB ${XR_SRC}/xrCDB/xrCDB.vcxproj)
+xr_module(xrXMLParser ${XR_SRC}/xrXMLParser/xrXMLParser.vcxproj)
