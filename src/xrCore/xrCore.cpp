@@ -4,7 +4,9 @@
 #pragma hdrstop
 
 #include <mmsystem.h>
+#ifndef __linux__
 #include <objbase.h>
+#endif
 #include "xrCore.h"
 
 #pragma comment(lib,"winmm.lib")

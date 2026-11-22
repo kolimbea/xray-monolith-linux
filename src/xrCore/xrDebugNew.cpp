@@ -1,3 +1,5 @@
+// Linux uses Common/linux/xrDebug_linux.cpp instead.
+#ifndef __linux__
 #include "stdafx.h"
 #pragma hdrstop
 
@@ -1208,3 +1210,5 @@ void xrDebug::_initialize(const bool& dedicated)
 #endif // 0
 }
 #endif
+
+#endif // __linux__

@@ -31,6 +31,7 @@ int _cpuid ( _processor_info *pinfo )
 }
 #else
 
+#ifndef __linux__
 DWORD countSetBits(ULONG_PTR bitMask)
 {
 	DWORD LSHIFT = sizeof(ULONG_PTR) * 8 - 1;
@@ -46,6 +47,7 @@ DWORD countSetBits(ULONG_PTR bitMask)
 
 	return bitSetCount;
 }
+#endif
 
 #undef _CPUID_DEBUG
 
@@ -140,6 +142,31 @@ int _cpuid(_processor_info* pinfo)
 	pinfo->model = (cpui[0] >> 4) & 0xf;
 	pinfo->stepping = cpui[0] & 0xf;
 
+#ifdef __linux__
+	// Logical CPUs from the affinity mask; physical cores = distinct (package, core) pairs in sysfs.
+	cpu_set_t set;
+	CPU_ZERO(&set);
+	sched_getaffinity(0, sizeof(set), &set);
+	u64 pa_mask_save = 0;
+	auto logicalProcessorCount = 0u;
+	xr_set<std::pair<int, int>> cores;
+	for (int cpu = 0; cpu < CPU_SETSIZE; ++cpu)
+	{
+		if (!CPU_ISSET(cpu, &set))
+			continue;
+		++logicalProcessorCount;
+		if (cpu < 64)
+			pa_mask_save |= u64(1) << cpu;
+		int pkg = 0, core = cpu;
+		string_path path;
+		xr_sprintf(path, "/sys/devices/system/cpu/cpu%d/topology/physical_package_id", cpu);
+		if (FILE* f = fopen(path, "r")) { if (fscanf(f, "%d", &pkg) != 1) pkg = 0; fclose(f); }
+		xr_sprintf(path, "/sys/devices/system/cpu/cpu%d/topology/core_id", cpu);
+		if (FILE* f = fopen(path, "r")) { if (fscanf(f, "%d", &core) != 1) core = cpu; fclose(f); }
+		cores.insert({pkg, core});
+	}
+	auto processorCoreCount = (unsigned)cores.size();
+#else
 	// Calculate available processors
 	ULONG_PTR pa_mask_save, sa_mask_stub = 0;
 	GetProcessAffinityMask(GetCurrentProcess(), &pa_mask_save, &sa_mask_stub);
@@ -173,6 +200,8 @@ int _cpuid(_processor_info* pinfo)
 		byteOffset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
 		ptr++;
 	}
+
+#endif // __linux__
 
 	if (logicalProcessorCount != processorCoreCount) pinfo->feature |= static_cast<u32>(_CPU_FEATURE_HTT);
 

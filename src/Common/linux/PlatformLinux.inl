@@ -203,6 +203,7 @@ typedef dirent DirEntryType;
 #define strcmpi stricmp
 #define lstrcpy strcpy
 #define stricmp strcasecmp
+// sprintf_s/vsprintf_s: bounded versions in MonolithCompat.inl (OpenXRay ignored the size).
 // error code numbers from original MS strcpy_s return value
 inline int strcpy_s(char *dest, size_t num, const char *source)
 {
@@ -332,9 +333,7 @@ inline int vsnprintf_s(char* buffer, size_t size, size_t, const char* format, va
     //TODO add bound check
     return vsnprintf(buffer, size, format, list);
 }
-#define vsprintf_s(dest, size, format, args) vsprintf(dest, format, args)
 #define _snprintf snprintf
-#define sprintf_s(buffer, buffer_size, stringbuffer, ...) sprintf(buffer, stringbuffer, ##__VA_ARGS__)
 //#define GetProcAddress(handle, name) dlsym(handle, name)
 #define _chdir chdir
 #define _strnicmp strnicmp

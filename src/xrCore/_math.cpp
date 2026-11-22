@@ -322,6 +322,10 @@ void _initialize_cpu_thread()
 	{
 		//_mm_setcsr ( _mm_getcsr() | (_MM_FLUSH_ZERO_ON+_MM_DENORMALS_ZERO_ON) );
 		_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+#ifdef __linux__
+		// Every x86-64 CPU supports DAZ, so no probe (the Windows code catches the fault via SEH).
+		_MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+#else
 		if (_denormals_are_zero_supported)
 		{
 			__try
@@ -333,6 +337,7 @@ void _initialize_cpu_thread()
 				_denormals_are_zero_supported = FALSE;
 			}
 		}
+#endif
 	}
 }
 #endif
@@ -346,6 +351,15 @@ struct THREAD_NAME
 	DWORD dwFlags;
 };
 
+#ifdef __linux__
+void thread_name(const char* name)
+{
+	char short_name[16]; // pthread names are limited to 15 chars + NUL
+	strncpy(short_name, name ? name : "", sizeof(short_name) - 1);
+	short_name[sizeof(short_name) - 1] = 0;
+	pthread_setname_np(pthread_self(), short_name);
+}
+#else
 void thread_name(const char* name)
 {
 	THREAD_NAME tn;
@@ -361,6 +375,7 @@ void thread_name(const char* name)
 	{
 	}
 }
+#endif
 #pragma pack(pop)
 
 struct THREAD_STARTUP
@@ -397,7 +412,19 @@ void thread_spawn(thread_t* entry, const char* name, unsigned stack, void* argli
 	startup->entry = entry;
 	startup->name = (char*)name;
 	startup->args = arglist;
+#ifdef __linux__
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	if (stack)
+		pthread_attr_setstacksize(&attr, stack < PTHREAD_STACK_MIN ? PTHREAD_STACK_MIN : stack);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED); // _beginthread threads are never joined
+	pthread_t tid;
+	const int err = pthread_create(&tid, &attr, [](void* p) -> void* { thread_entry(p); return nullptr; }, startup);
+	pthread_attr_destroy(&attr);
+	R_ASSERT3(err == 0, "thread_spawn failed", name);
+#else
 	_beginthread(thread_entry, stack, startup);
+#endif
 }
 
 //void spline1(float t, Fvector* p, Fvector* ret)

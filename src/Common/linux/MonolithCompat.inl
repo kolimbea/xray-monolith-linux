@@ -263,3 +263,83 @@ inline int MessageBox(void*, const char* text, const char* caption, unsigned typ
     return pressed;
 }
 #define MessageBoxA MessageBox
+
+// MSVC _controlfp. On x64 MSVC only the SSE rounding mode takes effect (precision control is
+// x87-only and ignored there), so this maps the rounding bits onto fesetround and ignores the rest.
+#include <cfenv>
+#define _MCW_RC 0x00000300u
+#define _RC_NEAR 0x00000000u
+#define _RC_DOWN 0x00000100u
+#define _RC_UP 0x00000200u
+#define _RC_CHOP 0x00000300u
+#define _MCW_PC 0x00030000u
+#define _PC_64 0x00000000u
+#define _PC_53 0x00010000u
+#define _PC_24 0x00020000u
+#define _MCW_EM 0x0008001Fu
+#define MCW_RC _MCW_RC
+#define MCW_PC _MCW_PC
+#define MCW_EM _MCW_EM
+#define RC_NEAR _RC_NEAR
+#define RC_CHOP _RC_CHOP
+#define PC_24 _PC_24
+#define PC_53 _PC_53
+#define PC_64 _PC_64
+inline unsigned _controlfp(unsigned value, unsigned mask)
+{
+    if (mask & _MCW_RC)
+    {
+        const unsigned rc = value & _MCW_RC;
+        fesetround(rc == _RC_DOWN ? FE_DOWNWARD : rc == _RC_UP ? FE_UPWARD : rc == _RC_CHOP ? FE_TOWARDZERO : FE_TONEAREST);
+    }
+    const int cur = fegetround();
+    return cur == FE_DOWNWARD ? _RC_DOWN : cur == FE_UPWARD ? _RC_UP : cur == FE_TOWARDZERO ? _RC_CHOP : _RC_NEAR;
+}
+#include "win32_system.h"
+
+// Bounded MSVC *printf_s. The CRT would invoke the invalid-parameter handler on truncation; here the
+// output is truncated and terminated instead, which keeps the engine's log paths alive.
+#include <cstdarg>
+inline int vsprintf_s(char* dst, size_t size, const char* fmt, va_list args)
+{
+    if (!dst || size == 0)
+        return -1;
+    const int n = vsnprintf(dst, size, fmt, args);
+    return n < 0 || (size_t)n >= size ? -1 : n;
+}
+template <size_t N> inline int vsprintf_s(char (&dst)[N], const char* fmt, va_list args) { return vsprintf_s(dst, N, fmt, args); }
+inline int sprintf_s(char* dst, size_t size, const char* fmt, ...)
+{
+    va_list a;
+    va_start(a, fmt);
+    const int n = vsprintf_s(dst, size, fmt, a);
+    va_end(a);
+    return n;
+}
+template <size_t N> inline int sprintf_s(char (&dst)[N], const char* fmt, ...)
+{
+    va_list a;
+    va_start(a, fmt);
+    const int n = vsprintf_s(dst, N, fmt, a);
+    va_end(a);
+    return n;
+}
+
+#define filelength _filelength
+// Cannot be probed cheaply on Linux; callers only check buffers they computed themselves.
+inline BOOL IsBadReadPtr(const void* p, size_t) { return p == nullptr; }
+
+// QueryPerformanceCounter in nanoseconds (frequency 1e9) from the monotonic clock.
+typedef LARGE_INTEGER* PLARGE_INTEGER;
+inline BOOL QueryPerformanceCounter(PLARGE_INTEGER out)
+{
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    *out = (LARGE_INTEGER)ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    return TRUE;
+}
+inline BOOL QueryPerformanceFrequency(PLARGE_INTEGER out)
+{
+    *out = 1000000000LL;
+    return TRUE;
+}

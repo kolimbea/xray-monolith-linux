@@ -42,3 +42,13 @@ HANDLE CreateFileMapping(HANDLE file, _SECURITY_ATTRIBUTES*, uint32_t protect, u
 void* MapViewOfFile(HANDLE mapping, uint32_t access, uint32_t off_high, uint32_t off_low, size_t bytes);
 int UnmapViewOfFile(const void* view);
 int CloseHandle(HANDLE h);
+
+#define FILE_BEGIN 0u
+#define FILE_CURRENT 1u
+#define FILE_END 2u
+#define INVALID_SET_FILE_POINTER 0xFFFFFFFFu
+struct _OVERLAPPED;
+// Synchronous only: overlapped must be NULL.
+int ReadFile(HANDLE file, void* buf, uint32_t n, uint32_t* read, _OVERLAPPED* overlapped);
+int WriteFile(HANDLE file, const void* buf, uint32_t n, uint32_t* written, _OVERLAPPED* overlapped);
+uint32_t SetFilePointer(HANDLE file, int32_t distance, int32_t* distance_high, uint32_t method);

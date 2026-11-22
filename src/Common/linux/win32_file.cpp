@@ -118,3 +118,66 @@ int CloseHandle(HANDLE handle)
     delete h;
     return 1;
 }
+
+int ReadFile(HANDLE file, void* buf, uint32_t n, uint32_t* read, _OVERLAPPED* overlapped)
+{
+    Handle* h = as(file);
+    if (read)
+        *read = 0;
+    if (!h || h->kind != Kind::File || overlapped)
+        return 0;
+    size_t done = 0;
+    while (done < n) // read() may return short counts; Win32 ReadFile on a file does not
+    {
+        const ssize_t r = ::read(h->fd, (char*)buf + done, n - done);
+        if (r < 0 && errno == EINTR)
+            continue;
+        if (r < 0)
+            return 0;
+        if (r == 0)
+            break; // EOF: success with fewer bytes, as on Windows
+        done += (size_t)r;
+    }
+    if (read)
+        *read = (uint32_t)done;
+    return 1;
+}
+
+int WriteFile(HANDLE file, const void* buf, uint32_t n, uint32_t* written, _OVERLAPPED* overlapped)
+{
+    Handle* h = as(file);
+    if (written)
+        *written = 0;
+    if (!h || h->kind != Kind::File || overlapped)
+        return 0;
+    size_t done = 0;
+    while (done < n)
+    {
+        const ssize_t r = ::write(h->fd, (const char*)buf + done, n - done);
+        if (r < 0 && errno == EINTR)
+            continue;
+        if (r <= 0)
+            return 0;
+        done += (size_t)r;
+    }
+    if (written)
+        *written = (uint32_t)done;
+    return 1;
+}
+
+uint32_t SetFilePointer(HANDLE file, int32_t distance, int32_t* distance_high, uint32_t method)
+{
+    Handle* h = as(file);
+    if (!h || h->kind != Kind::File)
+        return INVALID_SET_FILE_POINTER;
+    const int whence = method == FILE_BEGIN ? SEEK_SET : method == FILE_CURRENT ? SEEK_CUR : SEEK_END;
+    // Without distance_high the 32-bit distance is signed; with it, the pair forms a signed 64-bit value.
+    const off_t dist = distance_high ? (off_t)(((uint64_t)(uint32_t)*distance_high << 32) | (uint32_t)distance)
+                                     : (off_t)distance;
+    const off_t pos = lseek(h->fd, dist, whence);
+    if (pos < 0)
+        return INVALID_SET_FILE_POINTER;
+    if (distance_high)
+        *distance_high = (int32_t)((uint64_t)pos >> 32);
+    return (uint32_t)pos;
+}

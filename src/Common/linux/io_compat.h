@@ -20,7 +20,8 @@
 #define _SH_DENYNO 0
 #define _S_IREAD S_IRUSR
 
-struct _finddata_t
+// Named like MSVC's 64-bit-time variant because the locator forward-declares that struct tag.
+struct _finddata64i32_t
 {
     unsigned attrib;
     time_t time_create;
@@ -29,6 +30,13 @@ struct _finddata_t
     uint64_t size;
     char name[260];
 };
+typedef _finddata64i32_t _finddata_t;
+
+#define _findfirst64i32 _findfirst
+#define _findnext64i32 _findnext
+#ifndef _stat
+#define _stat stat // both "struct _stat" and the _stat() call map to POSIX stat
+#endif
 
 // pattern is "<dir>/<mask>"; masks are matched case-insensitively (fnmatch), as on Windows,
 // and "*.*" matches every name. "." and ".." are reported like on Windows.
