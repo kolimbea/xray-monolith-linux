@@ -65,3 +65,70 @@ inline void ReleaseSRWLockShared(SRWLOCK* l) { l->unlock_shared(); }
 inline BOOL TryAcquireSRWLockExclusive(SRWLOCK* l) { return l->try_lock() ? TRUE : FALSE; }
 inline BOOL TryAcquireSRWLockShared(SRWLOCK* l) { return l->try_lock_shared() ? TRUE : FALSE; }
 #include "win32_text.h"
+
+// MSVC target macro the engine uses for "64-bit x86" code paths (selects C code over 32-bit asm).
+#if defined(__x86_64__) && !defined(_M_AMD64)
+#define _M_AMD64 100
+#define _M_X64 100
+#endif
+
+// MSVC itoa family. Radix 2..36, negative values only for radix 10 (as the CRT does).
+inline char* xr_linux_itoa(long long v, char* buf, size_t size, int radix)
+{
+    if (!buf || size == 0 || radix < 2 || radix > 36)
+        return buf;
+    char tmp[72];
+    int n = 0;
+    const bool neg = v < 0 && radix == 10;
+    unsigned long long u = neg ? 0ull - (unsigned long long)v : (unsigned long long)(radix == 10 ? v : (unsigned)v);
+    do
+    {
+        tmp[n++] = "0123456789abcdefghijklmnopqrstuvwxyz"[u % radix];
+        u /= radix;
+    } while (u);
+    if (neg)
+        tmp[n++] = '-';
+    size_t i = 0;
+    while (n && i + 1 < size)
+        buf[i++] = tmp[--n];
+    buf[i] = 0;
+    return buf;
+}
+inline char* itoa(int v, char* buf, int radix) { return xr_linux_itoa(v, buf, 33, radix); }
+inline char* _itoa(int v, char* buf, int radix) { return xr_linux_itoa(v, buf, 33, radix); }
+inline errno_t _itoa_s(int v, char* buf, size_t size, int radix) { xr_linux_itoa(v, buf, size, radix); return 0; }
+template <size_t N> inline errno_t _itoa_s(int v, char (&buf)[N], int radix) { xr_linux_itoa(v, buf, N, radix); return 0; }
+
+// MSVC heap extensions over glibc. malloc_usable_size works for malloc and posix_memalign blocks.
+#include <malloc.h>
+#include <cstdlib>
+inline size_t _msize(void* p) { return p ? malloc_usable_size(p) : 0; }
+// _expand may legally fail; callers then fall back to malloc + copy.
+inline void* _expand(void*, size_t) { return nullptr; }
+inline void* _aligned_malloc(size_t size, size_t align)
+{
+    void* p = nullptr;
+    if (align < sizeof(void*))
+        align = sizeof(void*);
+    return posix_memalign(&p, align, size ? size : 1) == 0 ? p : nullptr;
+}
+inline void _aligned_free(void* p) { free(p); }
+inline size_t _aligned_msize(void* p, size_t, size_t) { return p ? malloc_usable_size(p) : 0; }
+inline void* _aligned_realloc(void* p, size_t size, size_t align)
+{
+    if (!p)
+        return _aligned_malloc(size, align);
+    if (!size)
+    {
+        free(p);
+        return nullptr;
+    }
+    void* n = _aligned_malloc(size, align);
+    if (!n)
+        return nullptr; // like the CRT: the old block stays valid
+    const size_t old = malloc_usable_size(p);
+    memcpy(n, p, old < size ? old : size);
+    free(p);
+    return n;
+}
+#include "win32_file.h"

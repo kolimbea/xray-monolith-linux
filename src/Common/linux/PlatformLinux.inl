@@ -197,14 +197,7 @@ typedef dirent DirEntryType;
 #define O_SEQUENTIAL 0
 #define SH_DENYWR 0
 
-#if __has_include(<SDL_stdinc.h>)
-#include <SDL_stdinc.h>
-#define itoa SDL_itoa
-#define _itoa_s SDL_itoa
-#else
-#define itoa(...) do { static_assert(false, "SDL_stdinc.h is missing"); } while (false)
-#define _itoa_s(...) do { static_assert(false, "SDL_stdinc.h is missing"); } while (false)
-#endif
+// itoa/_itoa_s: see MonolithCompat.inl (OpenXRay mapped _itoa_s to SDL_itoa, whose arity differs).
 
 #define _stricmp stricmp
 #define strcmpi stricmp
@@ -351,7 +344,7 @@ inline int vsnprintf_s(char* buffer, size_t size, size_t, const char* format, va
 #define _snwprintf swprintf
 #define swprintf_s swprintf
 #define wcsicmp _wcsicmp
-#define _wcsicmp wcscmp
+#define _wcsicmp wcscasecmp // OpenXRay used wcscmp, which is case-sensitive
 #define _tempnam tempnam
 #define _access access
 #define _open open
@@ -359,13 +352,7 @@ inline int vsnprintf_s(char* buffer, size_t size, size_t, const char* format, va
 #define _sopen open
 #define _utime utime
 #define _utimbuf utimbuf
-#define _sopen_s(handle, filename, ...) open(filename, O_RDONLY)
-inline int _filelength(int fd)
-{
-    struct stat file_info;
-    ::fstat(fd, &file_info);
-    return file_info.st_size;
-}
+// _sopen_s/_filelength: see io_compat.h (the OpenXRay macro never stored the handle).
 #define _fdopen fdopen
 inline int _rmdir(const char *path)
 {

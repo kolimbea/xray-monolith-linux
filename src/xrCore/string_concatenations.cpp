@@ -58,6 +58,26 @@ namespace xray
 				}
 			} // namespace strconcat_error
 
+#ifdef __linux__
+			// No SEH on Linux: compare the request against the remaining stack of this thread instead.
+			// Windows recovers and continues; a following _alloca would then fault anyway, so failing
+			// loudly here keeps the error at its cause.
+			void check_stack_overflow(u32 stack_increment)
+			{
+				pthread_attr_t attr;
+				void* base = nullptr;
+				size_t size = 0;
+				if (pthread_getattr_np(pthread_self(), &attr) != 0)
+					return;
+				pthread_attr_getstack(&attr, &base, &size);
+				pthread_attr_destroy(&attr);
+				char here;
+				const size_t left = (size_t)(&here - (char*)base);
+				const size_t guard = 64 * 1024;
+				R_ASSERT2(left > guard && left - guard > stack_increment, "strconcat: not enough stack");
+			}
+
+#else
 			int stack_overflow_exception_filter(int exception_code)
 			{
 				if (exception_code == EXCEPTION_STACK_OVERFLOW)
@@ -84,6 +104,8 @@ namespace xray
 					_resetstkoflw();
 				}
 			}
+
+#endif
 
 			void string_tupples::error_process() const
 			{

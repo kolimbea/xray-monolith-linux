@@ -48,7 +48,7 @@ public:
     {
         if constexpr (Counter == CounterPolicy::Atomic)
         {
-            u32 t = __ref_count.fetch_sub(1, std::memory_order_acq_rel)
+            u32 t = __ref_count.fetch_sub(1, std::memory_order_acq_rel);
             return t - 1;
         }
         else
@@ -176,14 +176,14 @@ using intrusive_base_deferred_nonatomic = intrusive_base_impl<DeletionPolicy::De
 using intrusive_base_strict = intrusive_base_impl<DeletionPolicy::Strict, CounterPolicy::Atomic>;
 using intrusive_base_strict_nonatomic = intrusive_base_impl<DeletionPolicy::Strict, CounterPolicy::NonAtomic>;
 
-#define TEMPLATE_SPECIALIZATION template <typename object_type>
-#define _intrusive_ptr intrusive_ptr<object_type>
+#define TEMPLATE_SPECIALIZATION template <typename object_type_>
+#define _intrusive_ptr intrusive_ptr<object_type_>
 
 TEMPLATE_SPECIALIZATION
 class intrusive_ptr
 {
 public:
-    typedef object_type object_type;
+    typedef object_type_ object_type;
     typedef _intrusive_ptr self_type;
 
 private:
@@ -223,7 +223,7 @@ public:
     IC intrusive_ptr(self_type&& rhs) noexcept;
 
     // Generalized Copy Constructor (Derived -> Base)
-    template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type*>, int> = 0>
+    template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type_*>, int> = 0>
     IC intrusive_ptr(intrusive_ptr<other_type> const& rhs);
 
     IC ~intrusive_ptr();
@@ -235,7 +235,7 @@ public:
     IC self_type& operator=(self_type&& rhs) noexcept;
 
     // Generalized Assignment
-    template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type*>, int> = 0>
+    template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type_*>, int> = 0>
     IC self_type& operator=(intrusive_ptr<other_type> const& rhs);
 
     // Accessors
@@ -326,7 +326,7 @@ IC _intrusive_ptr::intrusive_ptr(self_type&& rhs) noexcept
 
 // Generalized Constructor (Derived -> Base)
 TEMPLATE_SPECIALIZATION
-template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type*>, int>>
+template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type_*>, int>>
 IC _intrusive_ptr::intrusive_ptr(intrusive_ptr<other_type> const& rhs)
 {
     m_object = nullptr;
@@ -379,7 +379,7 @@ IC typename _intrusive_ptr::self_type& _intrusive_ptr::operator=(self_type&& rhs
 
 // Generalized Assignment
 TEMPLATE_SPECIALIZATION
-template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type*>, int>>
+template <typename other_type, std::enable_if_t<std::is_convertible_v<other_type*, object_type_*>, int>>
 IC typename _intrusive_ptr::self_type& _intrusive_ptr::operator=(intrusive_ptr<other_type> const& rhs)
 {
     set(rhs.get());

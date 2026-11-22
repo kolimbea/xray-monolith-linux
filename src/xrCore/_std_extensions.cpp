@@ -22,17 +22,29 @@ char* timestamp(string64& dest)
 	* the operating system is queried to obtain the default value
 	* for the variable.
 	*/
+#ifdef __linux__
+	tzset();
+#else
 	_tzset();
+#endif
 	u32 it;
 
 	// date
+#ifdef __linux__
+	{ time_t t = time(nullptr); strftime(temp, sizeof(temp), "%m/%d/%y", localtime(&t)); } // _strdate format
+#else
 	_strdate(temp);
+#endif
 	for (it = 0; it < xr_strlen(temp); it++)
 		if ('/' == temp[it]) temp[it] = '-';
 	strconcat(sizeof(dest), dest, temp, "_");
 
 	// time
+#ifdef __linux__
+	{ time_t t = time(nullptr); strftime(temp, sizeof(temp), "%H:%M:%S", localtime(&t)); } // _strtime format
+#else
 	_strtime(temp);
+#endif
 	for (it = 0; it < xr_strlen(temp); it++)
 		if (':' == temp[it]) temp[it] = '-';
 	xr_strcat(dest, sizeof(dest), temp);
