@@ -1,5 +1,9 @@
 #ifndef XRCORE_PLATFORM_H
 #define XRCORE_PLATFORM_H
+
+#ifdef __linux__
+#include "../Common/linux/PlatformLinux.inl"
+#else
 #pragma once
 
 #define VC_EXTRALEAN // Exclude rarely-used stuff from Windows headers
@@ -53,4 +57,5 @@
 #endif
 #pragma warning(pop)
 
+#endif // __linux__
 #endif

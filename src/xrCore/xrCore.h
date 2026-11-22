@@ -46,7 +46,7 @@
 #pragma warning(disable:4530)
 #endif
 
-#if !defined(_MT)
+#if !defined(_MT) && !defined(__linux__)
 // multithreading disabled
 #error Please enable multi-threaded library...
 #endif
@@ -160,7 +160,7 @@
 #define _MCW_EM MCW_EM
 #else
 #define ALIGN(a) __declspec(align(a))
-#include <sys\utime.h>
+#include <sys/utime.h>
 #define MODULE_NAME "xrCore.dll"
 #endif
 
