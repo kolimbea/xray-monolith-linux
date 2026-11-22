@@ -24,6 +24,7 @@
 
 #if defined(__linux__)
 // BOOL/BYTE/WORD/DWORD/UINT come from the Linux compat layer (DWORD is 32-bit there, as on Windows).
+#include "xrCore_platform.h"
 #elif defined(_WIN32_ENVIRONMENT_)
 #include <windows.h>
 #else /* _DOS32_ENVIRONMENT_ || _POSIX_ENVIRONMENT_ || _UNKNOWN_ENVIRONMENT_ */

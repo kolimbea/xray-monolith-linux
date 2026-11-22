@@ -5,9 +5,11 @@
 #include "stdafx.h"
 #pragma hdrstop
 
+#ifndef __linux__
 #include "cderr.h"
 #include "commdlg.h"
 #include "vfw.h"
+#endif
 
 EFS_Utils* xr_EFS = NULL;
 //----------------------------------------------------
@@ -70,6 +72,12 @@ xr_string EFS_Utils::ChangeFileExt(const xr_string& src, LPCSTR ext)
 }
 
 //----------------------------------------------------
+#ifdef __linux__
+// Native file dialogs are used only by editor tools; the game never opens them.
+bool EFS_Utils::GetOpenNameInternal(LPCSTR, LPSTR, int, bool, LPCSTR, int) { return false; }
+bool EFS_Utils::GetSaveName(LPCSTR, string_path&, LPCSTR, int) { return false; }
+
+#else
 void MakeFilter(string1024& dest, LPCSTR info, LPCSTR ext)
 {
 	std::string res;
@@ -286,6 +294,8 @@ bool EFS_Utils::GetSaveName(LPCSTR initial, string_path& buffer, LPCSTR offset, 
 }
 
 //----------------------------------------------------
+#endif
+
 LPCSTR EFS_Utils::AppendFolderToName(LPSTR tex_name, u32 const tex_name_size, int depth, BOOL full_name)
 {
 	string256 _fn;

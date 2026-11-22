@@ -203,7 +203,6 @@ typedef dirent DirEntryType;
 #define strcmpi stricmp
 #define lstrcpy strcpy
 #define stricmp strcasecmp
-#define strupr SDL_strupr
 // error code numbers from original MS strcpy_s return value
 inline int strcpy_s(char *dest, size_t num, const char *source)
 {

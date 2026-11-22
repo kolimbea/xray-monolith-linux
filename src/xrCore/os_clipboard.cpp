@@ -8,6 +8,82 @@
 #include "stdafx.h"
 #pragma hdrstop
 #include "os_clipboard.h"
+#ifdef __linux__
+// SDL3 clipboard (Wayland/X11). The engine works in CP1251, SDL in UTF-8.
+#include <SDL3/SDL_clipboard.h>
+
+namespace
+{
+xr_string cp1251_to_utf8(LPCSTR src)
+{
+	const int wn = MultiByteToWideChar(1251, 0, src, -1, nullptr, 0);
+	if (wn <= 0)
+		return xr_string();
+	xr_vector<wchar_t> w(wn);
+	MultiByteToWideChar(1251, 0, src, -1, w.data(), wn);
+	const int n = WideCharToMultiByte(CP_UTF8, 0, w.data(), -1, nullptr, 0, nullptr, nullptr);
+	if (n <= 0)
+		return xr_string();
+	xr_string out(n, '\0');
+	WideCharToMultiByte(CP_UTF8, 0, w.data(), -1, &out[0], n, nullptr, nullptr);
+	out.resize(n - 1);
+	return out;
+}
+
+xr_string utf8_to_cp1251(LPCSTR src)
+{
+	const int wn = MultiByteToWideChar(CP_UTF8, 0, src, -1, nullptr, 0);
+	if (wn <= 0)
+		return xr_string();
+	xr_vector<wchar_t> w(wn);
+	MultiByteToWideChar(CP_UTF8, 0, src, -1, w.data(), wn);
+	const int n = WideCharToMultiByte(1251, 0, w.data(), -1, nullptr, 0, nullptr, nullptr);
+	if (n <= 0)
+		return xr_string();
+	xr_string out(n, '\0');
+	WideCharToMultiByte(1251, 0, w.data(), -1, &out[0], n, nullptr, nullptr);
+	out.resize(n - 1);
+	return out;
+}
+
+xr_string clipboard_cp1251()
+{
+	char* text = SDL_GetClipboardText(); // never NULL; "" when empty or on error
+	xr_string out = text ? utf8_to_cp1251(text) : xr_string();
+	SDL_free(text);
+	return out;
+}
+} // namespace
+
+void os_clipboard::copy_to_clipboard(LPCSTR buf)
+{
+	if (!SDL_SetClipboardText(cp1251_to_utf8(buf).c_str()))
+		Msg("! clipboard: %s", SDL_GetError());
+}
+
+void os_clipboard::paste_from_clipboard(LPSTR buffer, u32 const& buffer_size)
+{
+	VERIFY(buffer);
+	VERIFY(buffer_size > 0);
+	const xr_string clip = clipboard_cp1251();
+	strncpy(buffer, clip.c_str(), buffer_size - 1);
+	buffer[buffer_size - 1] = 0;
+	for (u32 i = 0; i < strlen(buffer); ++i)
+	{
+		char c = buffer[i];
+		// CP1251 bytes >= 0x80 are letters; the C locale's isprint() would reject them all.
+		if (((unsigned char)c < 0x80 && isprint((unsigned char)c) == 0) || c == '\t' || c == '\n')
+			buffer[i] = ' ';
+	}
+}
+
+void os_clipboard::update_clipboard(LPCSTR string)
+{
+	xr_string joined = clipboard_cp1251();
+	joined += string;
+	copy_to_clipboard(joined.c_str());
+}
+#else
 
 void os_clipboard::copy_to_clipboard(LPCSTR buf)
 {
@@ -89,3 +165,5 @@ void os_clipboard::update_clipboard(LPCSTR string)
     xr_free (buffer);
 #endif // #ifdef _EDITOR
 }
+
+#endif // __linux__

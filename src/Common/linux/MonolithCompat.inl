@@ -218,3 +218,48 @@ inline BOOL SetFileAttributes(const char* path, DWORD attr)
 }
 #define GetFileAttributesA GetFileAttributes
 #define SetFileAttributesA SetFileAttributes
+
+// MessageBox over SDL3 (works without a window). Always logs to stderr too, since fatal paths call
+// it right before abort() and the dialog may not be visible.
+#include <SDL3/SDL_messagebox.h>
+#define MB_OK 0x0u
+#define MB_OKCANCEL 0x1u
+#define MB_YESNO 0x4u
+#define MB_ICONERROR 0x10u
+#define MB_ICONHAND MB_ICONERROR
+#define MB_ICONSTOP MB_ICONERROR
+#define MB_ICONQUESTION 0x20u
+#define MB_ICONWARNING 0x30u
+#define MB_ICONEXCLAMATION MB_ICONWARNING
+#define MB_ICONINFORMATION 0x40u
+#define MB_TASKMODAL 0x2000u
+#define MB_SYSTEMMODAL 0x1000u
+#define MB_TOPMOST 0x40000u
+#define IDOK 1
+#define IDCANCEL 2
+#define IDYES 6
+#define IDNO 7
+inline int MessageBox(void*, const char* text, const char* caption, unsigned type)
+{
+    fprintf(stderr, "[%s] %s\n", caption ? caption : "", text ? text : "");
+    const unsigned icon = type & 0xF0u;
+    const SDL_MessageBoxFlags flags = icon == MB_ICONERROR ? SDL_MESSAGEBOX_ERROR
+        : icon == MB_ICONWARNING ? SDL_MESSAGEBOX_WARNING : SDL_MESSAGEBOX_INFORMATION;
+    const unsigned kind = type & 0xFu;
+    if (kind != MB_OKCANCEL && kind != MB_YESNO)
+    {
+        SDL_ShowSimpleMessageBox(flags, caption, text, nullptr);
+        return IDOK;
+    }
+    const bool yesno = kind == MB_YESNO;
+    const SDL_MessageBoxButtonData buttons[] = {
+        {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, yesno ? IDNO : IDCANCEL, yesno ? "No" : "Cancel"},
+        {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, yesno ? IDYES : IDOK, yesno ? "Yes" : "OK"},
+    };
+    const SDL_MessageBoxData data = {flags, nullptr, caption, text, 2, buttons, nullptr};
+    int pressed = yesno ? IDNO : IDCANCEL;
+    if (!SDL_ShowMessageBox(&data, &pressed))
+        return yesno ? IDNO : IDCANCEL;
+    return pressed;
+}
+#define MessageBoxA MessageBox
