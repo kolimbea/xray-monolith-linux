@@ -8,7 +8,11 @@
 
 #pragma warning(push)
 #pragma warning(disable:4995)
+#ifdef __linux__
+#include "../Common/linux/io_compat.h"
+#else
 #include <io.h>
+#endif
 #pragma warning(pop)
 
 #include "LocatorAPI_defs.h"

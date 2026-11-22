@@ -64,3 +64,4 @@ inline void AcquireSRWLockShared(SRWLOCK* l) { l->lock_shared(); }
 inline void ReleaseSRWLockShared(SRWLOCK* l) { l->unlock_shared(); }
 inline BOOL TryAcquireSRWLockExclusive(SRWLOCK* l) { return l->try_lock() ? TRUE : FALSE; }
 inline BOOL TryAcquireSRWLockShared(SRWLOCK* l) { return l->try_lock_shared() ? TRUE : FALSE; }
+#include "win32_text.h"
