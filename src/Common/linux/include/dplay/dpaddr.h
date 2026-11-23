@@ -327,3 +327,10 @@ HRESULT WINAPI DirectPlay8AddressCreate(const GUID* pcIID, LPVOID* ppvInterface,
 #endif
 
 #endif
+
+// Missing from mingw-w64; values from the DirectX SDK's dpaddr.h (sdk/include/DPlay in this tree).
+#ifndef DPNA_TRAVERSALMODE_NONE
+#define DPNA_TRAVERSALMODE_NONE 0
+#define DPNA_TRAVERSALMODE_PORTREQUIRED 1
+#define DPNA_TRAVERSALMODE_PORTRECOMMENDED 2
+#endif

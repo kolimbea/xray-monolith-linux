@@ -103,6 +103,9 @@ target_link_libraries(xrPhysics PUBLIC ode xrCDB)
 
 # --- Stage 1c: engine ---
 # imgui core only; the D3D backends are replaced by the renderer later.
+xr_module(xrNetServer ${XR_SRC}/xrNetServer/xrNetServer.vcxproj)
+target_compile_definitions(xrNetServer PRIVATE XRNETSERVER_EXPORTS)
+
 xr_module(imgui "${XR_3RD}/imgui/imgui.vcxproj" EXCLUDE backends/)
 target_include_directories(imgui PUBLIC "${XR_3RD}/imgui")
 

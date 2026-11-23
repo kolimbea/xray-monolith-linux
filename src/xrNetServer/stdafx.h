@@ -13,7 +13,11 @@
 
 #pragma warning(push)
 #pragma warning(disable:4995)
+#ifdef __linux__
+#include <dplay/dplay8.h> // mingw-w64 header in Common/linux/include (the SDK one is MSVC-only)
+#else
 #include <DPlay/dplay8.h>
+#endif
 #pragma warning(pop)
 
 #include "NET_Shared.h"

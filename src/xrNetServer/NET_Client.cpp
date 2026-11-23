@@ -1118,8 +1118,12 @@ void IPureClient::Sync_Thread()
 		clPing.dwTime_ClientSend = TimerAsync(device_timer);
 
 		// Send it
+#ifdef __linux__ // no SEH: plain block (DirectPlay is never created on Linux anyway)
+		{
+#else
 		__try
 		{
+#endif
 			DPN_BUFFER_DESC desc;
 			DPNHANDLE hAsync = 0;
 			desc.dwBufferSize = sizeof(clPing);
@@ -1132,11 +1136,13 @@ void IPureClient::Sync_Thread()
 				break;
 			}
 		}
+#ifndef __linux__
 		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
 			Msg("* CLIENT: SyncThread: EXIT. (failed to send - disconnected?)");
 			break;
 		}
+#endif
 
 		// Waiting for reply-packet to arrive
 		if (!net_Syncronised)

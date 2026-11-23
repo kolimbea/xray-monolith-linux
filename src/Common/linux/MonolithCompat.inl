@@ -418,3 +418,27 @@ typedef void* HBRUSH;
 typedef void* HBITMAP;
 typedef void* HGDIOBJ;
 typedef void* HKL;
+
+// COM activation: no COM classes exist on Linux (DirectPlay is only created for multiplayer, which the
+// port does not support), so every request fails the way Windows does for an unregistered class.
+#define CLSCTX_INPROC_SERVER 0x1
+#define REGDB_E_CLASSNOTREG ((HRESULT)0x80040154L)
+inline HRESULT CoCreateInstance(const GUID&, void*, DWORD, const GUID&, void** out)
+{
+    if (out)
+        *out = nullptr;
+    return REGDB_E_CLASSNOTREG;
+}
+
+// Structured exception handling does not exist on Linux; SEH blocks are #ifdef'ed at their sites
+// (a global __try macro would collide with libstdc++'s own __try). Faults reach xrDebug's signal
+// handlers instead.
+#define EXCEPTION_EXECUTE_HANDLER 1
+#define EXCEPTION_CONTINUE_SEARCH 0
+#define EXCEPTION_CONTINUE_EXECUTION (-1)
+#define EXCEPTION_STACK_OVERFLOW ((DWORD)0xC00000FDL)
+inline int _resetstkoflw() { return 1; }
+
+#define _localtime64 localtime
+#define _time64 time
+typedef time_t __time64_t;
