@@ -111,10 +111,9 @@ inline void OutputDebugString(const char *str) // for linux debugger
     std::cerr << str;
 }
 
-inline unsigned long GetLastError()
-{
-    return 0;
-}
+// Last-error value set by the compat layer (CreateMutex, ...); see win32_file.cpp.
+unsigned long GetLastError();
+void SetLastError(unsigned long code);
 
 inline int GetExceptionCode()
 {

@@ -410,3 +410,11 @@ inline UINT xr_fvf_vertex_size(DWORD fvf)
     }
     return size;
 }
+
+typedef DWORD* PDWORD;
+typedef GUID CLSID;
+typedef void* HFONT;
+typedef void* HBRUSH;
+typedef void* HBITMAP;
+typedef void* HGDIOBJ;
+typedef void* HKL;

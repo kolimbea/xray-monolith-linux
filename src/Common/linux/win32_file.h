@@ -66,3 +66,12 @@ struct _OVERLAPPED;
 int ReadFile(HANDLE file, void* buf, uint32_t n, uint32_t* read, _OVERLAPPED* overlapped);
 int WriteFile(HANDLE file, const void* buf, uint32_t n, uint32_t* written, _OVERLAPPED* overlapped);
 uint32_t SetFilePointer(HANDLE file, int32_t distance, int32_t* distance_high, uint32_t method);
+
+// Named mutex used only as a single-instance guard: an flock()ed file in $XDG_RUNTIME_DIR (or /tmp).
+// If another process holds it, the handle is still returned and GetLastError() == ERROR_ALREADY_EXISTS,
+// matching Win32. The lock is released when the handle is closed or the process exits.
+#ifndef ERROR_ALREADY_EXISTS
+#define ERROR_ALREADY_EXISTS 183L
+#endif
+HANDLE CreateMutex(_SECURITY_ATTRIBUTES*, int initial_owner, const char* name);
+#define CreateMutexA CreateMutex

@@ -124,3 +124,5 @@ typedef struct _devicemodeA
 } DEVMODE, DEVMODEA;
 int EnumDisplaySettings(const char* device, uint32_t mode, DEVMODE* out); // only ENUM_CURRENT_SETTINGS
 #define EnumDisplaySettingsA EnumDisplaySettings
+int DestroyWindow(void* hwnd); // NULL is a no-op; never destroys the engine's main window
+int UpdateWindow(void* hwnd);

@@ -7,8 +7,10 @@
 #include <pthread.h>
 #include <sched.h>
 #include <sys/mman.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string>
 #include <unordered_map>
 
 namespace
@@ -244,4 +246,27 @@ uint32_t SetFilePointer(HANDLE file, int32_t distance, int32_t* distance_high, u
     if (distance_high)
         *distance_high = (int32_t)((uint64_t)pos >> 32);
     return (uint32_t)pos;
+}
+
+namespace
+{
+thread_local unsigned long g_last_error = 0;
+}
+unsigned long GetLastError() { return g_last_error; }
+void SetLastError(unsigned long code) { g_last_error = code; }
+
+HANDLE CreateMutex(_SECURITY_ATTRIBUTES*, int, const char* name)
+{
+    if (!name || !*name)
+        return nullptr;
+    std::string file;
+    for (const char* p = name; *p; ++p)
+        file += (*p == '/' || *p == '\\') ? '_' : *p; // "Local\\X" -> "Local_X"
+    const char* dir = getenv("XDG_RUNTIME_DIR");
+    const std::string path = std::string(dir && *dir ? dir : "/tmp") + "/" + file + ".lock";
+    const int fd = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+    if (fd < 0)
+        return nullptr;
+    SetLastError(flock(fd, LOCK_EX | LOCK_NB) == 0 ? 0 : ERROR_ALREADY_EXISTS);
+    return new Handle{Kind::File, fd, false};
 }

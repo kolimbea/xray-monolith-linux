@@ -1,10 +1,12 @@
 #include "win32_system.h"
 
 #include <cfenv>
+#include <dlfcn.h>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <strings.h>
 #include <mutex>
 #include <pwd.h>
 #include <string>
@@ -116,3 +118,35 @@ unsigned _clear87()
     feclearexcept(FE_ALL_EXCEPT);
     return (unsigned)raised;
 }
+
+void* LoadLibrary(const char* name)
+{
+    if (!name || !*name)
+        return nullptr;
+    std::string base(name);
+    for (char& c : base)
+        if (c == '\\')
+            c = '/';
+    const size_t slash = base.rfind('/');
+    std::string dir = slash == std::string::npos ? "" : base.substr(0, slash + 1);
+    std::string file = slash == std::string::npos ? base : base.substr(slash + 1);
+    const size_t dot = file.rfind('.');
+    if (dot != std::string::npos && strcasecmp(file.c_str() + dot, ".dll") == 0)
+        file.erase(dot);
+    char exe[PATH_MAX];
+    std::string exedir;
+    if (GetModuleFileName(nullptr, exe, sizeof(exe)))
+    {
+        exedir = exe;
+        exedir.erase(exedir.rfind('/') + 1);
+    }
+    for (const std::string& cand : {exedir + dir + "lib" + file + ".so", exedir + dir + file + ".so",
+                                    dir + "lib" + file + ".so", dir + file + ".so"})
+        if (void* h = dlopen(cand.c_str(), RTLD_NOW | RTLD_LOCAL))
+            return h;
+    return nullptr;
+}
+
+void* GetProcAddress(void* module, const char* symbol) { return module ? dlsym(module, symbol) : nullptr; }
+
+int FreeLibrary(void* module) { return module && dlclose(module) == 0; }

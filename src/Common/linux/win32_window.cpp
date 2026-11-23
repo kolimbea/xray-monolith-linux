@@ -293,3 +293,13 @@ int EnumDisplaySettings(const char*, uint32_t mode, DEVMODE* out)
     out->dmDisplayFrequency = m->refresh_rate > 0.f ? (uint32_t)(m->refresh_rate + 0.5f) : 60u;
     return 1;
 }
+
+int DestroyWindow(void* hwnd)
+{
+    if (!hwnd || hwnd == g_main || hwnd == kDesktop)
+        return 0;
+    SDL_DestroyWindow((SDL_Window*)hwnd);
+    return 1;
+}
+
+int UpdateWindow(void*) { return 1; } // SDL windows have no pending WM_PAINT to flush

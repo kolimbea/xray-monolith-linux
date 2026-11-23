@@ -687,6 +687,8 @@ void Startup()
 	destroyEngine();
 }
 
+#ifdef __linux__
+#else
 static INT_PTR CALLBACK logDlgProc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
 {
 	switch (msg)
@@ -706,6 +708,7 @@ static INT_PTR CALLBACK logDlgProc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
 	return TRUE;
 }
 
+#endif // __linux__
 // Always request high performance GPU
 extern "C"
 {
@@ -787,6 +790,13 @@ g_bIntroFinished = TRUE ;
 #define dwFilterKeysStructSize sizeof( FILTERKEYS )
 #define dwToggleKeysStructSize sizeof( TOGGLEKEYS )
 
+#ifdef __linux__
+// Sticky/filter/toggle keys are a Windows accessibility feature; SDL3 already inhibits the
+// screensaver while its window exists (SDL_DisableScreenSaver is the default).
+struct damn_keys_filter
+{
+};
+#else
 struct damn_keys_filter
 {
 	BOOL bScreenSaverState;
@@ -886,6 +896,7 @@ struct damn_keys_filter
 	}
 };
 
+#endif // __linux__
 #undef dwStickyKeysStructSize
 #undef dwFilterKeysStructSize
 #undef dwToggleKeysStructSize
@@ -951,6 +962,9 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 	Debug._initialize(false);
 #endif // DEDICATED_SERVER
 
+#ifdef __linux__
+	// glibc has no low-fragmentation heap switch (HeapSetInformation).
+#else
 	if (!IsDebuggerPresent())
 	{
 		HMODULE const kernel32 = LoadLibrary("kernel32.dll");
@@ -976,6 +990,7 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 #endif
 		}
 	}
+#endif // __linux__
 
 	// foo();
 #ifndef DEDICATED_SERVER
@@ -1019,6 +1034,9 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 #endif // DEDICATED_SERVER
 
 	// Title window
+#ifdef __linux__
+	// No startup splash dialog on Linux (it is a Win32 dialog resource).
+#else
     logoWindow = CreateDialog(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_STARTUP), 0, logDlgProc);
    
 	HWND logoPicture = GetDlgItem(logoWindow, IDC_STATIC_LOGO);
@@ -1056,6 +1074,7 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 	);
 	
 	UpdateWindow(logoWindow);
+#endif // __linux__
 
 	// AVI
 	g_bIntroFinished = TRUE;
@@ -1185,6 +1204,9 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 		// check for need to execute something external
 		if (/*xr_strlen(g_sLaunchOnExit_params) && */xr_strlen(g_sLaunchOnExit_app))
 		{
+#ifdef __linux__
+			Msg("! launch-on-exit (%s) is not supported on Linux", g_sLaunchOnExit_app);
+#else
 			//CreateProcess need to return results to next two structures
 			STARTUPINFO si;
 			PROCESS_INFORMATION pi;
@@ -1195,6 +1217,7 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 			char const* temp_wf = (xr_strlen(g_sLaunchWorkingFolder) > 0) ? g_sLaunchWorkingFolder : NULL;
 			CreateProcess(g_sLaunchOnExit_app, g_sLaunchOnExit_params, NULL, NULL, FALSE, 0, NULL,
 			              temp_wf, &si, &pi);
+#endif // __linux__
 		}
 #ifndef DEDICATED_SERVER
 #ifdef NO_MULTI_INSTANCES
@@ -1208,6 +1231,40 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 	return 0;
 }
 
+#ifdef __linux__
+extern BOOL DllMainXrCore(HANDLE hinstDLL, DWORD ul_reason_for_call, LPVOID lpvReserved);
+extern BOOL DllMainXrPhysics(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
+
+// Linux entry point: same sequence as WinMain below, minus the Windows-only steps (LuaJIT low-address
+// pool, DPI awareness, SEH stack-overflow guard -- an overflow reaches xrDebug's SIGSEGV handler on
+// its alternate stack). The string passed on excludes the program name, as lpCmdLine does.
+int main(int, char**)
+{
+	DllMainXrCore(NULL, DLL_PROCESS_ATTACH, NULL);
+	DllMainXrPhysics(NULL, DLL_PROCESS_ATTACH, NULL);
+	DllMainXrCore(NULL, DLL_THREAD_ATTACH, NULL);
+
+	const char* cmd = GetCommandLine();
+	const char* args = cmd;
+	if (*args == '"')
+	{
+		args = strchr(args + 1, '"');
+		args = args ? args + 1 : cmd + xr_strlen(cmd);
+	}
+	else
+		while (*args && *args != ' ')
+			++args;
+	while (*args == ' ')
+		++args;
+	static string4096 cmdline;
+	xr_strcpy(cmdline, args);
+	const int rc = WinMain_impl(NULL, NULL, cmdline, 0);
+
+	DllMainXrPhysics(NULL, DLL_PROCESS_DETACH, NULL);
+	DllMainXrCore(NULL, DLL_PROCESS_DETACH, NULL);
+	return rc;
+}
+#else
 int stack_overflow_exception_filter(int exception_code)
 {
 	if (exception_code == EXCEPTION_STACK_OVERFLOW)
@@ -1293,6 +1350,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	return (0);
 }
+
+#endif // __linux__
 
 LPCSTR _GetFontTexName(LPCSTR section) { return GetFontTextureName(section); }
 

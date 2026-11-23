@@ -38,3 +38,17 @@ unsigned _controlfp(unsigned value, unsigned mask);
 inline unsigned _control87(unsigned value, unsigned mask) { return _controlfp(value, mask); }
 unsigned _clear87();
 #define _clearfp _clear87
+
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+#ifndef PASCAL
+#define PASCAL
+#endif
+
+// dlopen-based module loading. "name.dll" is looked up as "libname.so" (and "name.so") next to the
+// executable first, then on the normal library path; missing modules return NULL like Win32.
+void* LoadLibrary(const char* name);
+#define LoadLibraryA LoadLibrary
+void* GetProcAddress(void* module, const char* symbol);
+int FreeLibrary(void* module);
