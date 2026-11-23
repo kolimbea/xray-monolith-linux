@@ -53,7 +53,7 @@ IC void CGameLocationSelector::select_location(const _vertex_id_type start_verte
 	case eSelectionTypeMask:
 		{
 			if (used())
-				perform_search(start_vertex_id);
+				this->perform_search(start_vertex_id);
 			else
 				m_failed = false;
 			break;

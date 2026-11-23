@@ -8,12 +8,17 @@
 
 #pragma once
 
+// Global classes befriended below; unqualified, the friend declarations would introduce new
+// LevelGraph:: classes in ISO C++ (MSVC looked them up globally).
+class CLevelGraph;
+class CRenumbererConverter;
+
 namespace LevelGraph
 {
 	class CHeader : private hdrNODES
 	{
 	private:
-		friend class CRenumbererConverter;
+		friend class ::CRenumbererConverter;
 
 	public:
 		ICF u32 version() const;
@@ -29,7 +34,7 @@ namespace LevelGraph
 	class CVertex : private NodeCompressed13
 	{
 	private:
-		friend class CRenumbererConverter;
+		friend class ::CRenumbererConverter;
 
 	public:
 		ICF u32 link(int i) const;
@@ -40,7 +45,7 @@ namespace LevelGraph
 		ICF bool operator<(const LevelGraph::CVertex& vertex) const;
 		ICF bool operator>(const LevelGraph::CVertex& vertex) const;
 		ICF bool operator==(const LevelGraph::CVertex& vertex) const;
-		friend class CLevelGraph;
+		friend class ::CLevelGraph;
 	};
 	static_assert(sizeof(CVertex) == sizeof(NodeCompressed13), "Unexpected level graph vertex size");
 

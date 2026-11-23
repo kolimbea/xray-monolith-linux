@@ -135,8 +135,8 @@ IC bool CSAStar::step(_PathManager& path_manager)
 	data_storage().remove_best_opened();
 
 	// iterating on the best node neighbours
-	_PathManager::const_iterator i;
-	_PathManager::const_iterator e;
+	typename _PathManager::const_iterator i;
+	typename _PathManager::const_iterator e;
 	// path_manager.begin() keeps a pointer to the index it is given (CPathManagerGeneric::best_node_index)
 	// and get_value() reads it on every neighbour. With CVertexManagerFixed, index() returns by value, so
 	// passing best.index() straight in left that pointer on a temporary that died at the end of the
@@ -260,7 +260,7 @@ IC bool CSAStar::find(_PathManager& path_manager)
 		if (path_manager.is_limit_reached(i))
 		{
 			// so we reached limit, return failure
-			finalize(path_manager);
+			this->finalize(path_manager);
 			return (false);
 		}
 
@@ -269,13 +269,13 @@ IC bool CSAStar::find(_PathManager& path_manager)
 		if (step(path_manager))
 		{
 			// so this step reached the goal, return success
-			finalize(path_manager);
+			this->finalize(path_manager);
 			return (true);
 		}
 	}
 
 	// so, opened list is empty, return failure
-	finalize(path_manager);
+	this->finalize(path_manager);
 	return (false);
 }
 

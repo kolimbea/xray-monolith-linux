@@ -15,9 +15,9 @@ TEMPLATE_SPECIALIZATION
 CStateChimeraThreatenAbstract::CStateChimeraThreaten(_Object* obj) : inherited(obj)
 {
 	m_last_time_threaten = 0;
-	add_state(eStateWalk, xr_new<CStateChimeraThreatenWalk<_Object>>(obj));
-	add_state(eStateThreaten, xr_new<CStateChimeraThreatenRoar<_Object>>(obj));
-	add_state(eStateSteal, xr_new<CStateChimeraThreatenSteal<_Object>>(obj));
+	this->add_state(eStateWalk, xr_new<CStateChimeraThreatenWalk<_Object>>(obj));
+	this->add_state(eStateThreaten, xr_new<CStateChimeraThreatenRoar<_Object>>(obj));
+	this->add_state(eStateSteal, xr_new<CStateChimeraThreatenSteal<_Object>>(obj));
 }
 
 TEMPLATE_SPECIALIZATION
@@ -71,31 +71,31 @@ void CStateChimeraThreatenAbstract::reselect_state()
 {
 	if (prev_substate == u32(-1))
 	{
-		select_state(eStateThreaten);
+		this->select_state(eStateThreaten);
 		return;
 	}
 
 	if (prev_substate == eStateSteal)
 	{
-		select_state(eStateThreaten);
+		this->select_state(eStateThreaten);
 		return;
 	}
 
 	if (prev_substate == eStateThreaten)
 	{
-		if (get_state(eStateSteal)->check_start_conditions())
+		if (this->get_state(eStateSteal)->check_start_conditions())
 		{
-			select_state(eStateSteal);
+			this->select_state(eStateSteal);
 			return;
 		}
-		else if (get_state(eStateWalk)->check_start_conditions())
+		else if (this->get_state(eStateWalk)->check_start_conditions())
 		{
-			select_state(eStateWalk);
+			this->select_state(eStateWalk);
 			return;
 		}
 	}
 
-	select_state(eStateThreaten);
+	this->select_state(eStateThreaten);
 }
 
 TEMPLATE_SPECIALIZATION

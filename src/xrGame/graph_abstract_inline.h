@@ -46,7 +46,7 @@ IC void CAbstractGraph::remove_vertex(const _vertex_id_type& vertex_id)
 {
 	vertex_iterator I = m_vertices.find(vertex_id);
 	VERIFY(m_vertices.end() != I);
-	VERTICES::value_type v = *I;
+	typename VERTICES::value_type v = *I;
 	delete_data(v);
 	m_vertices.erase(I);
 }
@@ -299,7 +299,7 @@ IC void CAbstractGraph::load(IReader& stream)
 		load_data(data, *chunk2);
 		chunk2->close();
 
-		add_vertex(data, vertex_id);
+		this->add_vertex(data, vertex_id);
 	}
 	chunk0->close();
 
@@ -322,7 +322,7 @@ IC void CAbstractGraph::load(IReader& stream)
 			_edge_weight_type edge_weight;
 			load_data(edge_weight, *chunk0);
 
-			add_edge(vertex_id0, vertex_id1, edge_weight);
+			this->add_edge(vertex_id0, vertex_id1, edge_weight);
 		}
 	}
 	chunk0->close();

@@ -57,9 +57,9 @@ public:
 		_operator_id_type m_operator_id;
 		_operator_ptr_ m_operator;
 
-		IC SOperator(const _operator_id_type& operator_id, _operator_ptr_ _operator) :
+		IC SOperator(const _operator_id_type& operator_id, _operator_ptr_ op) : // parameter was named like the template parameter _operator
 			m_operator_id(operator_id),
-			m_operator(_operator)
+			m_operator(op)
 		{
 		}
 
@@ -149,7 +149,7 @@ public:
 	IC _edge_value_type estimate_edge_weight(const _index_type& vertex_index) const;
 
 	// operator interface
-	IC virtual void add_operator(const _edge_type& operator_id, _operator_ptr_ _operator);
+	IC virtual void add_operator(const _edge_type& operator_id, _operator_ptr_ op);
 	IC virtual void remove_operator(const _edge_type& operator_id);
 	IC _operator_ptr_ get_operator(const _operator_id_type& operator_id);
 	IC const OPERATOR_VECTOR& operators() const;
