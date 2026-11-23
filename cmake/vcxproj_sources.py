@@ -9,7 +9,7 @@ import sys
 if sys.argv[1] == "--defines":
     # Release|x64 preprocessor definitions minus Windows/MSVC-build ones.
     text = open(sys.argv[2], encoding="utf-8", errors="replace").read()
-    m = re.search(r"<ItemDefinitionGroup Condition=\"'\$\(Configuration\)\|\$\(Platform\)'=='Release\|x64'\">(.*?)</ItemDefinitionGroup>", text, re.S)
+    m = re.search(r"<ItemDefinitionGroup Condition=\"\s*'\$\(Configuration\)\|\$\(Platform\)'\s*==\s*'Release\|x64'\s*\">(.*?)</ItemDefinitionGroup>", text, re.S)
     d = re.search(r"<PreprocessorDefinitions>(.*?)</PreprocessorDefinitions>", m.group(1) if m else "", re.S)
     drop = {"WIN32", "_WINDOWS", "_USRDLL", "_SECURE_SCL=0", "MSVC", "NDEBUG", "_WIN32", "%(PreprocessorDefinitions)", ""}
     print("\n".join(x for x in (d.group(1).split(";") if d else []) if x not in drop))
@@ -28,10 +28,15 @@ for m in re.finditer(r'<ClCompile Include="([^"]+)"\s*(/>|>(.*?)</ClCompile>)', 
         continue
     path = os.path.normpath(os.path.join(base, rel))
     if not os.path.exists(path):
-        # vcxproj paths are case-insensitive on Windows; find the real spelling
-        d, n = os.path.split(path)
-        hits = [f for f in os.listdir(d) if f.lower() == n.lower()] if os.path.isdir(d) else []
-        if not hits:
-            sys.exit(f"missing source {rel} in {proj}")
-        path = os.path.join(d, hits[0])
+        # vcxproj paths are case-insensitive on Windows; resolve each component's real spelling
+        cur = os.sep
+        for part in path.strip(os.sep).split(os.sep):
+            nxt = os.path.join(cur, part)
+            if not os.path.exists(nxt):
+                hits = [f for f in os.listdir(cur) if f.lower() == part.lower()] if os.path.isdir(cur) else []
+                if not hits:
+                    sys.exit(f"missing source {rel} in {proj}")
+                nxt = os.path.join(cur, hits[0])
+            cur = nxt
+        path = cur
     print(path)
