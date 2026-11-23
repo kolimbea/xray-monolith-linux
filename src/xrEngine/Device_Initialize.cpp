@@ -7,7 +7,11 @@
 # include "engine_impl.hpp"
 #endif // #ifdef INGAME_EDITOR
 
+#ifdef __linux__
+#include <SDL3/SDL.h>
+#else
 extern LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+#endif
 
 #ifdef INGAME_EDITOR
 void CRenderDevice::initialize_editor()
@@ -45,6 +49,26 @@ PROTECT_API void CRenderDevice::Initialize()
         initialize_editor();
 #endif // #ifdef INGAME_EDITOR
 
+#ifdef __linux__
+	// SDL3 window; HWND is the SDL_Window* throughout the Linux port. dxvk-native presents into it
+	// through its SDL3 WSI, which it selects from DXVK_WSI_DRIVER.
+	if (m_hWnd == NULL)
+	{
+		setenv("DXVK_WSI_DRIVER", "SDL3", 0);
+		if (!SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
+			FATAL(make_string("SDL video init failed: %s", SDL_GetError()).c_str());
+		SDL_Window* w = SDL_CreateWindow("S.T.A.L.K.E.R.: Anomaly", 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_HIDDEN);
+		if (!w)
+			FATAL(make_string("SDL_CreateWindow failed: %s", SDL_GetError()).c_str());
+		m_hWnd = w;
+		xr_linux_set_main_window(w);
+		SDL_StartTextInput(w); // SDL3 delivers SDL_EVENT_TEXT_INPUT (WM_CHAR) only after this
+	}
+	m_dwWindowStyle = WS_BORDER | WS_DLGFRAME;
+	SetWindowLongPtr(m_hWnd, GWL_STYLE, m_dwWindowStyle);
+	GetWindowRect(m_hWnd, &m_rcWindowBounds);
+	GetClientRect(m_hWnd, &m_rcWindowClient);
+#else
 	// Unless a substitute hWnd has been specified, create a window to render into
 	if (m_hWnd == NULL)
 	{
@@ -81,6 +105,7 @@ PROTECT_API void CRenderDevice::Initialize()
 	m_dwWindowStyle = GetWindowLong(m_hWnd, GWL_STYLE);
 	GetWindowRect(m_hWnd, &m_rcWindowBounds);
 	GetClientRect(m_hWnd, &m_rcWindowClient);
+#endif // __linux__
 
 	/*
 	if (strstr(lpCmdLine,"-gpu_sw")!=NULL) HW.Caps.bForceGPU_SW = TRUE;

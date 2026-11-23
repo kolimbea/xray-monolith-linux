@@ -228,7 +228,9 @@ PROTECT_API void CRenderDevice::Create()
 		true
 	);
 
+#ifndef __linux__ // Windows-only "not responding" ghost window
 	DisableProcessWindowsGhosting();
+#endif
 
 	RECT winRect;
 	GetClientRect(m_hWnd, &winRect);

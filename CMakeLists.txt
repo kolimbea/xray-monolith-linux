@@ -114,6 +114,6 @@ set(LX ${XR_SRC}/Common/linux)
 xr_module(xrEngine ${XR_SRC}/xrEngine/xrEngine.vcxproj
     EXCLUDE Text_Console.cpp Text_Console_WndProc.cpp tntQAVI.cpp MonitorList.cpp
     EXTRA ${LX}/MonitorList_linux.cpp ${LX}/dinput_sdl.cpp ${LX}/win32_window.cpp ${LX}/discord_stub.cpp)
-target_compile_definitions(xrEngine PRIVATE ENGINE_BUILD)
+target_compile_definitions(xrEngine PRIVATE ENGINE_BUILD STATIC_RENDERER_R4 AL_LIBTYPE_STATIC)
 target_include_directories(xrEngine PRIVATE "${XR_3RD}/discord")
 target_link_libraries(xrEngine PUBLIC imgui luabind lua_extensions xrCDB xrSound xrParticles xrXMLParser)

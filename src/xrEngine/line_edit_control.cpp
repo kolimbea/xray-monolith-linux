@@ -801,7 +801,11 @@ namespace text_editor
 
 	void line_edit_control::SwitchKL()
 	{
+#ifdef __linux__
+		// Layout switching belongs to the desktop (KDE/GNOME) on Linux; the console hotkey is a no-op.
+#else
 		ActivateKeyboardLayout((HKL)HKL_NEXT, 0);
+#endif
 	}
 
 	// -------------------------------------------------------------------------------------------------

@@ -2,7 +2,11 @@
 #pragma hdrstop
 
 #pragma warning(disable:4995)
+#ifdef __linux__
+#define D3DXGetFVFVertexSize xr_fvf_vertex_size // no D3DX9 on Linux
+#else
 #include <d3dx9.h>
+#endif
 #pragma warning(default:4995)
 #include "Fmesh.h"
 

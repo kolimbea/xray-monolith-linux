@@ -23,11 +23,15 @@ namespace xr_imgui
 
     static void ImGui_UpdateKeyboardCodePage(UINT32& keyboard_code_page)
     {
+#ifdef __linux__
+        keyboard_code_page = CP_UTF8; // SDL text input already delivers Unicode code points
+#else
         // Retrieve keyboard code page, required for handling of non-Unicode Windows.
         HKL keyboard_layout = ::GetKeyboardLayout(0);
         LCID keyboard_lcid = MAKELCID(HIWORD(keyboard_layout), SORT_DEFAULT);
         if (::GetLocaleInfoA(keyboard_lcid, (LOCALE_RETURN_NUMBER | LOCALE_IDEFAULTANSICODEPAGE), (LPSTR)&keyboard_code_page, sizeof(keyboard_code_page)) == 0)
             keyboard_code_page = CP_ACP; // Fallback to default ANSI code page when fails.
+#endif
     }
 
     void ide::InitBackend()
@@ -232,9 +236,13 @@ namespace xr_imgui
         ImGuiIO& io = ImGui::GetIO();
         if (!io.WantTextInput) return;
 
+#ifdef __linux__
+        io.AddInputCharacter((unsigned int)param); // Device::on_sdl_event passes a Unicode code point
+#else
         wchar_t wch = 0;
         ::MultiByteToWideChar(keyboard_code_page, MB_PRECOMPOSED, (char*)&param, 1, &wch, 1);
         io.AddInputCharacter(wch);
+#endif
     }
 
     void ide::EnableInput(bool bInput)

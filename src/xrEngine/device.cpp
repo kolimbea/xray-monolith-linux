@@ -13,11 +13,18 @@
 #define MMNOJOY
 #include <mmsystem.h>
 // d3dx9.h
+#ifdef __linux__
+#include "../Common/linux/matrix_inverse.h"
+#else
 #include <d3dx9.h>
+#endif
 #pragma warning(default:4995)
 
 #include "x_ray.h"
 #include "discord/discord.h"
+#ifdef __linux__
+#include <SDL3/SDL.h>
+#endif
 #include "Render.h"
 #include <chrono>
 
@@ -473,7 +480,11 @@ void CRenderDevice::on_idle()
 
 	//RCache.set_xform_view ( mView );
 	//RCache.set_xform_project ( mProject );
+#ifdef __linux__
+	xr_matrix_inverse4x4((float*)&mInvFullTransform, (const float*)&mFullTransform);
+#else
 	D3DXMatrixInverse((D3DXMATRIX*)&mInvFullTransform, 0, (D3DXMATRIX*)&mFullTransform);
+#endif
 
 	vCameraPosition_saved = vCameraPosition;
 	mFullTransform_saved = mFullTransform;
@@ -600,6 +611,15 @@ void CRenderDevice::message_loop()
         return;
     }
 #endif
+#ifdef __linux__
+	SDL_Event ev;
+	while (!xr_linux_quit_requested())
+	{
+		while (SDL_PollEvent(&ev))
+			on_sdl_event(ev);
+		on_idle();
+	}
+#else
 	MSG msg;
 	PeekMessage(&msg, NULL, 0U, 0U, PM_NOREMOVE);
 	while (msg.message != WM_QUIT)
@@ -612,6 +632,7 @@ void CRenderDevice::message_loop()
 		}
 		on_idle();
 	}
+#endif
 }
 
 void mt_DiscordThread(void*)

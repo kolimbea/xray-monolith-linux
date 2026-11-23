@@ -372,3 +372,41 @@ inline DWORD GetTickCount() { return timeGetTime(); }
 
 // COM's IUnknown as dxvk declares it (D3D objects derive from it).
 #include <unknwn.h>
+
+#define SEM_FAILCRITICALERRORS 0x0001
+inline UINT SetErrorMode(UINT) { return 0; } // no Windows error dialogs to suppress
+
+// D3DXGetFVFVertexSize without D3DX9: size in bytes of a fixed-function vertex format
+// (bit layout per the D3D9 FVF documentation / d3d9types.h).
+inline UINT xr_fvf_vertex_size(DWORD fvf)
+{
+    UINT size = 0;
+    switch (fvf & 0x400E) // D3DFVF_POSITION_MASK
+    {
+    case 0x002: size += 12; break;  // XYZ
+    case 0x004: size += 16; break;  // XYZRHW
+    case 0x006: size += 16; break;  // XYZB1
+    case 0x008: size += 20; break;  // XYZB2
+    case 0x00A: size += 24; break;  // XYZB3
+    case 0x00C: size += 28; break;  // XYZB4
+    case 0x00E: size += 32; break;  // XYZB5
+    case 0x4002: size += 16; break; // XYZW
+    default: break;
+    }
+    if (fvf & 0x010) size += 12; // NORMAL
+    if (fvf & 0x020) size += 4;  // PSIZE
+    if (fvf & 0x040) size += 4;  // DIFFUSE
+    if (fvf & 0x080) size += 4;  // SPECULAR
+    const UINT tex = (fvf & 0xF00) >> 8; // TEXCOUNT
+    for (UINT i = 0; i < tex; ++i)
+    {
+        switch ((fvf >> (16 + i * 2)) & 3) // TEXCOORDSIZEn: 0 -> 2, 1 -> 3, 2 -> 4, 3 -> 1 floats
+        {
+        case 0: size += 8; break;
+        case 1: size += 12; break;
+        case 2: size += 16; break;
+        case 3: size += 4; break;
+        }
+    }
+    return size;
+}

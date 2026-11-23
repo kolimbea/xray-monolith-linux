@@ -488,6 +488,9 @@ public:
 public:
 	void xr_stdcall on_idle();
 	bool xr_stdcall on_message(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
+#ifdef __linux__
+	void on_sdl_event(const union SDL_Event& event); // SDL3 counterpart of WndProc/on_message
+#endif
 
 private:
 	void message_loop();

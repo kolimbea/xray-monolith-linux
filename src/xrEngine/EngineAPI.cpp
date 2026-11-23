@@ -261,6 +261,7 @@ void CEngineAPI::Initialize(void)
 	//////////////////////////////////////////////////////////////////////////
 	// vTune
 	tune_enabled = FALSE;
+#ifndef __linux__ // Intel vTune via vTuneAPI.dll
 	if (strstr(Core.Params, "-tune"))
 	{
 		LPCSTR g_name = "vTuneAPI.dll";
@@ -275,6 +276,7 @@ void CEngineAPI::Initialize(void)
 		tune_resume = (VTResume*)GetProcAddress(hTuner, "VTResume");
 		R_ASSERT(tune_resume);
 	}
+#endif
 }
 
 void CEngineAPI::Destroy(void)
