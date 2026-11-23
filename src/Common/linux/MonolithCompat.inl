@@ -13,7 +13,7 @@
 #include <cstring>
 #include <type_traits>
 
-typedef uint8_t BYTE;
+// typedef uint8_t BYTE;  -- provided by windows_base.h
 typedef int errno_t;
 
 inline char* strlwr(char* s) { for (char* p = s; *p; ++p) *p = (char)tolower((unsigned char)*p); return s; }
@@ -314,12 +314,12 @@ inline BOOL QueryPerformanceCounter(PLARGE_INTEGER out)
 {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    *out = (LARGE_INTEGER)ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    out->QuadPart = (LONGLONG)ts.tv_sec * 1000000000LL + ts.tv_nsec;
     return TRUE;
 }
 inline BOOL QueryPerformanceFrequency(PLARGE_INTEGER out)
 {
-    *out = 1000000000LL;
+    out->QuadPart = 1000000000LL;
     return TRUE;
 }
 
@@ -328,16 +328,16 @@ inline BOOL QueryPerformanceFrequency(PLARGE_INTEGER out)
 #define _unlink xr_linux_unlink
 
 // Opaque Win32 handle and fixed-width integer typedefs used in engine headers.
-typedef void* HMONITOR;
-typedef void* HINSTANCE;
+// typedef void* HMONITOR;  -- provided by windows_base.h
+// typedef void* HINSTANCE;  -- provided by windows_base.h
 typedef void* HICON;
 typedef void* HCURSOR;
-typedef uint32_t UINT32;
+// typedef uint32_t UINT32;  -- provided by windows_base.h
 typedef int32_t INT32;
 typedef uint64_t DWORD64;
-typedef uint64_t ULONG_PTR;
-typedef unsigned long ULONG;
-typedef unsigned short USHORT;
+// typedef uint64_t ULONG_PTR;  -- provided by windows_base.h
+// typedef unsigned long ULONG;  -- provided by windows_base.h
+// typedef unsigned short USHORT;  -- provided by windows_base.h
 typedef unsigned char UCHAR;
 #ifndef VOID
 #define VOID void
@@ -345,14 +345,14 @@ typedef unsigned char UCHAR;
 typedef BYTE* LPBYTE;
 typedef BYTE* PBYTE;
 typedef WORD* LPWORD;
-typedef DWORD* LPDWORD;
+// typedef DWORD* LPDWORD;  -- provided by windows_base.h
 #define sscanf_s sscanf // engine uses it with numeric conversions only (no %s/%c size arguments)
 #include <unistd.h>
 inline DWORD GetCurrentThreadId() { return (DWORD)gettid(); }
 #include "win32_window.h"
 
 #ifndef GUID_DEFINED
-#define GUID_DEFINED
+// #define GUID_DEFINED  -- defined by windows_base.h
 typedef struct _GUID // Windows layout
 {
     uint32_t Data1;
@@ -361,21 +361,14 @@ typedef struct _GUID // Windows layout
     uint8_t Data4[8];
 } GUID;
 #endif
-typedef const GUID& REFGUID;
 #ifndef E_NOTIMPL
-#define E_NOTIMPL ((HRESULT)0x80004001L)
+// #define E_NOTIMPL ((HRESULT)0x80004001L)  -- defined by windows_base.h
 #endif
 
-typedef int INT;
+// typedef int INT;  -- provided by windows_base.h
 #include "include/mmsystem.h"
 // ms since an arbitrary start, wraps after ~49 days like Win32
 inline DWORD GetTickCount() { return timeGetTime(); }
 
-// COM's base interface, only for engine helpers that take renderer objects (get_ref_count).
-struct IUnknown
-{
-    virtual long QueryInterface(const GUID& riid, void** out) = 0;
-    virtual unsigned long AddRef() = 0;
-    virtual unsigned long Release() = 0;
-    virtual ~IUnknown() = default;
-};
+// COM's IUnknown as dxvk declares it (D3D objects derive from it).
+#include <unknwn.h>

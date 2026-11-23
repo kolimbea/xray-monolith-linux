@@ -1,4 +1,7 @@
 // Based on OpenXRay src/Common/PlatformLinux.inl (commit d1eb5d3), same GSC licence.
+// Win32 base types come from dxvk-native's windows_base.h (Windows-accurate widths; the renderer's
+// D3D11/DXGI headers need exactly these). This file and MonolithCompat.inl only add on top.
+#include <windows_base.h>
 #include <stdio.h>
 #include "io_compat.h" // xr_linux_* path-resolving file calls used below
 #include "path_resolve.h"
@@ -31,16 +34,16 @@
 
 #define _LINUX // for GameSpy
 
-#define MAX_PATH PATH_MAX + 1
+// #define MAX_PATH PATH_MAX + 1  -- defined by windows_base.h
 
-#define WINAPI
+// #define WINAPI  -- defined by windows_base.h
 
 #define _copysign copysign
 
 #define _cdecl //__attribute__((cdecl))
 
 #define __cdecl _cdecl
-#define __stdcall
+// #define __stdcall  -- defined by windows_base.h
 #define __fastcall
 
 #define __pragma(...) _Pragma(#__VA_ARGS__)
@@ -121,72 +124,64 @@ inline int GetExceptionCode()
 inline void convert_path_separators(char * path);
 
 #include <inttypes.h>
-typedef int32_t BOOL;
-typedef uint16_t WORD;
-typedef uint32_t DWORD;
-typedef int32_t LONG;
+// typedef int32_t BOOL;  -- provided by windows_base.h
+// typedef uint16_t WORD;  -- provided by windows_base.h
+// typedef uint32_t DWORD;  -- provided by windows_base.h
+// typedef int32_t LONG;  -- provided by windows_base.h
 #ifndef _LIBRAW_TYPES_H
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+// typedef int64_t INT64;  -- provided by windows_base.h
+// typedef uint64_t UINT64;  -- provided by windows_base.h
 #endif
 
-typedef char* LPSTR;
+// typedef char* LPSTR;  -- provided by windows_base.h
 typedef char* PSTR;
 typedef char* LPTSTR;
 typedef const char* LPCSTR;
 typedef const char* LPCTSTR;
-typedef unsigned int UINT;
-typedef long long int LARGE_INTEGER;
+// typedef unsigned int UINT;  -- provided by windows_base.h
+// typedef long long int LARGE_INTEGER;  -- provided by windows_base.h
 typedef unsigned long long int ULARGE_INTEGER;
 
 typedef struct _EXCEPTION_POINTERS {
 } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
 
 #if defined(XR_ARCHITECTURE_X64) || defined(XR_ARCHITECTURE_ARM64) || defined(XR_ARCHITECTURE_E2K)
-typedef int64_t INT_PTR;
-typedef uint64_t UINT_PTR;
-typedef int64_t LONG_PTR;
+// typedef int64_t INT_PTR;  -- provided by windows_base.h
+// typedef uint64_t UINT_PTR;  -- provided by windows_base.h
+// typedef int64_t LONG_PTR;  -- provided by windows_base.h
 #else
-typedef int INT_PTR;
-typedef unsigned int UINT_PTR;
-typedef long LONG_PTR;
+// typedef int INT_PTR;  -- provided by windows_base.h
+// typedef unsigned int UINT_PTR;  -- provided by windows_base.h
+// typedef long LONG_PTR;  -- provided by windows_base.h
 #endif
 
-typedef void* HANDLE;
-typedef void* HMODULE;
-typedef void* PVOID;
-typedef void* LPVOID;
+// typedef void* HANDLE;  -- provided by windows_base.h
+// typedef void* HMODULE;  -- provided by windows_base.h
+// typedef void* PVOID;  -- provided by windows_base.h
+// typedef void* LPVOID;  -- provided by windows_base.h
 #if defined(XR_ARCHITECTURE_PPC64)
 typedef LONG_PTR WPARAM;
 #else
 typedef UINT_PTR WPARAM;
 #endif
 typedef LONG_PTR LPARAM;
-typedef long HRESULT;
+// typedef long HRESULT;  -- provided by windows_base.h
 typedef long LRESULT;
-typedef void* HWND;
-typedef void* HDC;
+// typedef void* HWND;  -- provided by windows_base.h
+// typedef void* HDC;  -- provided by windows_base.h
 
 // Win32 LONG is 32-bit; the engine casts Ivector2/Irect (int pairs) to POINT*/RECT*, so the
 // layout must match Windows (OpenXRay used 64-bit long here).
-typedef struct _RECT {
-    int32_t left;
-    int32_t top;
-    int32_t right;
-    int32_t bottom;
-} RECT, *PRECT, *LPRECT;
+// RECT/POINT come from windows_base.h (32-bit LONG, Windows layout)
 
-typedef struct tagPOINT {
-    int32_t x;
-    int32_t y;
-} POINT, *PPOINT, *LPPOINT;
+// RECT/POINT come from windows_base.h (32-bit LONG, Windows layout)
 
 #define WM_USER 0x0400
 
-#define TRUE true
-#define FALSE false
+// #define TRUE true  -- defined by windows_base.h
+// #define FALSE false  -- defined by windows_base.h
 #define NONE 0
-#define CONST const
+// #define CONST const  -- defined by windows_base.h
 
 typedef dirent DirEntryType;
 
@@ -384,15 +379,15 @@ inline int _mkdir(const char *dir) { return xr_linux_mkdir(dir); }
 #define _isalpha_l isalpha_l
 #define _create_locale(category, arg) newlocale(category, arg, (locale_t) 0)
 
-#define ZeroMemory(p, sz) memset((p), 0, (sz))
+// #define ZeroMemory(p, sz) memset((p), 0, (sz))  -- defined by windows_base.h
 #define CopyMemory(d, s, n) memcpy(d, s, n)
 
-#define RGB(r,g,b) ( ((DWORD)(uint8_t)r)|((DWORD)((uint8_t)g)<<8)|((DWORD)((uint8_t)b)<<16) )
-#define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
-#define FAILED(hr) (((HRESULT)(hr)) < 0)
-#define S_OK 0x00000000
-#define S_FALSE 0x10000000
-#define E_FAIL 0x80004005
+// #define RGB(r,g,b) ( ((DWORD)(uint8_t)r)|((DWORD)((uint8_t)g)<<8)|((DWORD)((uint8_t)b)<<16) )  -- defined by windows_base.h
+// #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)  -- defined by windows_base.h
+// #define FAILED(hr) (((HRESULT)(hr)) < 0)  -- defined by windows_base.h
+// #define S_OK 0x00000000  -- defined by windows_base.h
+// #define S_FALSE 0x10000000  -- defined by windows_base.h
+// #define E_FAIL 0x80004005  -- defined by windows_base.h
 
 #define _MAX_DRIVE	3
 #define _MAX_DIR	256

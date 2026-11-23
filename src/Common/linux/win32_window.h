@@ -63,7 +63,7 @@ union SDL_Event;
 #define HWND_TOP ((HWND)0)
 #define HWND_NOTOPMOST ((HWND)(intptr_t)-2)
 #define WS_OVERLAPPEDWINDOW (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
-#define ENUM_CURRENT_SETTINGS ((uint32_t)-1)
+// #define ENUM_CURRENT_SETTINGS ((uint32_t)-1)  -- defined by windows_base.h
 #ifndef LOWORD
 #define LOWORD(l) ((uint16_t)(((uintptr_t)(l)) & 0xffff))
 #define HIWORD(l) ((uint16_t)((((uintptr_t)(l)) >> 16) & 0xffff))

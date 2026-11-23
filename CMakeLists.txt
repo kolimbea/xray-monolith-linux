@@ -19,6 +19,14 @@ find_package(TBB REQUIRED CONFIG)
 find_package(Iconv REQUIRED)
 
 set(XR_SRC ${CMAKE_SOURCE_DIR}/src)
+
+# dxvk-native: D3D11/DXGI over Vulkan, the temporary render path (see docs/PLAN.md). Its headers
+# also supply the Win32 base types for the whole engine (windows_base.h). Unpacked by
+# tools/fetch_deps.sh into build/deps; override with -DDXVK_NATIVE_DIR=...
+set(DXVK_NATIVE_DIR "${CMAKE_SOURCE_DIR}/../build/deps/dxvk-native-3.1.1/usr" CACHE PATH "dxvk-native prefix")
+if(NOT EXISTS "${DXVK_NATIVE_DIR}/include/dxvk/windows_base.h")
+    message(FATAL_ERROR "dxvk-native not found in ${DXVK_NATIVE_DIR} (run tools/fetch_deps.sh)")
+endif()
 set(XR_3RD "${XR_SRC}/3rd party")
 
 # Flags every engine module shares: MSVC extensions the code base relies on (__super, __declspec,
@@ -31,7 +39,8 @@ target_compile_options(xr_common INTERFACE
     -fno-strict-aliasing -msse4.2)
 target_compile_definitions(xr_common INTERFACE NDEBUG _CRT_SECURE_NO_WARNINGS)
 target_include_directories(xr_common INTERFACE
-    ${XR_SRC}/Common/linux/include ${XR_SRC} ${CMAKE_SOURCE_DIR}/sdk/include ${XR_3RD})
+    ${XR_SRC}/Common/linux/include ${XR_SRC} ${CMAKE_SOURCE_DIR}/sdk/include ${XR_3RD}
+    ${DXVK_NATIVE_DIR}/include/dxvk)
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     message(WARNING "Only clang is tested so far; gcc lacks -fms-extensions semantics such as __super.")
 endif()

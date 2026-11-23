@@ -1,14 +1,7 @@
 // Win32 window/cursor subset over SDL3 (see win32_window.h).
 #include <cstdint>
 
-typedef struct _RECT
-{
-    int32_t left, top, right, bottom;
-} RECT;
-typedef struct tagPOINT
-{
-    int32_t x, y;
-} POINT;
+#include <windows_base.h> // RECT/POINT, same as the engine sees
 #include "win32_window.h"
 
 #include <SDL3/SDL.h>

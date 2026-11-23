@@ -2,10 +2,11 @@
 // locator and stream readers use. Handles are owned objects; CloseHandle releases either kind.
 #pragma once
 #include <cstddef>
+#include <windows_base.h> // HANDLE, INVALID_HANDLE_VALUE, WAIT_* (dxvk-native)
 #include <cstdint>
 
 typedef void* HANDLE;
-#define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)
+// #define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)  -- defined by windows_base.h
 
 #define GENERIC_READ 0x80000000u
 #define GENERIC_WRITE 0x40000000u
@@ -47,9 +48,9 @@ int CloseHandle(HANDLE h);
 typedef HANDLE* LPHANDLE;
 typedef uint32_t (*LPTHREAD_START_ROUTINE)(void*);
 #define INFINITE 0xFFFFFFFFu
-#define WAIT_OBJECT_0 0u
-#define WAIT_TIMEOUT 0x102u
-#define WAIT_FAILED 0xFFFFFFFFu
+// #define WAIT_OBJECT_0 0u  -- defined by windows_base.h
+// #define WAIT_TIMEOUT 0x102u  -- defined by windows_base.h
+// #define WAIT_FAILED 0xFFFFFFFFu  -- defined by windows_base.h
 HANDLE CreateThread(_SECURITY_ATTRIBUTES*, size_t stack, LPTHREAD_START_ROUTINE fn, void* arg, uint32_t flags,
                     uint32_t* thread_id);
 // Only INFINITE waits on thread handles are supported (all the engine uses); others fail.

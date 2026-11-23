@@ -18,7 +18,6 @@
 #endif
 #define _O_BINARY 0 // POSIX has no text mode
 #define _SH_DENYNO 0
-#define _S_IREAD S_IRUSR
 
 // Named like MSVC's 64-bit-time variant because the locator forward-declares that struct tag.
 struct _finddata64i32_t
