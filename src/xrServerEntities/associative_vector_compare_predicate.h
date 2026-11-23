@@ -13,10 +13,10 @@ template <
 	typename _data_type_,
 	typename _compare_predicate_type_
 >
-class associative_vector_compare_predicate : public _compare_predicate_type
+class associative_vector_compare_predicate : public _compare_predicate_type_
 {
 private:
-	typedef _compare_predicate_type inherited;
+	typedef _compare_predicate_type_ inherited;
 
 public:
 	typedef _key_type_ _key_type; // parameter renamed: ISO C++ forbids redeclaring it
@@ -24,15 +24,15 @@ public:
 	typedef _compare_predicate_type_ _compare_predicate_type; // parameter renamed: ISO C++ forbids redeclaring it
 
 public:
-	typedef std::pair<_key_type, _data_type> value_type;
+	typedef std::pair<_key_type_, _data_type_> value_type;
 
 public:
 	IC associative_vector_compare_predicate();
-	IC associative_vector_compare_predicate(const _compare_predicate_type& compare_predicate);
-	IC bool operator()(const _key_type& lhs, const _key_type& rhs) const;
+	IC associative_vector_compare_predicate(const _compare_predicate_type_& compare_predicate);
+	IC bool operator()(const _key_type_& lhs, const _key_type_& rhs) const;
 	IC bool operator()(const value_type& lhs, const value_type& rhs) const;
-	IC bool operator()(const value_type& lhs, const _key_type& rhs) const;
-	IC bool operator()(const _key_type& lhs, const value_type& rhs) const;
+	IC bool operator()(const value_type& lhs, const _key_type_& rhs) const;
+	IC bool operator()(const _key_type_& lhs, const value_type& rhs) const;
 };
 
 #include "associative_vector_compare_predicate_inline.h"

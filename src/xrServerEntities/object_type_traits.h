@@ -208,7 +208,7 @@ namespace object_type_traits
 		};
 	};
 
-	template <template <typename _1> class T1, typename T2, typename T3>
+	template <template <typename> class T1, typename T2, typename T3>
 	struct is_base_and_derived_or_same_for_template_template_1_1
 	{
 		template <typename P>
@@ -223,7 +223,7 @@ namespace object_type_traits
 		enum { value = sizeof(detail::yes) == sizeof(select((T2*)0)) };
 	};
 
-	template <template <typename _1> class T1, typename T2>
+	template <template <typename> class T1, typename T2>
 	struct is_base_and_derived_or_same_from_template
 	{
 		template <typename P>

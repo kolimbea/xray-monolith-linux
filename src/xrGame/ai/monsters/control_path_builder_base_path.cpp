@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "control_path_builder_base.h"
 #include "../../cover_point.h"
 #include "../../cover_manager.h"

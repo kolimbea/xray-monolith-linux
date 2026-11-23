@@ -5,7 +5,7 @@
 //	Description : UI Map Legend Wnd (PDA : Task) class impl
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIMapLegend.h"
 
 #include "xrUIXmlParser.h"

@@ -6,7 +6,7 @@
 //	Description : Inventory item object implementation
 ////////////////////////////////////////////////////////////////////////////
 
-//#include "stdafx.h"
+//#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "pch_script.h"
 #include "inventory_item_object.h"
 

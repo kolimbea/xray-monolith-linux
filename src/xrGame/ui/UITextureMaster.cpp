@@ -7,7 +7,7 @@
 //
 // copyright 2005 GSC Game World
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UITextureMaster.h"
 #include "UIStaticItem.h"
 #include "uiabstract.h"

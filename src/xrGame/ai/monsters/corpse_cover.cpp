@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "corpse_cover.h"
 #include "../../cover_point.h"
 #include "../../ai_space.h"

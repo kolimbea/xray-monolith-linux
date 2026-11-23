@@ -18,10 +18,10 @@ template <
 	typename _vertex_allocator,
 	bool euclidian_heuristics = true,
 	typename _data_storage_base = CVertexPath<euclidian_heuristics>,
-	template <typename _T> class _vertex = CEmptyClassTemplate,
+	template <typename> class _vertex = CEmptyClassTemplate,
 	template <
-		typename _1,
-		typename _2
+		typename,
+		typename
 	>
 	class _builder_allocator_constructor = CBuilderAllocatorConstructor,
 	template <
@@ -29,8 +29,8 @@ template <
 		typename _2,
 		typename _3,
 		template <
-			typename _1,
-			typename _2
+			typename,
+			typename
 		>
 		class _4
 	>
@@ -40,10 +40,10 @@ template <
 		typename _manager,
 		typename _builder,
 		typename _allocator,
-		template <typename _T> class _vertex,
+		template <typename> class _vertex,
 		template <
-			typename _1,
-			typename _2
+			typename,
+			typename
 		>
 		class _builder_allocator_constructor = CBuilderAllocatorConstructor,
 		template <
@@ -51,8 +51,8 @@ template <
 			typename _2,
 			typename _3,
 			template <
-				typename _1,
-				typename _2
+				typename,
+				typename
 			>
 			class _4
 		>
@@ -69,15 +69,15 @@ public:
 	{
 		typedef _dist_type_ _dist_type; // parameter renamed: ISO C++ forbids redeclaring it
 
-		_dist_type _f;
+		_dist_type_ _f;
 		T1* _back;
 
-		IC _dist_type& f()
+		IC _dist_type_& f()
 		{
 			return (_f);
 		}
 
-		IC const _dist_type& f() const
+		IC const _dist_type_& f() const
 		{
 			return (_f);
 		}
@@ -101,7 +101,7 @@ public:
 
 protected:
 	typedef typename CDataStorage::CGraphVertex CGraphVertex;
-	typedef typename CGraphVertex::_dist_type _dist_type;
+	typedef typename CGraphVertex::_dist_type_ _dist_type_;
 	typedef typename CGraphVertex::_index_type _index_type;
 
 protected:

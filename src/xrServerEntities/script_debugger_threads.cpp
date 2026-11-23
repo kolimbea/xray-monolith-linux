@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "script_debugger_threads.h"
 #include "ai_space.h"
 #include "script_process.h"

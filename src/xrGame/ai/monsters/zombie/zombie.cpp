@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "zombie.h"
 #include "zombie_state_manager.h"
 #include "profiler.h"

@@ -6,7 +6,7 @@
 //	Description : Script token list class
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "script_token_list.h"
 
 CScriptTokenList::~CScriptTokenList()

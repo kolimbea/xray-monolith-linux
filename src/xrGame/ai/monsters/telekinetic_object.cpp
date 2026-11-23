@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "../../PhysicsShellHolder.h"
 #include "telekinetic_object.h"
 #include "../../../xrPhysics/PhysicsShell.h"

@@ -6,7 +6,7 @@
 //	Description : XRay Script Engine export
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "pch_script.h"
 
 #include "script_engine_export.h"

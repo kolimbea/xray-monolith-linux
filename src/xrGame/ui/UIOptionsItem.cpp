@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIOptionsItem.h"
 #include "UIOptionsManager.h"
 #include "../../xrEngine/XR_IOConsole.h"

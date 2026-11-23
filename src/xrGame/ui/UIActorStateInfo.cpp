@@ -5,7 +5,7 @@
 //	Description : UI actor state window class implementation
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIActorStateInfo.h"
 #include "UIProgressBar.h"
 #include "UIProgressShape.h"

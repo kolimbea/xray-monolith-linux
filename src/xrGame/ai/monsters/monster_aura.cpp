@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "monster_aura.h"
 #include "basemonster/base_monster.h"
 #include "../../Actor.h"

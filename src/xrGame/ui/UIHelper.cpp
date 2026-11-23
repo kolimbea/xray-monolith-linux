@@ -5,7 +5,7 @@
 //	Description : UI Helper class implementation
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIHelper.h"
 #include "UIXmlInit.h"
 

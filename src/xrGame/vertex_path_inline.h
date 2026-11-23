@@ -10,7 +10,7 @@
 
 #define TEMPLATE_SPECIALIZATION \
 	template<bool bEuclidianHeuristics>\
-	template <template <typename _T> class _vertex>
+	template <template <typename> class _vertex>
 
 
 #define CVertexPathBuilder		CVertexPath<bEuclidianHeuristics>::CDataStorage<_vertex>

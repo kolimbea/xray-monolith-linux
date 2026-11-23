@@ -6,7 +6,7 @@
 //	Description : Server objects
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "xrServer_Objects.h"
 #include "game_base_space.h"
 

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "monster_corpse_memory.h"
 #include "basemonster/base_monster.h"
 #include "../../memory_manager.h"

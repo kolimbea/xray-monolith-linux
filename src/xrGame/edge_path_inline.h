@@ -10,7 +10,7 @@
 
 #define TEMPLATE_SPECIALIZATION \
 	template<typename _edge_type, bool bEuclidianHeuristics>\
-	template <template <typename _T> class _vertex>
+	template <template <typename> class _vertex>
 
 
 #define CEdgePathBuilder		CEdgePath<_edge_type,bEuclidianHeuristics>::CDataStorage<_vertex>

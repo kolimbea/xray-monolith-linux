@@ -13,7 +13,7 @@
 template <bool sorted = false>
 struct CDataStorageDoubleLinkedList
 {
-	template <template <typename _T> class T1>
+	template <template <typename> class T1>
 	struct DoubleLinkedList
 	{
 		template <typename T2>
@@ -30,7 +30,7 @@ struct CDataStorageDoubleLinkedList
 
 	template <
 		typename _data_storage,
-		template <typename _T> class _vertex = CEmptyClassTemplate
+		template <typename> class _vertex = CEmptyClassTemplate
 	>
 	class CDataStorage : public CDataStorageSingleLinkedList<sorted>::CDataStorage<
 			_data_storage, DoubleLinkedList<_vertex>::_vertex>

@@ -5,7 +5,7 @@
 //	Description : UI ActorMenu actions implementation
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIActorMenu.h"
 #include "UIActorStateInfo.h"
 #include "../Actor.h"

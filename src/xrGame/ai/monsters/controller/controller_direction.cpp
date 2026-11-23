@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "controller_direction.h"
 #include "controller.h"
 #include "../../../game_object_space.h"

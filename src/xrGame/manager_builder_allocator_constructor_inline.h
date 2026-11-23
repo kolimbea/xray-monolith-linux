@@ -14,14 +14,14 @@
 		typename _builder,\
 		typename _allocator,\
 		template <\
-			typename _builder,\
-			typename _allocator\
+			typename,\
+			typename\
 		>\
 		class	 _builder_allocator_constructor\
 	>\
 	template <\
-		template <typename T> class _vertex,\
-		template <typename T1, typename T2> class _index_vertex\
+		template <typename> class _vertex,\
+		template <typename, typename> class _index_vertex\
 	>
 
 #define CConstructorManagerBuilderAllocator \

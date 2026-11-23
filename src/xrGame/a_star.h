@@ -16,7 +16,7 @@ namespace AStar
 {
 	template <
 		typename _dist_type_,
-		template <typename _T> class T1
+		template <typename> class T1
 	>
 	struct _Vertex
 	{
@@ -25,15 +25,15 @@ namespace AStar
 		{
 			typedef _dist_type_ _dist_type; // parameter renamed: ISO C++ forbids redeclaring it
 
-			_dist_type _g;
-			_dist_type _h;
+			_dist_type_ _g;
+			_dist_type_ _h;
 
-			IC _dist_type& g()
+			IC _dist_type_& g()
 			{
 				return (_g);
 			}
 
-			IC _dist_type& h()
+			IC _dist_type_& h()
 			{
 				return (_h);
 			}
@@ -48,10 +48,10 @@ template <
 	typename _vertex_allocator,
 	bool euclidian_heuristics = true,
 	typename _data_storage_base = CVertexPath<euclidian_heuristics>,
-	template <typename _T> class _vertex = CEmptyClassTemplate,
+	template <typename> class _vertex = CEmptyClassTemplate,
 	template <
-		typename _1,
-		typename _2
+		typename,
+		typename
 	>
 	class _builder_allocator_constructor = CBuilderAllocatorConstructor,
 	template <
@@ -59,8 +59,8 @@ template <
 		typename _2,
 		typename _3,
 		template <
-			typename _1,
-			typename _2
+			typename,
+			typename
 		>
 		class _4
 	>
@@ -70,10 +70,10 @@ template <
 		typename _manager,
 		typename _builder,
 		typename _allocator,
-		template <typename _T> class _vertex,
+		template <typename> class _vertex,
 		template <
-			typename _1,
-			typename _2
+			typename,
+			typename
 		>
 		class _builder_allocator_constructor = CBuilderAllocatorConstructor,
 		template <
@@ -81,8 +81,8 @@ template <
 			typename _2,
 			typename _3,
 			template <
-				typename _1,
-				typename _2
+				typename,
+				typename
 			>
 			class _4
 		>

@@ -14,16 +14,16 @@ class CEdgeBase
 public:
 	typedef _edge_weight_type_ _edge_weight_type; // parameter renamed: ISO C++ forbids redeclaring it
 	typedef _vertex_type_ _vertex_type; // parameter renamed: ISO C++ forbids redeclaring it
-	typedef typename _vertex_type::_vertex_id_type _vertex_id_type;
+	typedef typename _vertex_type_::_vertex_id_type _vertex_id_type;
 
 private:
-	_edge_weight_type m_weight;
-	_vertex_type* m_vertex;
+	_edge_weight_type_ m_weight;
+	_vertex_type_* m_vertex;
 
 public:
-	IC CEdgeBase(const _edge_weight_type& weight, _vertex_type* vertex);
-	IC const _edge_weight_type& weight() const;
-	IC _vertex_type* vertex() const;
+	IC CEdgeBase(const _edge_weight_type_& weight, _vertex_type_* vertex);
+	IC const _edge_weight_type_& weight() const;
+	IC _vertex_type_* vertex() const;
 	IC const _vertex_id_type& vertex_id() const;
 };
 
@@ -33,6 +33,9 @@ class CEdge :
 {
 private:
 	typedef CEdgeBase<_edge_weight_type, _vertex_type> inherited;
+
+public:
+	typedef typename inherited::_vertex_id_type _vertex_id_type; // from the dependent base
 
 private:
 	_edge_data_type m_data;

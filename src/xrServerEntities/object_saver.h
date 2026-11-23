@@ -153,7 +153,7 @@ struct CSaver
 				CSaver<M, P>::save_data(temp.front(), stream, p);
 	}
 
-	template <template <typename _1, typename _2> class T1, typename T2, typename T3>
+	template <template <typename, typename> class T1, typename T2, typename T3>
 	IC static void save_data(const T1<T2, T3>& data, M& stream, const P& p, bool)
 	{
 		T1<T2, T3> temp = data;
@@ -163,7 +163,7 @@ struct CSaver
 				CSaver<M, P>::save_data(temp.top(), stream, p);
 	}
 
-	template <template <typename _1, typename _2, typename _3> class T1, typename T2, typename T3, typename T4>
+	template <template <typename, typename, typename> class T1, typename T2, typename T3, typename T4>
 	IC static void save_data(const T1<T2, T3, T4>& data, M& stream, const P& p, bool)
 	{
 		T1<T2, T3, T4> temp = data;

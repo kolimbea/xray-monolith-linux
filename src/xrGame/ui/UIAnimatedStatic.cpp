@@ -6,7 +6,7 @@
 //  Статик для отображения анимированной иконки
 //=============================================================================
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIAnimatedStatic.h"
 
 //////////////////////////////////////////////////////////////////////////

@@ -15,8 +15,8 @@
 		u8 mask\
 	>\
 	template <\
-		template <typename _T> class _vertex,\
-		template <typename _T1, typename _T2> class _index_vertex,\
+		template <typename> class _vertex,\
+		template <typename, typename> class _index_vertex,\
 		typename _data_storage\
 	>
 

@@ -12,7 +12,7 @@ class CScriptGameObject;
 
 template <
 	typename _object_type,
-	template <typename _base_object_type> class ancestor,
+	template <typename> class ancestor,
 	typename _base_object_type = CScriptGameObject
 >
 class CWrapperAbstract : public ancestor<_base_object_type>
@@ -39,7 +39,7 @@ class CPropertyStorage;
 
 template <
 	typename _object_type,
-	template <typename _base_object_type> class ancestor,
+	template <typename> class ancestor,
 	typename _base_object_type = CScriptGameObject
 >
 class CWrapperAbstract2 : public ancestor<_base_object_type>

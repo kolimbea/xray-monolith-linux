@@ -1,4 +1,4 @@
-//#include "stdafx.h"
+//#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "pch_script.h"
 #include "UIActorMenu.h"
 #include "UI3tButton.h"

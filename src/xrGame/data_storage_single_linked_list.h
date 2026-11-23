@@ -11,7 +11,7 @@
 template <bool sorted = false>
 struct CDataStorageSingleLinkedList
 {
-	template <template <typename _T> class T1>
+	template <template <typename> class T1>
 	struct SingleLinkedList
 	{
 		template <typename T2>
@@ -28,7 +28,7 @@ struct CDataStorageSingleLinkedList
 
 	template <
 		typename _data_storage,
-		template <typename _T> class _vertex = CEmptyClassTemplate
+		template <typename> class _vertex = CEmptyClassTemplate
 	>
 	class CDataStorage : public _data_storage::template CDataStorage<SingleLinkedList<_vertex>::_vertex>
 	{

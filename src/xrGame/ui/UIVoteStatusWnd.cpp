@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIVoteStatusWnd.h"
 #include "UIXmlInit.h"
 #include "UIStatic.h"

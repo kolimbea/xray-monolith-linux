@@ -4,7 +4,7 @@
 // author:		Serge Vynnychenko
 //
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UISpinNum.h"
 #include "UILines.h"
 

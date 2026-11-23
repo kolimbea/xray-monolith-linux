@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "poltergeist.h"
 #include "poltergeist_state_manager.h"
 #include "../../../CharacterPhysicsSupport.h"

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "anomaly_detector.h"
 #include "basemonster/base_monster.h"
 #include "../../restricted_object.h"

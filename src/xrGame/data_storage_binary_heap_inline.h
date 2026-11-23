@@ -11,7 +11,7 @@
 #define TEMPLATE_SPECIALIZATION \
 	template<\
 		typename _data_storage,\
-		template <typename _T> class _vertex\
+		template <typename> class _vertex\
 	>
 
 #define CBinaryHeap				CDataStorageBinaryHeap::CDataStorage<_data_storage,_vertex>

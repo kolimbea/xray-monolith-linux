@@ -81,7 +81,7 @@ struct CCloner
 		}
 	}
 
-	template <template <typename _1, typename _2> class T1, typename T2, typename T3>
+	template <template <typename, typename> class T1, typename T2, typename T3>
 	IC static void clone(const T1<T2, T3>& __1, T1<T2, T3>& __2, bool)
 	{
 		T1<T2, T3> _1 = __1;
@@ -101,7 +101,7 @@ struct CCloner
 		}
 	}
 
-	template <template <typename _1, typename _2, typename _3> class T1, typename T2, typename T3, typename T4>
+	template <template <typename, typename, typename> class T1, typename T2, typename T3, typename T4>
 	IC static void clone(const T1<T2, T3, T4>& __1, T1<T2, T3, T4>& __2, bool)
 	{
 		T1<T2, T3, T4> _1 = __1;
@@ -135,7 +135,7 @@ struct CCloner
 
 	struct CHelper3
 	{
-		template <template <typename _1> class T1, typename T2>
+		template <template <typename> class T1, typename T2>
 		IC static void add(T1<T2>& data, typename T1<T2>::value_type& value)
 		{
 			data.push_back(value);

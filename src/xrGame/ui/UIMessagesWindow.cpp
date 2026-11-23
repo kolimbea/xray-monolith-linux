@@ -6,7 +6,7 @@
 //
 // Copyright 2005 GSC Game World
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 bool IsGameTypeSingle();
 #include "UIMessagesWindow.h"
 #include "UIGameLog.h"

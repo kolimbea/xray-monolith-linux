@@ -35,8 +35,8 @@ private:
 		_condition_evaluator,
 		_operator_id_type,
 		_reverse_search,
-		_operator_ptr,
-		_condition_evaluator_ptr
+		_operator_ptr_,
+		_condition_evaluator_ptr_
 	> self_type;
 
 public:
@@ -55,9 +55,9 @@ public:
 	struct SOperator
 	{
 		_operator_id_type m_operator_id;
-		_operator_ptr m_operator;
+		_operator_ptr_ m_operator;
 
-		IC SOperator(const _operator_id_type& operator_id, _operator_ptr _operator) :
+		IC SOperator(const _operator_id_type& operator_id, _operator_ptr_ _operator) :
 			m_operator_id(operator_id),
 			m_operator(_operator)
 		{
@@ -68,7 +68,7 @@ public:
 			return (m_operator_id < operator_id);
 		}
 
-		_operator_ptr get_operator() const
+		_operator_ptr_ get_operator() const
 		{
 			return (m_operator);
 		}
@@ -76,7 +76,7 @@ public:
 
 	typedef xr_vector<SOperator> OPERATOR_VECTOR;
 	typedef typename OPERATOR_VECTOR::const_iterator const_iterator;
-	typedef associative_vector<_condition_type, _condition_evaluator_ptr> EVALUATORS;
+	typedef associative_vector<_condition_type, _condition_evaluator_ptr_> EVALUATORS;
 
 protected:
 	OPERATOR_VECTOR m_operators;
@@ -149,9 +149,9 @@ public:
 	IC _edge_value_type estimate_edge_weight(const _index_type& vertex_index) const;
 
 	// operator interface
-	IC virtual void add_operator(const _edge_type& operator_id, _operator_ptr _operator);
+	IC virtual void add_operator(const _edge_type& operator_id, _operator_ptr_ _operator);
 	IC virtual void remove_operator(const _edge_type& operator_id);
-	IC _operator_ptr get_operator(const _operator_id_type& operator_id);
+	IC _operator_ptr_ get_operator(const _operator_id_type& operator_id);
 	IC const OPERATOR_VECTOR& operators() const;
 
 	// state interface
@@ -160,9 +160,9 @@ public:
 	IC const CState& target_state() const;
 
 	// evaluator interface
-	IC virtual void add_evaluator(const _condition_type& condition_id, _condition_evaluator_ptr evaluator);
+	IC virtual void add_evaluator(const _condition_type& condition_id, _condition_evaluator_ptr_ evaluator);
 	IC virtual void remove_evaluator(const _condition_type& condition_id);
-	IC _condition_evaluator_ptr evaluator(const _condition_type& condition_id) const;
+	IC _condition_evaluator_ptr_ evaluator(const _condition_type& condition_id) const;
 	IC const EVALUATORS& evaluators() const;
 	IC void evaluate_condition(typename xr_vector<COperatorCondition>::const_iterator& I,
 	                           typename xr_vector<COperatorCondition>::const_iterator& E,

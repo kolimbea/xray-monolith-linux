@@ -29,7 +29,7 @@ protected:
 	CSConditionState m_effects;
 	bool* m_actuality;
 	mutable bool m_weight_actual;
-	mutable _edge_value_type m_min_weight;
+	mutable _edge_value_type_ m_min_weight;
 
 protected:
 	IC void actual(bool value);
@@ -46,7 +46,7 @@ public:
 	IC void add_effect(const COperatorCondition& effect);
 	IC void remove_condition(const typename COperatorCondition::_condition_type& condition);
 	IC void remove_effect(const typename COperatorCondition::_condition_type& effect);
-	IC _edge_value_type min_weight() const;
+	IC _edge_value_type_ min_weight() const;
 
 	template <typename T>
 	IC bool applicable(const CSConditionState& condition, const CSConditionState& start,
@@ -63,7 +63,7 @@ public:
 
 	virtual bool apply_reverse(const CSConditionState& condition, const CSConditionState& start,
 	                           CSConditionState& result, const CSConditionState& self_condition) const;
-	virtual _edge_value_type weight(const CSConditionState& condition0, const CSConditionState& condition1) const;
+	virtual _edge_value_type_ weight(const CSConditionState& condition0, const CSConditionState& condition1) const;
 };
 
 #include "operator_abstract_inline.h"

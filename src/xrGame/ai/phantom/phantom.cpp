@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "phantom.h"
 #include "../../Level.h"
 #include "../../../xrServerEntities/xrServer_Objects_ALife_Monsters.h"

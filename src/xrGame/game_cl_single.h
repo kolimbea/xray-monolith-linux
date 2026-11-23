@@ -36,6 +36,6 @@ enum ESingleGameDifficulty
 };
 
 extern ESingleGameDifficulty g_SingleGameDifficulty;
-xr_token difficulty_type_token [ ];
+extern xr_token difficulty_type_token[]; // defined in game_cl_single.cpp
 
 typedef enum_exporter<ESingleGameDifficulty> CScriptGameDifficulty;

@@ -12,7 +12,7 @@
 	template <bool sorted>\
 	template <\
 		typename _data_storage,\
-		template <typename _T> class _vertex\
+		template <typename> class _vertex\
 	>
 
 #define CDoubleLinkedList	CDataStorageDoubleLinkedList<sorted>::CDataStorage<_data_storage,_vertex>

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+﻿#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "CustomDetector.h"
 #include "ui/ArtefactDetectorUI.h"
 #include "HUDManager.h"

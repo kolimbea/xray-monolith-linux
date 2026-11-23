@@ -222,7 +222,7 @@ struct CLoader
 			data.push(temp.front());
 	}
 
-	template <template <typename _1, typename _2> class T1, typename T2, typename T3>
+	template <template <typename, typename> class T1, typename T2, typename T3>
 	IC static void load_data(T1<T2, T3>& data, M& stream, const P& p, bool)
 	{
 		if (p.can_clear())
@@ -243,7 +243,7 @@ struct CLoader
 			data.push(temp.top());
 	}
 
-	template <template <typename _1, typename _2, typename _3> class T1, typename T2, typename T3, typename T4>
+	template <template <typename, typename, typename> class T1, typename T2, typename T3, typename T4>
 	IC static void load_data(T1<T2, T3, T4>& data, M& stream, const P& p, bool)
 	{
 		if (p.can_clear())

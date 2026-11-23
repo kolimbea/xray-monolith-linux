@@ -14,7 +14,7 @@ template <
 >
 struct CBuilderAllocatorConstructor
 {
-	template <template <typename _T> class _vertex>
+	template <template <typename> class _vertex>
 	class CDataStorage :
 		public _path_builder::template CDataStorage<_vertex>,
 		public _vertex_allocator::template CDataStorage<typename _path_builder::template CDataStorage<_vertex>::

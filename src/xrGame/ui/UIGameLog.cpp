@@ -5,7 +5,7 @@
 //	---------------------------------------------------------------------------
 //  Multiplayer game log window
 //=============================================================================
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIGameLog.h"
 #include "UIXmlInit.h"
 #include "UIPdaMsgListItem.h"

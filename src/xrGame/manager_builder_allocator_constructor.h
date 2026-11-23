@@ -15,16 +15,16 @@ template <
 	typename _builder,
 	typename _allocator,
 	template <
-		typename _builder,
-		typename _allocator
+		typename,
+		typename
 	>
 	class _builder_allocator_constructor = CBuilderAllocatorConstructor
 >
 struct CManagerBuilderAllocatorConstructor
 {
 	template <
-		template <typename T> class _vertex = CEmptyClassTemplate,
-		template <typename T1, typename T2> class _index_vertex = CEmptyClassTemplate2
+		template <typename> class _vertex = CEmptyClassTemplate,
+		template <typename, typename> class _index_vertex = CEmptyClassTemplate2
 	>
 	class CDataStorage :
 		public _manager::template CDataStorage<

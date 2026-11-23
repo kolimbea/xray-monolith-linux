@@ -25,10 +25,10 @@ template <
 	typename _manager,
 	typename _builder,
 	typename _allocator,
-	template <typename _T> class _vertex = CEmptyClassTemplate,
+	template <typename> class _vertex = CEmptyClassTemplate,
 	template <
-		typename _1,
-		typename _2
+		typename,
+		typename
 	>
 	class _builder_allocator_constructor = CBuilderAllocatorConstructor,
 	template <
@@ -36,8 +36,8 @@ template <
 		typename _2,
 		typename _3,
 		template <
-			typename _1,
-			typename _2
+			typename,
+			typename
 		>
 		class _4
 	>

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UICDkey.h"
 #include "UILines.h"
 #include "../../xrEngine/line_edit_control.h"

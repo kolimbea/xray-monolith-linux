@@ -16,7 +16,7 @@ template <
 >
 struct CEdgePath
 {
-	template <template <typename _T> class T1>
+	template <template <typename> class T1>
 	struct DataStorageEdgePath
 	{
 		template <typename T2>
@@ -31,7 +31,7 @@ struct CEdgePath
 		};
 	};
 
-	template <template <typename _T> class _vertex>
+	template <template <typename> class _vertex>
 	class CDataStorage : public CVertexPath<bEuclidianHeuristics>::template CDataStorage<DataStorageEdgePath<_vertex>::
 			_vertex>
 	{

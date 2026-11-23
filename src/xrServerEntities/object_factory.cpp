@@ -6,7 +6,7 @@
 //	Description : Object factory
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "object_factory.h"
 #include "object_broker.h"
 

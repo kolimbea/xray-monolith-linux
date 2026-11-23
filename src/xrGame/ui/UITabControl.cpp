@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UITabControl.h"
 #include "UITabButton.h"
 #include "UITabScrollArrows.h"

@@ -7,7 +7,7 @@
 // Copyright 2005 GSC Game World
 
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UILine.h"
 #include "uilinestd.h"
 #include "ui_base.h"

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "cat.h"
 #include "cat_state_manager.h"
 #include "../../../../Include/xrRender/KinematicsAnimated.h"

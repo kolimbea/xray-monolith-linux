@@ -1,6 +1,6 @@
 // sea 08.01.2008
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIDoubleProgressBar.h"
 #include "UIXmlInit.h"
 

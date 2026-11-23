@@ -16,10 +16,10 @@
 		typename _vertex_allocator,\
 		bool	 euclidian_heuristics,\
 		typename _data_storage_base,\
-		template <typename _T> class _vertex,\
+		template <typename> class _vertex,\
 		template <\
-			typename _1,\
-			typename _2\
+			typename,\
+			typename\
 		>\
 		class	 _builder_allocator_constructor,\
 		template <\
@@ -27,8 +27,8 @@
 			typename _2,\
 			typename _3,\
 			template <\
-				typename _1,\
-				typename _2\
+				typename,\
+				typename\
 			>\
 			class	 _4\
 		>\
@@ -38,10 +38,10 @@
 			typename _manager,\
 			typename _builder,\
 			typename _allocator,\
-			template <typename _T> class _vertex,\
+			template <typename> class _vertex,\
 			template <\
-				typename _1,\
-				typename _2\
+				typename,\
+				typename\
 			>\
 			class	 _builder_allocator_constructor,\
 			template <\
@@ -49,8 +49,8 @@
 				typename _2,\
 				typename _3,\
 				template <\
-					typename _1,\
-					typename _2\
+					typename,\
+					typename\
 				>\
 				class	 _4\
 			>\

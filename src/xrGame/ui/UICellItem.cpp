@@ -3,7 +3,7 @@
 //	Last updated: 13/08/2015
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UICellItem.h"
 #include "UICursor.h"
 #include "../inventory_item.h"

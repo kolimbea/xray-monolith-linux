@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "snork.h"
 #include "snork_state_manager.h"
 #include "../../../detail_path_manager_space.h"

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "monster_cover_manager.h"
 #include "basemonster/base_monster.h"
 #include "../../cover_evaluators.h"

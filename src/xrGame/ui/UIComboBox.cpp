@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIComboBox.h"
 #include "UITextureMaster.h"
 #include "UIScrollBar.h"

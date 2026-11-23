@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "psy_dog.h"
 #include "../../../level_graph.h"
 #include "../../../ai_space.h"

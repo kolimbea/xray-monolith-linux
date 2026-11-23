@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "pseudo_gigant_step_effector.h"
 
 CPseudogigantStepEffector::CPseudogigantStepEffector(float time, float amp, float periods, float power)

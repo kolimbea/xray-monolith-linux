@@ -23,7 +23,7 @@ class CGraphAbstract
 public:
 	typedef CVertex<
 		_data_type,
-		_vertex_id_type,
+		_vertex_id_type_,
 		CGraphAbstract
 	> CVertex;
 
@@ -34,7 +34,7 @@ public:
 	> CEdge;
 
 public:
-	typedef xr_map<_vertex_id_type, CVertex*> VERTICES;
+	typedef xr_map<_vertex_id_type_, CVertex*> VERTICES;
 	typedef typename CVertex::EDGES EDGES;
 
 public:
@@ -53,29 +53,29 @@ public:
 	virtual ~CGraphAbstract();
 	IC bool operator==(const CGraphAbstract& obj) const;
 	IC void clear();
-	IC void add_vertex(const _data_type& data, const _vertex_id_type& vertex_id);
-	IC void remove_vertex(const _vertex_id_type& vertex_id);
-	IC void add_edge(const _vertex_id_type& vertex_id0, const _vertex_id_type& vertex_id1,
+	IC void add_vertex(const _data_type& data, const _vertex_id_type_& vertex_id);
+	IC void remove_vertex(const _vertex_id_type_& vertex_id);
+	IC void add_edge(const _vertex_id_type_& vertex_id0, const _vertex_id_type_& vertex_id1,
 	                 const _edge_weight_type& edge_weight);
-	IC void add_edge(const _vertex_id_type& vertex_id0, const _vertex_id_type& vertex_id1,
+	IC void add_edge(const _vertex_id_type_& vertex_id0, const _vertex_id_type_& vertex_id1,
 	                 const _edge_weight_type& edge_weight0, const _edge_weight_type& edge_weight1);
-	IC void remove_edge(const _vertex_id_type& vertex_id0, const _vertex_id_type& vertex_id1);
+	IC void remove_edge(const _vertex_id_type_& vertex_id0, const _vertex_id_type_& vertex_id1);
 	IC u32 vertex_count() const;
 	IC size_t edge_count() const;
 	IC bool empty() const;
 	IC const VERTICES& vertices() const;
 	IC VERTICES& vertices();
-	IC const CVertex* vertex(const _vertex_id_type& vertex_id) const;
-	IC CVertex* vertex(const _vertex_id_type& vertex_id);
-	IC const CEdge* edge(const _vertex_id_type& vertex_id0, const _vertex_id_type& vertex_id1) const;
-	IC CEdge* edge(const _vertex_id_type& vertex_id0, const _vertex_id_type& vertex_id1);
+	IC const CVertex* vertex(const _vertex_id_type_& vertex_id) const;
+	IC CVertex* vertex(const _vertex_id_type_& vertex_id);
+	IC const CEdge* edge(const _vertex_id_type_& vertex_id0, const _vertex_id_type_& vertex_id1) const;
+	IC CEdge* edge(const _vertex_id_type_& vertex_id0, const _vertex_id_type_& vertex_id1);
 	IC const CGraphAbstract& header() const;
-	IC const _edge_weight_type get_edge_weight(const _vertex_id_type vertex_index0, const _vertex_id_type vertex_index1,
+	IC const _edge_weight_type get_edge_weight(const _vertex_id_type_ vertex_index0, const _vertex_id_type_ vertex_index1,
 	                                           const_iterator i) const;
-	IC bool is_accessible(const _vertex_id_type vertex_index) const;
-	IC _vertex_id_type const& value(_vertex_id_type const& vertex_index, const_iterator i) const;
+	IC bool is_accessible(const _vertex_id_type_ vertex_index) const;
+	IC _vertex_id_type_ const& value(_vertex_id_type_ const& vertex_index, const_iterator i) const;
 	IC void begin(const CVertex* vertex, const_iterator& b, const_iterator& e) const;
-	IC void begin(_vertex_id_type const& vertex_index, const_iterator& b, const_iterator& e) const;
+	IC void begin(_vertex_id_type_ const& vertex_index, const_iterator& b, const_iterator& e) const;
 };
 
 template <

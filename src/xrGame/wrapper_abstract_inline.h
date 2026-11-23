@@ -14,7 +14,7 @@ class CScriptGameObject;
 #define TEMPLATE_SPECIALIZATION \
 	template <\
 		typename _object_type,\
-		template <typename _base_object_type> class ancestor,\
+		template <typename> class ancestor,\
 		typename _base_object_type\
 	>
 #define CWrapper CWrapperAbstract<_object_type,ancestor,_base_object_type>

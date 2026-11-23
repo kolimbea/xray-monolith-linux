@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UITaskWnd.h"
 #include "UIMapWnd.h"
 #include "object_broker.h"

@@ -6,7 +6,7 @@
 //	Description : Server objects
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #pragma hdrstop
 #pragma pack(push,4)
 

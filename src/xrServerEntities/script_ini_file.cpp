@@ -6,7 +6,7 @@
 //	Description : Script ini file class
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "script_ini_file.h"
 #include "script_engine.h"
 #include "ai_space.h"

@@ -2,7 +2,7 @@
 // с галочкой и без
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UICheckButton.h"
 #include "UIXmlInit.h"
 #include "UIHint.h"

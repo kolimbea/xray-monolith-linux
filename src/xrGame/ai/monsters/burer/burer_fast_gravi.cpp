@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "burer_fast_gravi.h"
 #include "burer.h"
 #include "../control_animation_base.h"

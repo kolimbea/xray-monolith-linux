@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "melee_checker.h"
 #include "basemonster/base_monster.h"
 #include "../../../Include/xrRender/KinematicsAnimated.h"

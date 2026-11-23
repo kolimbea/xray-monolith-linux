@@ -6,7 +6,7 @@
 //	Description : Stalker script functions
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "ai_stalker.h"
 #include "../../stalker_animation_manager.h"
 #include "../../script_entity_action.h"

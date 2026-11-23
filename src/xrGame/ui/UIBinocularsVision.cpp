@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UIBinocularsVision.h"
 #include "entity_alive.h"
 #include "visual_memory_manager.h"

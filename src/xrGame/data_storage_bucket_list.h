@@ -18,7 +18,7 @@ template <
 >
 struct CDataStorageBucketList
 {
-	template <template <typename _T> class T1>
+	template <template <typename> class T1>
 	struct BucketList
 	{
 		template <typename T2>
@@ -31,7 +31,7 @@ struct CDataStorageBucketList
 
 	template <
 		typename _data_storage,
-		template <typename _T> class _vertex = CEmptyClassTemplate
+		template <typename> class _vertex = CEmptyClassTemplate
 	>
 	class CDataStorage : public CDataStorageDoubleLinkedList<false>::CDataStorage<
 			_data_storage, BucketList<_vertex>::_vertex>

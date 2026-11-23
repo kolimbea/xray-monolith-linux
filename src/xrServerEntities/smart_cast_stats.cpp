@@ -6,7 +6,7 @@
 //	Description : Smart dynamic cast statistics
 ////////////////////////////////////////////////////////////////////////////
 
-//#include "stdafx.h"
+//#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 //
 //#ifdef  DEBUG
 //#define SMART_CAST_STATS

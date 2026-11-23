@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "control_path_builder.h"
 #include "control_manager.h"
 #include "basemonster/base_monster.h"

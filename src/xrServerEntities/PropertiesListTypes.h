@@ -48,6 +48,7 @@ enum EPropType
 struct xr_token;
 class PropValue;
 class PropItem;
+class TProperties; // named by PropItem's friend declaration and pointer member
 DEFINE_VECTOR(PropItem*, PropItemVec, PropItemIt);
 
 //------------------------------------------------------------------------------
@@ -564,6 +565,11 @@ typedef CustomValue<Fcolor> ColorValue;
 template <class T>
 class NumericValue : public CustomValue<T>
 {
+public: // members of the dependent base (MSVC found them without qualification)
+	using CustomValue<T>::value;
+	using CustomValue<T>::init_value;
+	using CustomValue<T>::OnBeforeEditEvent;
+	using CustomValue<T>::OnAfterEditEvent;
 public:
 	T lim_mn;
 	T lim_mx;
@@ -694,6 +700,11 @@ public:
 template <class T>
 class FlagValue : public CustomValue<T>, public FlagValueCustom
 {
+public: // members of the dependent base (MSVC found them without qualification)
+	using CustomValue<T>::value;
+	using CustomValue<T>::init_value;
+	using CustomValue<T>::OnBeforeEditEvent;
+	using CustomValue<T>::OnAfterEditEvent;
 public:
 	typedef T TYPE;
 	typedef typename T::TYPE FLAG_TYPE;
@@ -749,6 +760,11 @@ public:
 template <class T>
 class TokenValue : public CustomValue<T>, public TokenValueCustom
 {
+public: // members of the dependent base (MSVC found them without qualification)
+	using CustomValue<T>::value;
+	using CustomValue<T>::init_value;
+	using CustomValue<T>::OnBeforeEditEvent;
+	using CustomValue<T>::OnAfterEditEvent;
 public:
 	TokenValue(T* val, xr_token* _token): TokenValueCustom(_token), CustomValue<T>(val)
 	{
@@ -781,6 +797,11 @@ public:
 template <class T>
 class RTokenValue : public CustomValue<T>, public RTokenValueCustom
 {
+public: // members of the dependent base (MSVC found them without qualification)
+	using CustomValue<T>::value;
+	using CustomValue<T>::init_value;
+	using CustomValue<T>::OnBeforeEditEvent;
+	using CustomValue<T>::OnAfterEditEvent;
 public:
 	RTokenValue(T* val, xr_rtoken* _token, u32 _t_cnt): CustomValue<T>(val), RTokenValueCustom(_token, _t_cnt)
 	{

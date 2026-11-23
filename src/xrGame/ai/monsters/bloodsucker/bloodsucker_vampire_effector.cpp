@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "bloodsucker_vampire_effector.h"
 
 CVampirePPEffector::CVampirePPEffector(const SPPInfo& ppi, float life_time) :

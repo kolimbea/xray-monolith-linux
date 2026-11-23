@@ -2,7 +2,7 @@
 // 
 //////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include <dinput.h>
 #include "UIEditBox.h"
 #include "UIFrameLineWnd.h"

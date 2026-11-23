@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "control_animation_base.h"
 
 void CControlAnimationBase::AddAnim(EMotionAnim ma, LPCSTR tn, int s_id, SVelocityParam* vel, EPState p_s,

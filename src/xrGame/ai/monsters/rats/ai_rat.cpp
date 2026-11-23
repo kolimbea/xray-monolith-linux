@@ -6,7 +6,7 @@
 //	Description : AI Behaviour for monster "Rat"
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "ai_rat.h"
 #include "../../ai_monsters_misc.h"
 #include "../../../../xrPhysics/PhysicsShell.h"

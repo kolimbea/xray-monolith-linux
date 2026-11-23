@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UISpinText.h"
 #include "UILines.h"
 #include "../string_table.h"

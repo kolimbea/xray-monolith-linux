@@ -6,7 +6,7 @@
 //	Description : Smart dynamic cast
 ////////////////////////////////////////////////////////////////////////////
 
-//#include "stdafx.h"
+//#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 //
 //#ifndef PURE_DYNAMIC_CAST
 //#	ifdef XRGAME_EXPORTS

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "flesh.h"
 #include "../../../ai_space.h"
 #include "flesh_state_manager.h"

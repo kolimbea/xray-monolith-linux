@@ -5,7 +5,7 @@
 //	Description : UI Secondary Task Wnd class impl
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
 #include "UISecondTaskWnd.h"
 
 #include "xrUIXmlParser.h"
