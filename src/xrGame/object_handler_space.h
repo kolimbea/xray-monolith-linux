@@ -10,7 +10,7 @@
 
 namespace ObjectHandlerSpace
 {
-	enum EWorldProperties : int
+	enum EWorldProperties : u32 // values up to 0xffff00xx; MSVC stored them in an int, same bits
 	{
 		eWorldPropertyItemID = u32(0),
 		eWorldPropertyHidden,
@@ -55,7 +55,7 @@ namespace ObjectHandlerSpace
 
 		eWorldPropertyNoItems = u32((u16(-1) << 16) | eWorldPropertyItemID),
 		eWorldPropertyNoItemsIdle = u32((u16(-1) << 16) | eWorldPropertyIdle),
-		eWorldPropertyDummy = -1,
+		eWorldPropertyDummy = u32(-1),
 	};
 
 	enum EWorldOperators

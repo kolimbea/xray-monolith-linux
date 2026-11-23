@@ -55,6 +55,12 @@ public:
 	using _value_type = typename inherited::_value_type;
 	using _edge_type = typename inherited::_edge_type;
 	using _operator_ptr = typename inherited::_operator_ptr;
+	// dependent-base members used unqualified in action_planner_inline.h (MSVC found them implicitly)
+	using OPERATOR_VECTOR = typename inherited::OPERATOR_VECTOR;
+	using EVALUATORS = typename inherited::EVALUATORS;
+	using inherited::m_operators;
+	using inherited::m_evaluators;
+	using inherited::solve;
 
 	typedef GraphEngineSpace::CWorldProperty CWorldProperty;
 	typedef GraphEngineSpace::CWorldState CWorldState;

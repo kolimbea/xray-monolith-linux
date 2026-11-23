@@ -16,6 +16,10 @@ class CPropertyEvaluatorConst : public CPropertyEvaluator<_object_type>
 protected:
 	typedef CPropertyEvaluator<_object_type> inherited;
 
+public: // from the dependent base (MSVC looked them up there implicitly)
+	typedef typename inherited::_value_type _value_type;
+	typedef typename inherited::_condition_type _condition_type;
+
 protected:
 	_value_type m_value;
 

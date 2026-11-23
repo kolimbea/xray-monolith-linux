@@ -42,12 +42,12 @@ IC void CSolverPathManager::setup(
 	const _Parameters& params
 )
 {
-	graph = _graph;
-	data_storage = _data_storage;
+	this->graph = _graph;
+	this->data_storage = _data_storage;
 	m_edge_path = _path;
-	start_node_index = _start_node_index;
-	goal_node_index = _goal_node_index;
-	max_visited_node_count = params.max_visited_node_count;
+	this->start_node_index = _start_node_index;
+	this->goal_node_index = _goal_node_index;
+	this->max_visited_node_count = params.max_visited_node_count;
 	max_range = (_solver_dist_type)params.max_range;
 	max_iteration_count = params.max_iteration_count;
 }

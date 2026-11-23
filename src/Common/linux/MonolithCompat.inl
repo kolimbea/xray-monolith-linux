@@ -442,3 +442,24 @@ inline int _resetstkoflw() { return 1; }
 #define _localtime64 localtime
 #define _time64 time
 typedef time_t __time64_t;
+
+// SYSTEMTIME / GetLocalTime (used for screenshot and log file names).
+typedef struct _SYSTEMTIME
+{
+    WORD wYear, wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, wMilliseconds;
+} SYSTEMTIME, *LPSYSTEMTIME;
+inline void GetLocalTime(LPSYSTEMTIME st)
+{
+    timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    tm t;
+    localtime_r(&ts.tv_sec, &t);
+    st->wYear = (WORD)(t.tm_year + 1900);
+    st->wMonth = (WORD)(t.tm_mon + 1);
+    st->wDayOfWeek = (WORD)t.tm_wday;
+    st->wDay = (WORD)t.tm_mday;
+    st->wHour = (WORD)t.tm_hour;
+    st->wMinute = (WORD)t.tm_min;
+    st->wSecond = (WORD)t.tm_sec;
+    st->wMilliseconds = (WORD)(ts.tv_nsec / 1000000);
+}

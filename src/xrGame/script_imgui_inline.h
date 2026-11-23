@@ -47,12 +47,12 @@ IC void ImGui_SetNextWindowScroll(Fvector2& scroll)
 
 IC Fvector2 ImGui_GetWindowPos()
 {
-	return *(Fvector2*)&ImGui::GetWindowPos();
+	{ const ImVec2 v = ImGui::GetWindowPos(); return Fvector2().set(v.x, v.y); }
 }
 
 IC Fvector2 ImGui_GetWindowSize()
 {
-	return *(Fvector2*)&ImGui::GetWindowSize();
+	{ const ImVec2 v = ImGui::GetWindowSize(); return Fvector2().set(v.x, v.y); }
 }
 
 IC void ImGui_SetWindowPos(Fvector2& pos, ImGuiCond cond = 0)
@@ -82,7 +82,7 @@ IC void ImGui_SetScrollFromPosY(float pos)
 
 IC Fvector2 ImGui_GetCursorScreenPos()
 {
-	return *(Fvector2*)&ImGui::GetCursorScreenPos();
+	{ const ImVec2 v = ImGui::GetCursorScreenPos(); return Fvector2().set(v.x, v.y); }
 }
 
 IC void ImGui_SetCursorScreenPos(Fvector2& pos)
@@ -92,12 +92,12 @@ IC void ImGui_SetCursorScreenPos(Fvector2& pos)
 
 IC Fvector2 ImGui_GetContentRegionAvail()
 {
-	return *(Fvector2*)&ImGui::GetContentRegionAvail();
+	{ const ImVec2 v = ImGui::GetContentRegionAvail(); return Fvector2().set(v.x, v.y); }
 }
 
 IC Fvector2 ImGui_GetCursorPos()
 {
-	return *(Fvector2*)&ImGui::GetCursorPos();
+	{ const ImVec2 v = ImGui::GetCursorPos(); return Fvector2().set(v.x, v.y); }
 }
 
 IC void ImGui_SetCursorPos(Fvector2& pos)
@@ -107,7 +107,7 @@ IC void ImGui_SetCursorPos(Fvector2& pos)
 
 IC Fvector2 ImGui_GetCursorStartPos()
 {
-	return *(Fvector2*)&ImGui::GetCursorStartPos();
+	{ const ImVec2 v = ImGui::GetCursorStartPos(); return Fvector2().set(v.x, v.y); }
 }
 
 IC void ImGui_SameLine()
@@ -353,17 +353,17 @@ IC void ImGui_PushClipRect(Fvector2 min, Fvector2 max, bool intersect)
 
 IC Fvector2 ImGui_GetItemRectMin()
 {
-	return *(Fvector2*)&ImGui::GetItemRectMin();
+	{ const ImVec2 v = ImGui::GetItemRectMin(); return Fvector2().set(v.x, v.y); }
 }
 
 IC Fvector2 ImGui_GetItemRectMax()
 {
-	return *(Fvector2*)&ImGui::GetItemRectMax();
+	{ const ImVec2 v = ImGui::GetItemRectMax(); return Fvector2().set(v.x, v.y); }
 }
 
 IC Fvector2 ImGui_GetItemRectSize()
 {
-	return *(Fvector2*)&ImGui::GetItemRectSize();
+	{ const ImVec2 v = ImGui::GetItemRectSize(); return Fvector2().set(v.x, v.y); }
 }
 
 IC bool ImGui_IsKeyPressed(ImGuiKey key)
@@ -403,12 +403,12 @@ IC bool ImGui_IsMousePosValid(Fvector2 pos = {0,0})
 
 IC Fvector2 ImGui_GetMousePos()
 {
-	return *(Fvector2*)&ImGui::GetMousePos();
+	{ const ImVec2 v = ImGui::GetMousePos(); return Fvector2().set(v.x, v.y); }
 }
 
 IC Fvector2 ImGui_GetMousePosOnOpeningCurrentPopup()
 {
-	return *(Fvector2*)&ImGui::GetMousePosOnOpeningCurrentPopup();
+	{ const ImVec2 v = ImGui::GetMousePosOnOpeningCurrentPopup(); return Fvector2().set(v.x, v.y); }
 }
 
 IC Fvector2 ImGui_GetMouseDragDelta(ImGuiMouseButton button = 0, float lock_treshold = -1.f)

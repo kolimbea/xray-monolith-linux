@@ -18,7 +18,7 @@ class CFoodItem;
 
 namespace ObjectHandlerSpace
 {
-	enum EWorldProperties : int;
+	enum EWorldProperties : u32; // values up to 0xffff00xx; MSVC stored them in an int, same bits
 };
 
 namespace MonsterSpace
