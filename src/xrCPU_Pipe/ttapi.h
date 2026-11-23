@@ -1,7 +1,11 @@
 #ifndef _TTAPI_H_INCLUDED_
 #define _TTAPI_H_INCLUDED_
 
+#ifdef __linux__
+#include "../xrCore/xrCore_platform.h"
+#else
 #include <windows.h>
+#endif
 
 /*
 	Trivial (and dumb) Threads API

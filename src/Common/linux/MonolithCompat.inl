@@ -362,3 +362,11 @@ typedef uint64_t ULONG_PTR;
 typedef unsigned long ULONG;
 typedef unsigned short USHORT;
 typedef unsigned char UCHAR;
+#ifndef VOID
+#define VOID void
+#endif
+typedef BYTE* LPBYTE;
+typedef BYTE* PBYTE;
+typedef WORD* LPWORD;
+typedef DWORD* LPDWORD;
+#define sscanf_s sscanf // engine uses it with numeric conversions only (no %s/%c size arguments)

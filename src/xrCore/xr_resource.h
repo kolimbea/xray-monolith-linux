@@ -100,8 +100,8 @@ protected:
 	using C::_inc;
 	using C::_dec;
 	using C::_set;
-	using C::_get;
 public:
+	using C::_get;
 	// construction
 	resptr_core() { p_ = 0; }
 

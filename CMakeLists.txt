@@ -58,3 +58,11 @@ endfunction()
 add_subdirectory(src/xrCore)
 xr_module(xrCDB ${XR_SRC}/xrCDB/xrCDB.vcxproj)
 xr_module(xrXMLParser ${XR_SRC}/xrXMLParser/xrXMLParser.vcxproj)
+xr_module(xrCPU_Pipe ${XR_SRC}/xrCPU_Pipe/xrCPU_Pipe.vcxproj)
+xr_module(xrParticles ${XR_SRC}/xrParticles/xrParticles.vcxproj)
+
+pkg_check_modules(XR_AUDIO REQUIRED IMPORTED_TARGET openal vorbisfile vorbis ogg)
+# guids.cpp: DirectSound GUIDs; NotificationClient.cpp: Windows audio endpoint notifications
+# (OpenAL Soft follows the default device itself).
+xr_module(xrSound ${XR_SRC}/xrSound/xrSound.vcxproj EXCLUDE guids.cpp NotificationClient.cpp)
+target_link_libraries(xrSound PUBLIC PkgConfig::XR_AUDIO xrCDB)

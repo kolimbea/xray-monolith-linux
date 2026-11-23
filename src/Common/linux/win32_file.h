@@ -43,6 +43,19 @@ void* MapViewOfFile(HANDLE mapping, uint32_t access, uint32_t off_high, uint32_t
 int UnmapViewOfFile(const void* view);
 int CloseHandle(HANDLE h);
 
+// Threads (CreateThread / WaitFor*Object(s)) share the handle type so CloseHandle works on them.
+typedef HANDLE* LPHANDLE;
+typedef uint32_t (*LPTHREAD_START_ROUTINE)(void*);
+#define INFINITE 0xFFFFFFFFu
+#define WAIT_OBJECT_0 0u
+#define WAIT_TIMEOUT 0x102u
+#define WAIT_FAILED 0xFFFFFFFFu
+HANDLE CreateThread(_SECURITY_ATTRIBUTES*, size_t stack, LPTHREAD_START_ROUTINE fn, void* arg, uint32_t flags,
+                    uint32_t* thread_id);
+// Only INFINITE waits on thread handles are supported (all the engine uses); others fail.
+uint32_t WaitForSingleObject(HANDLE h, uint32_t ms);
+uint32_t WaitForMultipleObjects(uint32_t n, const HANDLE* hs, int wait_all, uint32_t ms);
+
 #define FILE_BEGIN 0u
 #define FILE_CURRENT 1u
 #define FILE_END 2u

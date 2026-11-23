@@ -1,4 +1,10 @@
 #pragma once
+#ifdef __linux__
+// OpenAL Soft follows default-device changes itself (PipeWire/Pulse), so no OS notification hook.
+class CNotificationClient
+{
+};
+#else
 #include <mmdeviceapi.h>
 #include <endpointvolume.h>
 
@@ -47,3 +53,4 @@ private:
     IMMDeviceEnumerator* m_pEnumerator;
     bool m_bComInitialized;
 };
+#endif // __linux__

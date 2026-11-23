@@ -4,6 +4,8 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <mutex>
+#include <pthread.h>
+#include <sched.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -11,12 +13,16 @@
 
 namespace
 {
-enum class Kind { File, Mapping };
+enum class Kind { File, Mapping, Thread };
 struct Handle
 {
     Kind kind;
-    int fd;        // File: owned; Mapping: dup of the file's fd, owned
+    int fd;        // File: owned; Mapping: dup of the file's fd, owned; Thread: unused (-1)
     bool writable;
+    pthread_t tid{};
+    bool joined = false;
+    LPTHREAD_START_ROUTINE fn = nullptr;
+    void* arg = nullptr;
 };
 
 std::mutex g_views_lock;
@@ -118,9 +124,63 @@ int CloseHandle(HANDLE handle)
     Handle* h = as(handle);
     if (!h)
         return 0;
-    close(h->fd);
+    if (h->kind == Kind::Thread)
+    {
+        if (!h->joined)
+            pthread_detach(h->tid); // Win32 lets a thread outlive its closed handle
+    }
+    else
+        close(h->fd);
     delete h;
     return 1;
+}
+
+HANDLE CreateThread(_SECURITY_ATTRIBUTES*, size_t stack, LPTHREAD_START_ROUTINE fn, void* arg, uint32_t, uint32_t* id)
+{
+    auto* h = new Handle{Kind::Thread, -1, false};
+    h->fn = fn;
+    h->arg = arg;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    if (stack)
+        pthread_attr_setstacksize(&attr, stack < PTHREAD_STACK_MIN ? PTHREAD_STACK_MIN : stack);
+    const int err = pthread_create(&h->tid, &attr, [](void* p) -> void* {
+        auto* self = (Handle*)p;
+        self->fn(self->arg);
+        return nullptr;
+    }, h);
+    pthread_attr_destroy(&attr);
+    if (err)
+    {
+        delete h;
+        return nullptr; // CreateThread returns NULL on failure
+    }
+    if (id)
+        *id = (uint32_t)(uintptr_t)h->tid;
+    return h;
+}
+
+uint32_t WaitForSingleObject(HANDLE handle, uint32_t ms)
+{
+    Handle* h = as(handle);
+    if (!h || h->kind != Kind::Thread || ms != INFINITE)
+        return WAIT_FAILED;
+    if (!h->joined)
+    {
+        pthread_join(h->tid, nullptr);
+        h->joined = true;
+    }
+    return WAIT_OBJECT_0;
+}
+
+uint32_t WaitForMultipleObjects(uint32_t n, const HANDLE* hs, int wait_all, uint32_t ms)
+{
+    if (!wait_all || ms != INFINITE)
+        return WAIT_FAILED;
+    for (uint32_t i = 0; i < n; ++i)
+        if (WaitForSingleObject(hs[i], ms) != WAIT_OBJECT_0)
+            return WAIT_FAILED;
+    return WAIT_OBJECT_0;
 }
 
 int ReadFile(HANDLE file, void* buf, uint32_t n, uint32_t* read, _OVERLAPPED* overlapped)

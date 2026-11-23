@@ -6,7 +6,11 @@
 
 #define WIN32_LEAN_AND_MEAN
 
+#ifdef __linux__
+#include "../xrCore/xrCore_platform.h"
+#else
 #include <windows.h>
+#endif
 #include <stdio.h>
 
 #pragma warning(disable:4995)

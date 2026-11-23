@@ -88,6 +88,7 @@ typedef struct tagTHREADNAME_INFO
 	DWORD dwFlags;
 } THREADNAME_INFO;
 
+#ifndef __linux__ // thread naming via SEH is Windows-only (and unused)
 void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName)
 {
 	THREADNAME_INFO info;
@@ -105,6 +106,7 @@ void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName)
 	{
 	}
 }
+#endif
 
 DWORD ttapi_Init(_processor_info* ID)
 {
@@ -120,7 +122,7 @@ DWORD ttapi_Init(_processor_info* ID)
 	// 2. Handle Command Line Override (-max-threads)
 	// Kept for backward compatibility with launcher/user configs
 	char szSearchFor[] = "-max-threads";
-	char* pszTemp = strstr(GetCommandLine(), szSearchFor);
+	const char* pszTemp = strstr(GetCommandLine(), szSearchFor);
 	DWORD dwOverride = 0;
 	if (pszTemp)
 		if (sscanf_s(pszTemp + strlen(szSearchFor), "%u", &dwOverride))
