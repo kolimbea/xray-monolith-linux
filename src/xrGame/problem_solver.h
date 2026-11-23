@@ -17,8 +17,8 @@ template <
 	typename _condition_evaluator,
 	typename _operator_id_type,
 	bool _reverse_search = false,
-	typename _operator_ptr = _operator*,
-	typename _condition_evaluator_ptr = _condition_evaluator*>
+	typename _operator_ptr_ = _operator*,
+	typename _condition_evaluator_ptr_ = _condition_evaluator*>
 class CProblemSolver
 {
 public:
@@ -44,8 +44,8 @@ public:
 	typedef _operator COperator;
 	typedef _condition_state CState;
 	typedef _condition_evaluator CConditionEvaluator;
-	typedef _operator_ptr _operator_ptr;
-	typedef _condition_evaluator_ptr _condition_evaluator_ptr;
+	typedef _operator_ptr_ _operator_ptr; // parameter renamed: ISO C++ forbids redeclaring it
+	typedef _condition_evaluator_ptr_ _condition_evaluator_ptr; // parameter renamed: ISO C++ forbids redeclaring it
 	typedef typename _operator_condition::_condition_type _condition_type;
 	typedef typename _operator_condition::_value_type _value_type;
 	typedef typename _operator::_edge_value_type _edge_value_type;

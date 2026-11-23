@@ -10,7 +10,7 @@
 #include "game_graph_builder.h"
 #include "patrol_path.h"
 #include "patrol_path_storage.h"
-#include "xrmessages.h"
+#include "xrMessages.h"
 #include "clsid_game.h"
 
 extern LPCSTR LEVEL_GRAPH_NAME;

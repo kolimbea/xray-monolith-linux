@@ -15,7 +15,7 @@
 namespace AStar
 {
 	template <
-		typename _dist_type,
+		typename _dist_type_,
 		template <typename _T> class T1
 	>
 	struct _Vertex
@@ -23,7 +23,7 @@ namespace AStar
 		template <typename T2>
 		struct _vertex : public T1<T2>
 		{
-			typedef _dist_type _dist_type;
+			typedef _dist_type_ _dist_type; // parameter renamed: ISO C++ forbids redeclaring it
 
 			_dist_type _g;
 			_dist_type _h;

@@ -10,9 +10,9 @@
 #include "UICursor.h"
 #include "../xrEngine/XR_IOConsole.h"
 #include "string_table.h"
-#include "level.h"
-#include "demoinfo.h"
-#include "demoplay_control.h"
+#include "Level.h"
+#include "DemoInfo.h"
+#include "DemoPlay_Control.h"
 
 CUIDemoPlayControl::CUIDemoPlayControl()
 {

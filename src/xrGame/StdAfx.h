@@ -11,7 +11,11 @@
 #pragma warning(push)
 #pragma warning(disable:4995)
 #include "../xrEngine/stdafx.h"
+#ifdef __linux__
+#include <dplay/dplay8.h> // mingw-w64 header (Common/linux/include)
+#else
 #include "DPlay/dplay8.h"
+#endif
 #pragma warning(pop)
 //#pragma warning(default:4995)
 #pragma warning( 4 : 4018 )

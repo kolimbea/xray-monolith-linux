@@ -15,7 +15,7 @@
 template <
 	typename _data_type = xr_empty,
 	typename _edge_weight_type = float,
-	typename _vertex_id_type = u32,
+	typename _vertex_id_type_ = u32,
 	typename _edge_data_type = xr_empty
 >
 class CGraphAbstract
@@ -42,7 +42,7 @@ public:
 	typedef typename VERTICES::iterator vertex_iterator;
 	typedef typename EDGES::const_iterator const_iterator;
 	typedef typename EDGES::iterator iterator;
-	typedef _vertex_id_type _vertex_id_type;
+	typedef _vertex_id_type_ _vertex_id_type; // parameter renamed: ISO C++ forbids redeclaring it
 
 private:
 	VERTICES m_vertices;

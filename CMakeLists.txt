@@ -120,3 +120,9 @@ xr_module(xrEngine ${XR_SRC}/xrEngine/xrEngine.vcxproj
 target_compile_definitions(xrEngine PRIVATE ENGINE_BUILD STATIC_RENDERER_R4 AL_LIBTYPE_STATIC)
 target_include_directories(xrEngine PRIVATE "${XR_3RD}/discord")
 target_link_libraries(xrEngine PUBLIC imgui luabind lua_extensions xrCDB xrSound xrParticles xrXMLParser)
+
+# --- Stage 1c: game ---
+xr_module(xrGame ${XR_SRC}/xrGame/xrGame.vcxproj)
+target_include_directories(xrGame PRIVATE ${XR_SRC}/xrServerEntities "${XR_3RD}/luajit-2/src" "${XR_3RD}/luabind"
+    "${XR_3RD}/cximage")
+target_link_libraries(xrGame PUBLIC xrEngine xrPhysics xrNetServer luabind lua_extensions)

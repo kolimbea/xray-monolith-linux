@@ -9,9 +9,9 @@
 #pragma once
 
 template <
-	typename _key_type,
-	typename _data_type,
-	typename _compare_predicate_type
+	typename _key_type_,
+	typename _data_type_,
+	typename _compare_predicate_type_
 >
 class associative_vector_compare_predicate : public _compare_predicate_type
 {
@@ -19,9 +19,9 @@ private:
 	typedef _compare_predicate_type inherited;
 
 public:
-	typedef _key_type _key_type;
-	typedef _data_type _data_type;
-	typedef _compare_predicate_type _compare_predicate_type;
+	typedef _key_type_ _key_type; // parameter renamed: ISO C++ forbids redeclaring it
+	typedef _data_type_ _data_type; // parameter renamed: ISO C++ forbids redeclaring it
+	typedef _compare_predicate_type_ _compare_predicate_type; // parameter renamed: ISO C++ forbids redeclaring it
 
 public:
 	typedef std::pair<_key_type, _data_type> value_type;

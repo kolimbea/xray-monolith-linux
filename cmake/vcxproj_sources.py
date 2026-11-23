@@ -10,7 +10,8 @@ if sys.argv[1] == "--defines":
     # Release|x64 preprocessor definitions minus Windows/MSVC-build ones.
     text = open(sys.argv[2], encoding="utf-8", errors="replace").read()
     m = re.search(r"<ItemDefinitionGroup Condition=\"\s*'\$\(Configuration\)\|\$\(Platform\)'\s*==\s*'Release\|x64'\s*\">(.*?)</ItemDefinitionGroup>", text, re.S)
-    d = re.search(r"<PreprocessorDefinitions>(.*?)</PreprocessorDefinitions>", m.group(1) if m else "", re.S)
+    cl = re.search(r"<ClCompile>(.*?)</ClCompile>", m.group(1), re.S) if m else None
+    d = re.search(r"<PreprocessorDefinitions>(.*?)</PreprocessorDefinitions>", cl.group(1) if cl else "", re.S)
     drop = {"WIN32", "_WINDOWS", "_USRDLL", "_SECURE_SCL=0", "MSVC", "NDEBUG", "_WIN32", "%(PreprocessorDefinitions)", ""}
     print("\n".join(x for x in (d.group(1).split(";") if d else []) if x not in drop))
     sys.exit(0)

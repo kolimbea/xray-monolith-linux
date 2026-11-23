@@ -20,9 +20,9 @@ class CScriptGameObject;
 template <
 	typename _object_type,
 	bool _reverse_search = false,
-	typename _world_operator = CActionBase<_object_type>,
+	typename _world_operator_ = CActionBase<_object_type>,
 	typename _condition_evaluator = CPropertyEvaluator<_object_type>,
-	typename _world_operator_ptr = _world_operator*,
+	typename _world_operator_ptr = _world_operator_*,
 	typename _condition_evaluator_ptr = _condition_evaluator*>
 class CActionPlanner :
 	public CProblemSolver<
@@ -58,7 +58,7 @@ public:
 
 	typedef GraphEngineSpace::CWorldProperty CWorldProperty;
 	typedef GraphEngineSpace::CWorldState CWorldState;
-	typedef _world_operator _world_operator;
+	typedef _world_operator_ _world_operator; // parameter renamed: ISO C++ forbids redeclaring it
 
 protected:
 	bool m_initialized;

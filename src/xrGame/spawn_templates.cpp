@@ -6,7 +6,7 @@
 
 #include "StdAfx.h"
 #include "spawn_templates.h"
-#include "xrmessages.h"
+#include "xrMessages.h"
 
 namespace
 {

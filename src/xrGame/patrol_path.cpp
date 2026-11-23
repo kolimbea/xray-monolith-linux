@@ -9,7 +9,7 @@
 #include <regex>
 #include "StdAfx.h"
 #include "patrol_path.h"
-#include "levelgamedef.h"
+#include "LevelGameDef.h"
 #include "game_graph.h"
 #include "../xrCore/mezz_stringbuffer.h"
 

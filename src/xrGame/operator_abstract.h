@@ -12,12 +12,12 @@
 
 template <
 	typename _world_property,
-	typename _edge_value_type
+	typename _edge_value_type_
 >
 class COperatorAbstract
 {
 public:
-	typedef _edge_value_type _edge_value_type;
+	typedef _edge_value_type_ _edge_value_type; // parameter renamed: ISO C++ forbids redeclaring it
 
 protected:
 	typedef CConditionState<_world_property> inherited;

@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "UITabButton.h"
 #include "UIStatic.h"
 #include "UITextureMaster.h"
