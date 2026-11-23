@@ -92,6 +92,12 @@
 
 // this define is set if we're currently building a luabind file
 // select import or export depending on it
+#ifdef __linux__
+// MSVC exposes type_info globally and <cstring> transitively; luabind relies on both.
+#include <cstring>
+#include <typeinfo>
+using std::type_info;
+#endif
 #include "luabind_api.h"
 #include <luabind/luabind_memory.h>
 

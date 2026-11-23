@@ -2,6 +2,10 @@
 #include "lj_def.h"
 #include "lj_arch.h"
 
+// The low-address pool works around Windows x64 address-space exhaustion; on Linux lj_alloc.c
+// maps with MAP_32BIT itself and never calls into this file.
+#if LJ_TARGET_WINDOWS
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -147,3 +151,4 @@ void dump_map(void* ptr, size_t size, char c)
 	OutputDebugString("--------------------------------------------------------------------------------------------------------------------------------\r\n");
 #endif
 }
+#endif // LJ_TARGET_WINDOWS

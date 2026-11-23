@@ -75,6 +75,16 @@ pkg_check_modules(XR_AUDIO REQUIRED IMPORTED_TARGET openal vorbisfile vorbis ogg
 xr_module(xrSound ${XR_SRC}/xrSound/xrSound.vcxproj EXCLUDE guids.cpp NotificationClient.cpp)
 target_link_libraries(xrSound PUBLIC PkgConfig::XR_AUDIO xrCDB)
 
+include(cmake/luajit.cmake)
+
+xr_module(luabind "${XR_3RD}/luabind/luabind.vcxproj")
+target_include_directories(luabind PUBLIC "${XR_3RD}/luabind" PRIVATE "${XR_3RD}/luabind/luabind/src")
+target_link_libraries(luabind PUBLIC luajit)
+# luasocket: the POSIX backend replaces the Winsock one.
+xr_module(lua_extensions "${XR_3RD}/lua-extensions/lua_extensions.vcxproj" EXCLUDE wsocket.c
+    EXTRA "${XR_3RD}/lua-extensions/luasocket/usocket.c")
+target_link_libraries(lua_extensions PUBLIC luajit)
+
 xr_module(ode "${XR_3RD}/ode/contrib/msvc7/ode_default/default.vcxproj")
 target_compile_definitions(ode PUBLIC dSINGLE PRIVATE dNODEBUG)
 target_compile_options(ode PRIVATE -include ${XR_SRC}/Common/linux/ode_prelude.h)

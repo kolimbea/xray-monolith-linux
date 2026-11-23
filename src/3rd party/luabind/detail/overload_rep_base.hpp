@@ -32,7 +32,9 @@ extern "C"
 namespace luabind::detail
 {
 	// this class represents a specific overload of a member-function.
+#ifndef __linux__ // DLL-export instantiation; ill-formed outside namespace std and not needed on Linux
     template class LUABIND_API std::function<int(lua_State*)>;
+#endif
 
 	struct LUABIND_API overload_rep_base
 	{

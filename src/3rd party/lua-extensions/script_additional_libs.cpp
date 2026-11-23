@@ -1,6 +1,9 @@
 //RvP, 11.05.2014	Функционал из xrLuaFix
 //#include "StdAfx.h"
 #include "script_additional_libs.h"
+#ifdef __linux__
+#include "../../xrCore/xrCore_platform.h" // _itoa, BYTE
+#endif
 #include <random>
 #include "../../build_config_defines.h"
 
@@ -198,11 +201,11 @@ int open_string(lua_State *L)
 /******************** MATH ********************/
 std::random_device ndrng;
 std::mt19937 intgen;
-std::uniform_real<float> float_random_01;
+std::uniform_real_distribution<float> float_random_01;
 
 int gen_random_in_range(int a1, int a2)
 {	//unsigned?
-    std::uniform_int<> dist(a1, a2);
+    std::uniform_int_distribution<> dist(a1, a2);
     return dist(intgen);
 }
 
