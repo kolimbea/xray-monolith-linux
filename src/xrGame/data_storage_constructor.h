@@ -32,14 +32,14 @@ template <
 	>
 	class _builder_allocator_constructor = CBuilderAllocatorConstructor,
 	template <
-		typename _1,
-		typename _2,
-		typename _3,
+		typename,
+		typename,
+		typename,
 		template <
 			typename,
 			typename
 		>
-		class _4
+		class
 	>
 	class _manager_builder_allocator_constructor = CManagerBuilderAllocatorConstructor
 >

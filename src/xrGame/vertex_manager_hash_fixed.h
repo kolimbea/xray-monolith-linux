@@ -62,7 +62,7 @@ struct CVertexManagerHashFixed
 			>::_vertex
 		> inherited;
 		typedef typename inherited::CGraphVertex CGraphVertex;
-		typedef typename CGraphVertex::_index_type_ _index_type_;
+		typedef typename CGraphVertex::_index_type _index_type;
 
 #pragma pack(push,1)
 		template <typename _path_id_type_>

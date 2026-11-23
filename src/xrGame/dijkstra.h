@@ -25,38 +25,38 @@ template <
 	>
 	class _builder_allocator_constructor = CBuilderAllocatorConstructor,
 	template <
-		typename _1,
-		typename _2,
-		typename _3,
+		typename,
+		typename,
+		typename,
 		template <
 			typename,
 			typename
 		>
-		class _4
+		class
 	>
 	class _manager_builder_allocator_constructor = CManagerBuilderAllocatorConstructor,
 	template <
-		typename _algorithm,
-		typename _manager,
-		typename _builder,
-		typename _allocator,
-		template <typename> class _vertex,
+		typename,
+		typename,
+		typename,
+		typename,
+		template <typename> class,
 		template <
 			typename,
 			typename
 		>
-		class _builder_allocator_constructor = CBuilderAllocatorConstructor,
+		class = CBuilderAllocatorConstructor,
 		template <
-			typename _1,
-			typename _2,
-			typename _3,
+			typename,
+			typename,
+			typename,
 			template <
 				typename,
 				typename
 			>
-			class _4
+			class
 		>
-		class _manager_builder_allocator_constructor = CManagerBuilderAllocatorConstructor
+		class = CManagerBuilderAllocatorConstructor
 	>
 	class _data_storage_constructor = CDataStorageConstructor,
 	typename _iteration_type = u32
@@ -101,7 +101,7 @@ public:
 
 protected:
 	typedef typename CDataStorage::CGraphVertex CGraphVertex;
-	typedef typename CGraphVertex::_dist_type_ _dist_type_;
+	typedef typename CGraphVertex::_dist_type _dist_type;
 	typedef typename CGraphVertex::_index_type _index_type;
 
 protected:
