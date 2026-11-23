@@ -10,7 +10,7 @@
 
 #define TEMPLATE_SPECIALIZATION \
 	template <\
-		typename _dist_type,\
+		typename _dist_type_,\
 		typename _priority_queue,\
 		typename _vertex_manager,\
 		typename _vertex_allocator,\
@@ -61,7 +61,7 @@
 	>
 
 #define CSDijkstra CDijkstra<\
-	_dist_type,\
+	_dist_type_,\
 	_priority_queue,\
 	_vertex_manager,\
 	_vertex_allocator,\

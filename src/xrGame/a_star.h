@@ -15,7 +15,7 @@
 namespace AStar
 {
 	template <
-		typename _dist_type_,
+		typename _dist_type_, // renamed: _vertex redeclares _dist_type
 		template <typename> class T1
 	>
 	struct _Vertex
@@ -23,17 +23,17 @@ namespace AStar
 		template <typename T2>
 		struct _vertex : public T1<T2>
 		{
-			typedef _dist_type_ _dist_type; // parameter renamed: ISO C++ forbids redeclaring it
+			typedef _dist_type_ _dist_type;
 
-			_dist_type_ _g;
-			_dist_type_ _h;
+			_dist_type _g;
+			_dist_type _h;
 
-			IC _dist_type_& g()
+			IC _dist_type& g()
 			{
 				return (_g);
 			}
 
-			IC _dist_type_& h()
+			IC _dist_type& h()
 			{
 				return (_h);
 			}
@@ -42,7 +42,7 @@ namespace AStar
 }
 
 template <
-	typename _dist_type,
+	typename _dist_type_, // renamed: the class body redeclares _dist_type
 	typename _priority_queue,
 	typename _vertex_manager,
 	typename _vertex_allocator,
@@ -92,13 +92,13 @@ template <
 	typename _iteration_type = u32
 >
 class CAStar : public CDijkstra<
-		_dist_type,
+		_dist_type_,
 		_priority_queue,
 		_vertex_manager,
 		_vertex_allocator,
 		euclidian_heuristics,
 		_data_storage_base,
-		AStar::_Vertex<_dist_type, _vertex>::_vertex,
+		AStar::_Vertex<_dist_type_, _vertex>::template _vertex,
 		_builder_allocator_constructor,
 		_manager_builder_allocator_constructor,
 		_data_storage_constructor,
@@ -107,13 +107,13 @@ class CAStar : public CDijkstra<
 {
 protected:
 	typedef CDijkstra<
-		_dist_type,
+		_dist_type_,
 		_priority_queue,
 		_vertex_manager,
 		_vertex_allocator,
 		euclidian_heuristics,
 		_data_storage_base,
-		AStar::_Vertex<_dist_type, _vertex>::_vertex,
+		AStar::_Vertex<_dist_type_, _vertex>::template _vertex,
 		_builder_allocator_constructor,
 		_manager_builder_allocator_constructor,
 		_data_storage_constructor,

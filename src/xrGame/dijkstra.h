@@ -12,7 +12,7 @@
 #include "data_storage_constructor.h"
 
 template <
-	typename _dist_type_,
+	typename _dist_type_, // renamed: the class body redeclares _dist_type
 	typename _priority_queue,
 	typename _vertex_manager,
 	typename _vertex_allocator,
@@ -67,17 +67,17 @@ public:
 	template <typename T1>
 	struct _Vertex : public _vertex<T1>
 	{
-		typedef _dist_type_ _dist_type; // parameter renamed: ISO C++ forbids redeclaring it
+		typedef _dist_type_ _dist_type;
 
-		_dist_type_ _f;
+		_dist_type _f;
 		T1* _back;
 
-		IC _dist_type_& f()
+		IC _dist_type& f()
 		{
 			return (_f);
 		}
 
-		IC const _dist_type_& f() const
+		IC const _dist_type& f() const
 		{
 			return (_f);
 		}

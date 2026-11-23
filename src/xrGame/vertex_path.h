@@ -25,7 +25,7 @@ struct CVertexPath
 	class CDataStorage
 	{
 	public:
-		typedef typename DataStoragePath<_vertex>::_vertex CGraphVertex;
+		typedef typename DataStoragePath<_vertex>::_vertex CGraphVertex; // a class, not a template
 		typedef typename CGraphVertex::_index_type _index_type;
 
 	public:

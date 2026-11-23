@@ -9,8 +9,8 @@
 #pragma once
 
 template <
-	typename _path_id_type_,
-	typename _index_type_,
+	typename _path_id_type_, // renamed: nested scopes redeclare _path_id_type
+	typename _index_type_, // renamed: nested scopes redeclare _index_type
 	u8 mask
 >
 struct CVertexManagerFixed
@@ -21,16 +21,16 @@ struct CVertexManagerFixed
 		template <typename T2>
 		struct _vertex : public T1<T2>
 		{
-			typedef _index_type_ _index_type; // parameter renamed: ISO C++ forbids redeclaring it
-			_index_type_ _index : 8 * sizeof(_index_type_) - mask;
-			_index_type_ _opened : mask;
+			typedef _index_type_ _index_type;
+			_index_type _index : 8 * sizeof(_index_type) - mask;
+			_index_type _opened : mask;
 
-			IC _index_type_ index() const
+			IC _index_type index() const
 			{
 				return (_index);
 			}
 
-			IC _index_type_ opened() const
+			IC _index_type opened() const
 			{
 				return (_opened);
 			}
@@ -40,31 +40,31 @@ struct CVertexManagerFixed
 	template <
 		template <typename> class _vertex = CEmptyClassTemplate,
 		template <typename, typename> class _index_vertex = CEmptyClassTemplate2,
-		typename _data_storage = CBuilderAllocatorConstructor
+		typename _data_storage = void // was the class template CBuilderAllocatorConstructor (MSVC only); always given explicitly
 	>
-	class CDataStorage : public _data_storage::template CDataStorage<VertexManager<_vertex>::_vertex>
+	class CDataStorage : public _data_storage::template CDataStorage<VertexManager<_vertex>::template _vertex>
 	{
 	public:
 		typedef typename _data_storage::template CDataStorage<
-			VertexManager<_vertex>::_vertex
+			VertexManager<_vertex>::template _vertex
 		> inherited;
 		typedef typename inherited::CGraphVertex CGraphVertex;
 		typedef typename CGraphVertex::_index_type _index_type;
 
 #pragma pack(push,1)
-		template <typename _path_id_type_>
-		struct SGraphIndexVertex : public _index_vertex<CGraphVertex, SGraphIndexVertex<_path_id_type_>>
+		template <typename TPathId>
+		struct SGraphIndexVertex : public _index_vertex<CGraphVertex, SGraphIndexVertex<TPathId>>
 		{
-			_path_id_type_ m_path_id;
+			TPathId m_path_id;
 			CGraphVertex* m_vertex;
 		};
 #pragma pack(pop)
 
-		typedef _path_id_type_ _path_id_type; // parameter renamed: ISO C++ forbids redeclaring it
-		typedef SGraphIndexVertex<_path_id_type_> CGraphIndexVertex;
+		typedef _path_id_type_ _path_id_type;
+		typedef SGraphIndexVertex<_path_id_type> CGraphIndexVertex;
 
 	protected:
-		_path_id_type_ m_current_path_id;
+		_path_id_type m_current_path_id;
 		u32 m_max_node_count;
 		CGraphIndexVertex* m_indexes;
 
@@ -73,13 +73,13 @@ struct CVertexManagerFixed
 		virtual ~CDataStorage();
 		IC void init();
 		IC bool is_opened(const CGraphVertex& vertex) const;
-		IC bool is_visited(const _index_type_& vertex_id) const;
+		IC bool is_visited(const _index_type& vertex_id) const;
 		IC bool is_closed(const CGraphVertex& vertex) const;
-		IC CGraphVertex& get_node(const _index_type_& vertex_id) const;
-		IC CGraphVertex& create_vertex(CGraphVertex& vertex, const _index_type_& vertex_id);
+		IC CGraphVertex& get_node(const _index_type& vertex_id) const;
+		IC CGraphVertex& create_vertex(CGraphVertex& vertex, const _index_type& vertex_id);
 		IC void add_opened(CGraphVertex& vertex);
 		IC void add_closed(CGraphVertex& vertex);
-		IC _path_id_type_ current_path_id() const;
+		IC _path_id_type current_path_id() const;
 	};
 };
 
