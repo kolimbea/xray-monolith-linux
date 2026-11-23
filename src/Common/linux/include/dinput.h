@@ -230,11 +230,18 @@ extern const DIDATAFORMAT c_dfDIKeyboard;
 extern const DIDATAFORMAT c_dfDIMouse;
 extern const DIDATAFORMAT c_dfDIMouse2;
 
-struct DIGUID_
+#ifndef GUID_DEFINED
+#define GUID_DEFINED
+// Windows layout. Device GUIDs below use Data1 as the device kind (1 keyboard, 2 mouse).
+typedef struct _GUID
 {
-    int kind;
-};
-typedef DIGUID_ DIGUID_T;
+    uint32_t Data1;
+    uint16_t Data2;
+    uint16_t Data3;
+    uint8_t Data4[8];
+} GUID;
+#endif
+typedef GUID DIGUID_;
 extern const DIGUID_ GUID_SysKeyboard;
 extern const DIGUID_ GUID_SysMouse;
 extern const DIGUID_ IID_IDirectInput8;
@@ -277,6 +284,7 @@ struct DIDEVICEOBJECTINSTANCE
 struct IDirectInputDevice8
 {
     virtual ~IDirectInputDevice8() = default;
+    virtual unsigned long AddRef() { return 1; }
     virtual long SetDataFormat(const DIDATAFORMAT* fmt) = 0;
     virtual long SetCooperativeLevel(void* window, uint32_t flags) = 0;
     virtual long SetProperty(const DIGUID_* prop, const DIPROPHEADER* ph) = 0;
@@ -291,6 +299,7 @@ typedef IDirectInputDevice8* LPDIRECTINPUTDEVICE8;
 struct IDirectInput8
 {
     virtual ~IDirectInput8() = default;
+    virtual unsigned long AddRef() { return 1; }
     virtual long CreateDevice(const DIGUID_& guid, LPDIRECTINPUTDEVICE8* out, void* outer) = 0;
     virtual unsigned long Release() = 0;
 };

@@ -272,7 +272,11 @@ void CInput::KeyUpdate()
 	if (b_alt_tab) {
 		BOOL fullscreen = (g_screenmode == 2);
 		if (fullscreen)
+#ifdef __linux__
+			ShowWindow(Device.m_hWnd, SW_MINIMIZE);
+#else
 			SendMessage(Device.m_hWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+#endif
 	}
 #endif
 	/*
@@ -344,6 +348,35 @@ bool CInput::get_dik_name(int dik, LPSTR dest_str, int dest_sz)
 	return (cnt != -1);
 }
 
+#ifdef __linux__
+#include <SDL3/SDL_keyboard.h>
+// Character a key produces under the current layout (SDL keymap), converted to CP1251 like the
+// Windows ToUnicodeEx path. Dead keys and non-character keys yield false.
+bool CInput::dik_to_text(int dik, bool shift, bool caps, bool ctrl, bool alt, bool altgr, LPSTR dest, int dest_sz)
+{
+	if (!dest || dest_sz <= 1)
+		return false;
+	dest[0] = 0;
+	const int sc = dinput_sdl_dik_to_scancode(dik);
+	if (!sc)
+		return false;
+	SDL_Keymod mod = SDL_KMOD_NONE;
+	if (shift) mod |= SDL_KMOD_LSHIFT;
+	if (caps) mod |= SDL_KMOD_CAPS;
+	if (ctrl) mod |= SDL_KMOD_LCTRL;
+	if (alt) mod |= SDL_KMOD_LALT;
+	if (altgr) mod |= SDL_KMOD_MODE;
+	const SDL_Keycode key = SDL_GetKeyFromScancode((SDL_Scancode)sc, mod, false);
+	if ((key & SDLK_SCANCODE_MASK) || key < 0x20 || key == 0x7F || (ctrl && !altgr))
+		return false;
+	const wchar_t w[2] = {(wchar_t)key, 0};
+	const int mb = WideCharToMultiByte(1251, 0, w, 1, dest, dest_sz - 1, "?", nullptr);
+	if (mb <= 0)
+		return false;
+	dest[mb] = 0;
+	return dest[0] != '?' || key == '?'; // not representable in CP1251
+}
+#else
 bool CInput::dik_to_text(int dik, bool shift, bool caps, bool ctrl, bool alt, bool altgr, LPSTR dest, int dest_sz)
 {
 	if (!dest || dest_sz <= 1)
@@ -407,6 +440,7 @@ bool CInput::dik_to_text(int dik, bool shift, bool caps, bool ctrl, bool alt, bo
 
 	return true;
 }
+#endif // __linux__
 
 #define MOUSE_1 (0xED + 100)
 #define MOUSE_8 (0xED + 107)

@@ -9,7 +9,8 @@
 #ifndef ai_soundsH
 #define ai_soundsH
 
-enum ESoundTypes : int
+// u32: bit flags up to 0x80000000 (MSVC stored them in an int as INT_MIN; same 32-bit pattern)
+enum ESoundTypes : u32
 {
 	SOUND_TYPE_NO_SOUND = 0x00000000ui32,
 

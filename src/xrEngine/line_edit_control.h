@@ -17,7 +17,7 @@ namespace text_editor
 
 	class base;
 
-	enum key_state // Flags32
+	enum key_state : int // Flags32; fixed type to match the opaque declaration in edit_actions.h
 	{
 		ks_free = u32(0),
 		ks_LShift = u32(1) << 0,

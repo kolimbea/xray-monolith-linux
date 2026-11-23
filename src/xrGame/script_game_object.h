@@ -44,7 +44,7 @@
 #endif
 
 enum EPdaMsg : int;
-enum ESoundTypes : int;
+enum ESoundTypes : u32;
 enum ETaskState : int;
 
 namespace ALife { enum ERelationType : int; }

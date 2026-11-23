@@ -15,7 +15,7 @@ class ENGINE_API IRender_DetailModel;
 #include "../Include/xrRender/RainRender.h"
 
 // SSS
-#include "../../xrEngine/perlin.h"
+#include "perlin.h"
 
 //
 class ENGINE_API CEffect_Rain

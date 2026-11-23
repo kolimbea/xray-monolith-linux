@@ -91,3 +91,20 @@ target_compile_options(ode PRIVATE -include ${XR_SRC}/Common/linux/ode_prelude.h
 target_include_directories(ode PUBLIC "${XR_3RD}/ode/include" PRIVATE "${XR_3RD}/ode/ode/src")
 xr_module(xrPhysics ${XR_SRC}/xrPhysics/xrPhysics.vcxproj)
 target_link_libraries(xrPhysics PUBLIC ode xrCDB)
+
+# --- Stage 1c: engine ---
+# imgui core only; the D3D backends are replaced by the renderer later.
+xr_module(imgui "${XR_3RD}/imgui/imgui.vcxproj" EXCLUDE backends/)
+target_include_directories(imgui PUBLIC "${XR_3RD}/imgui")
+
+set(LX ${XR_SRC}/Common/linux)
+# Windows-only parts and their Linux replacements:
+#   Text_Console*  dedicated-server console window (DEDICATED_SERVER builds only)
+#   tntQAVI        Video-for-Windows AVI textures (renderer stage; no replacement yet)
+#   MonitorList    -> Common/linux/MonitorList_linux.cpp (SDL displays)
+xr_module(xrEngine ${XR_SRC}/xrEngine/xrEngine.vcxproj
+    EXCLUDE Text_Console.cpp Text_Console_WndProc.cpp tntQAVI.cpp MonitorList.cpp
+    EXTRA ${LX}/MonitorList_linux.cpp ${LX}/dinput_sdl.cpp ${LX}/win32_window.cpp ${LX}/discord_stub.cpp)
+target_compile_definitions(xrEngine PRIVATE ENGINE_BUILD)
+target_include_directories(xrEngine PRIVATE "${XR_3RD}/discord")
+target_link_libraries(xrEngine PUBLIC imgui luabind lua_extensions xrCDB xrSound xrParticles xrXMLParser)

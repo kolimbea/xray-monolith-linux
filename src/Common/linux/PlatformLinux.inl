@@ -167,16 +167,18 @@ typedef long LRESULT;
 typedef void* HWND;
 typedef void* HDC;
 
+// Win32 LONG is 32-bit; the engine casts Ivector2/Irect (int pairs) to POINT*/RECT*, so the
+// layout must match Windows (OpenXRay used 64-bit long here).
 typedef struct _RECT {
-    long left;
-    long top;
-    long right;
-    long bottom;
-} RECT, *PRECT;
+    int32_t left;
+    int32_t top;
+    int32_t right;
+    int32_t bottom;
+} RECT, *PRECT, *LPRECT;
 
 typedef struct tagPOINT {
-    long x;
-    long y;
+    int32_t x;
+    int32_t y;
 } POINT, *PPOINT, *LPPOINT;
 
 #define WM_USER 0x0400
@@ -237,6 +239,9 @@ inline int strcpy_s(char *dest, size_t num, const char *source)
 template <size_t num>
 inline int strcpy_s(char (&dest)[num], const char *source) { return strcpy_s(dest, num, source); }
 
+#ifndef _TRUNCATE
+#define _TRUNCATE ((size_t)-1)
+#endif
 inline int strncpy_s(char * dest, size_t dst_size, const char * source, size_t num)
 {
     if (!dest || (0 == dst_size))
@@ -267,6 +272,12 @@ inline int strncpy_s(char * dest, size_t dst_size, const char * source, size_t n
     {
         dest[i] = '\0';
         return 0;
+    }
+
+    if (num == (size_t)-1) // _TRUNCATE: keep what fits (OpenXRay cleared the buffer instead)
+    {
+        dest[i] = '\0';
+        return 80; // STRUNCATE
     }
 
     dest[0] = '\0';

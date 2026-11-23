@@ -160,9 +160,9 @@ namespace
     public:
         long CreateDevice(const DIGUID_ &guid, LPDIRECTINPUTDEVICE8 *out, void *) override
         {
-            if (!out || (guid.kind != kKeyboard && guid.kind != kMouse))
+            if (!out || (guid.Data1 != kKeyboard && guid.Data1 != kMouse))
                 return DIERR_INVALIDPARAM;
-            *out = new Device(guid.kind);
+            *out = new Device(guid.Data1);
             return DI_OK;
         }
         unsigned long Release() override
@@ -176,9 +176,9 @@ namespace
 const DIDATAFORMAT c_dfDIKeyboard{kKeyboard};
 const DIDATAFORMAT c_dfDIMouse{kMouse};
 const DIDATAFORMAT c_dfDIMouse2{kMouse};
-const DIGUID_ GUID_SysKeyboard{kKeyboard};
-const DIGUID_ GUID_SysMouse{kMouse};
-const DIGUID_ IID_IDirectInput8{0};
+const DIGUID_ GUID_SysKeyboard{kKeyboard, 0, 0, {}};
+const DIGUID_ GUID_SysMouse{kMouse, 0, 0, {}};
+const DIGUID_ IID_IDirectInput8{0, 0, 0, {}};
 
 long DirectInput8Create(void *, uint32_t, const DIGUID_ &, void **out, void *)
 {

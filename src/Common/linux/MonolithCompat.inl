@@ -349,3 +349,33 @@ typedef DWORD* LPDWORD;
 #define sscanf_s sscanf // engine uses it with numeric conversions only (no %s/%c size arguments)
 #include <unistd.h>
 inline DWORD GetCurrentThreadId() { return (DWORD)gettid(); }
+#include "win32_window.h"
+
+#ifndef GUID_DEFINED
+#define GUID_DEFINED
+typedef struct _GUID // Windows layout
+{
+    uint32_t Data1;
+    uint16_t Data2;
+    uint16_t Data3;
+    uint8_t Data4[8];
+} GUID;
+#endif
+typedef const GUID& REFGUID;
+#ifndef E_NOTIMPL
+#define E_NOTIMPL ((HRESULT)0x80004001L)
+#endif
+
+typedef int INT;
+#include "include/mmsystem.h"
+// ms since an arbitrary start, wraps after ~49 days like Win32
+inline DWORD GetTickCount() { return timeGetTime(); }
+
+// COM's base interface, only for engine helpers that take renderer objects (get_ref_count).
+struct IUnknown
+{
+    virtual long QueryInterface(const GUID& riid, void** out) = 0;
+    virtual unsigned long AddRef() = 0;
+    virtual unsigned long Release() = 0;
+    virtual ~IUnknown() = default;
+};
