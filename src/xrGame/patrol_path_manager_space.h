@@ -10,20 +10,20 @@
 
 namespace PatrolPathManager
 {
-	enum EPatrolStartType
+	enum EPatrolStartType : int
 	{
 		ePatrolStartTypeFirst = u32(0),
 		ePatrolStartTypeLast,
 		ePatrolStartTypeNearest,
 		ePatrolStartTypePoint,
 		ePatrolStartTypeNext,
-		ePatrolStartTypeDummy = u32(-1),
+		ePatrolStartTypeDummy = -1,
 	};
 
-	enum EPatrolRouteType
+	enum EPatrolRouteType : int
 	{
 		ePatrolRouteTypeStop = u32(0),
 		ePatrolRouteTypeContinue,
-		ePatrolRouteTypeDummy = u32(-1),
+		ePatrolRouteTypeDummy = -1,
 	};
 };

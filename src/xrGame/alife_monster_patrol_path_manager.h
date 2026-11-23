@@ -16,8 +16,8 @@ class CPatrolPath;
 
 namespace PatrolPathManager
 {
-	enum EPatrolStartType;
-	enum EPatrolRouteType;
+	enum EPatrolStartType : int;
+	enum EPatrolRouteType : int;
 };
 
 class CALifeMonsterPatrolPathManager

@@ -15,12 +15,12 @@
 
 namespace MovementManager
 {
-	enum EPathType;
+	enum EPathType : int;
 };
 
 namespace DetailPathManager
 {
-	enum EDetailPathType;
+	enum EDetailPathType : int;
 };
 
 template <
@@ -131,7 +131,7 @@ protected:
 	> CLevelPathManager;
 
 private:
-	enum EPathState
+	enum EPathState : int
 	{
 		ePathStateSelectGameVertex = u32(0),
 		ePathStateBuildGamePath,
@@ -150,7 +150,7 @@ private:
 
 		ePathStateTeleport,
 
-		ePathStateDummy = u32(-1),
+		ePathStateDummy = -1,
 	};
 
 protected:

@@ -3,7 +3,7 @@
 
 namespace UIMapWndActionsSpace
 {
-	enum EWorldProperties
+	enum EWorldProperties : int
 	{
 		ePropTargetMapShown,
 		ePropMapMinimized,

@@ -79,17 +79,17 @@ namespace ALife
 		eMeetActionTypeDummy = u32(-1),
 	};
 
-	enum ERelationType
+	enum ERelationType : int
 	{
 		eRelationTypeFriend = u32(0),
 		eRelationTypeNeutral,
 		eRelationTypeEnemy,
 		eRelationTypeWorstEnemy,
 		eRelationTypeLast,
-		eRelationTypeDummy = u32(-1),
+		eRelationTypeDummy = -1,
 	};
 
-	enum EHitType
+	enum EHitType : int
 	{
 		eHitTypeBurn = u32(0),
 		eHitTypeShock,

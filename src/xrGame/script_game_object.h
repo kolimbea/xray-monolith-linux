@@ -43,15 +43,15 @@
 #include "searchlight.h"
 #endif
 
-enum EPdaMsg;
-enum ESoundTypes;
-enum ETaskState;
+enum EPdaMsg : int;
+enum ESoundTypes : int;
+enum ETaskState : int;
 
-namespace ALife { enum ERelationType; }
-namespace ScriptEntity { enum EActionType; }
-namespace MovementManager { enum EPathType; }
-namespace DetailPathManager { enum EDetailPathType; }
-namespace SightManager { enum ESightType; }
+namespace ALife { enum ERelationType : int; }
+namespace ScriptEntity { enum EActionType : int; }
+namespace MovementManager { enum EPathType : int; }
+namespace DetailPathManager { enum EDetailPathType : int; }
+namespace SightManager { enum ESightType : int; }
 namespace smart_cover { class object; }
 namespace doors { class door; }
 
@@ -59,8 +59,8 @@ class NET_Packet;
 class CGameTask;
 
 namespace PatrolPathManager {
-	enum EPatrolStartType;
-	enum EPatrolRouteType;
+	enum EPatrolStartType : int;
+	enum EPatrolRouteType : int;
 };
 
 namespace MemorySpace {
@@ -72,25 +72,25 @@ namespace MemorySpace {
 };
 
 namespace MonsterSpace {
-	enum EBodyState;
-	enum EMovementType;
-	enum EMovementDirection;
-	enum EDirectionType;
-	enum EPathState;
-	enum EObjectAction;
-	enum EMentalState;
-	enum EScriptMonsterMoveAction;
-	enum EScriptMonsterSpeedParam;
-	enum EScriptMonsterAnimAction;
-	enum EScriptMonsterGlobalAction;
-	enum EScriptSoundAnim;
-	enum EMonsterSounds;
-	enum EMonsterHeadAnimType;
+	enum EBodyState : int;
+	enum EMovementType : int;
+	enum EMovementDirection : int;
+	enum EDirectionType : int;
+	enum EPathState : int;
+	enum EObjectAction : int;
+	enum EMentalState : int;
+	enum EScriptMonsterMoveAction : int;
+	enum EScriptMonsterSpeedParam : int;
+	enum EScriptMonsterAnimAction : int;
+	enum EScriptMonsterGlobalAction : int;
+	enum EScriptSoundAnim : int;
+	enum EMonsterSounds : int;
+	enum EMonsterHeadAnimType : int;
 	struct SBoneRotation;
 };
 
 namespace GameObject {
-	enum ECallbackType;
+	enum ECallbackType : int;
 };
 
 class CGameObject;
@@ -158,7 +158,7 @@ class CScriptGameObject;
 
 namespace SightManager
 {
-	enum ESightType;
+	enum ESightType : int;
 }
 
 struct CSightParams

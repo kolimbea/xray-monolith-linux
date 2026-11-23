@@ -18,12 +18,12 @@ class CFoodItem;
 
 namespace ObjectHandlerSpace
 {
-	enum EWorldProperties;
+	enum EWorldProperties : int;
 };
 
 namespace MonsterSpace
 {
-	enum EObjectAction;
+	enum EObjectAction : int;
 };
 
 class CObjectHandlerPlanner : public CActionPlanner<CAI_Stalker, true>

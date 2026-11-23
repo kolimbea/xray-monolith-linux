@@ -151,7 +151,7 @@ public:
 
 
 public:
-	enum EMentalState
+	enum EMentalState : int
 	{
 		eStateIdle,
 		eStateDanger

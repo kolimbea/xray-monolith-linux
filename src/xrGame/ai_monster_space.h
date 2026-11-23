@@ -12,28 +12,28 @@
 
 namespace MonsterSpace
 {
-	enum EMentalState
+	enum EMentalState : int
 	{
 		eMentalStateDanger = u32(0),
 		eMentalStateFree,
 		eMentalStatePanic,
 	};
 
-	enum EBodyState
+	enum EBodyState : int
 	{
 		eBodyStateCrouch = u32(0),
 		eBodyStateStand,
-		eBodyStateDummy = u32(-1)
+		eBodyStateDummy = -1
 	};
 
-	enum EMovementType
+	enum EMovementType : int
 	{
 		eMovementTypeWalk = 0,
 		eMovementTypeRun,
 		eMovementTypeStand,
 	};
 
-	enum EMovementDirection
+	enum EMovementDirection : int
 	{
 		eMovementDirectionForward = 0,
 		eMovementDirectionBackward,
@@ -41,7 +41,7 @@ namespace MonsterSpace
 		eMovementDirectionRight,
 	};
 
-	enum EObjectAction
+	enum EObjectAction : int
 	{
 		eObjectActionSwitch1,
 		eObjectActionSwitch2,
@@ -73,7 +73,7 @@ namespace MonsterSpace
 		eObjectActionEmpty1,
 		eObjectActionNoItems = eObjectActionIdle | u16(-1),
 		// 
-		eObjectActionDummy = u32(-1),
+		eObjectActionDummy = -1,
 	};
 
 	struct SBoneRotation
@@ -83,7 +83,7 @@ namespace MonsterSpace
 		float speed;
 	};
 
-	enum EScriptMonsterMoveAction
+	enum EScriptMonsterMoveAction : int
 	{
 		eMA_WalkFwd,
 		eMA_WalkBkwd,
@@ -95,14 +95,14 @@ namespace MonsterSpace
 		eMA_RunWithLeader
 	};
 
-	enum EScriptMonsterSpeedParam
+	enum EScriptMonsterSpeedParam : int
 	{
 		eSP_Default = u32(0),
 		eSP_ForceSpeed,
-		eSP_None = u32(-1),
+		eSP_None = -1,
 	};
 
-	enum EScriptMonsterAnimAction
+	enum EScriptMonsterAnimAction : int
 	{
 		eAA_StandIdle,
 		eAA_CapturePrepare,
@@ -114,31 +114,31 @@ namespace MonsterSpace
 		eAA_Attack,
 		eAA_LookAround,
 		eAA_Turn,
-		eAA_NoAction = u32(-1)
+		eAA_NoAction = -1
 	};
 
-	enum EScriptMonsterGlobalAction
+	enum EScriptMonsterGlobalAction : int
 	{
 		eGA_Rest = u32(0),
 		eGA_Eat,
 		eGA_Attack,
 		eGA_Panic,
-		eGA_None = u32(-1)
+		eGA_None = -1
 	};
 
-	enum EScriptSoundAnim
+	enum EScriptSoundAnim : int
 	{
 		eAnimSoundCustom = u32(0),
 		eAnimSoundDefault,
 	};
 
-	enum EMonsterHeadAnimType
+	enum EMonsterHeadAnimType : int
 	{
 		eHeadAnimNormal = u32(0),
 		eHeadAnimAngry,
 		eHeadAnimGlad,
 		eHeadAnimKind,
 
-		eHeadAnimNone = u32(-1),
+		eHeadAnimNone = -1,
 	};
 };

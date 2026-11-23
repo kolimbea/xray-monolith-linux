@@ -13,7 +13,7 @@
 
 namespace SightManager
 {
-	enum ESightType;
+	enum ESightType : int;
 };
 
 class CScriptGameObject;

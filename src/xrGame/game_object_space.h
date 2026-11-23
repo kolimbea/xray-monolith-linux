@@ -2,7 +2,7 @@
 
 namespace GameObject
 {
-	enum ECallbackType
+	enum ECallbackType : int
 	{
 		eTradeStart = u32(0),
 		eTradeStop,
@@ -100,6 +100,6 @@ namespace GameObject
         eNetSpawnAfter,
 #endif
 
-		eDummy = u32(-1),
+		eDummy = -1,
 	};
 };

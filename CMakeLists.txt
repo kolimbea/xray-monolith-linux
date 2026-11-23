@@ -22,10 +22,12 @@ set(XR_SRC ${CMAKE_SOURCE_DIR}/src)
 set(XR_3RD "${XR_SRC}/3rd party")
 
 # Flags every engine module shares: MSVC extensions the code base relies on (__super, __declspec,
-# __forceinline, MS builtins), `or`/`and` used as identifiers, and C++17-removed `register`.
+# __forceinline, MS builtins), `or`/`and` used as identifiers, C++17-removed `register`, and
+# MSVC-style template parsing (names in dependent bases resolved at instantiation), without which
+# hundreds of thousands of lines would need `this->`/`typename` edits.
 add_library(xr_common INTERFACE)
 target_compile_options(xr_common INTERFACE
-    $<$<COMPILE_LANGUAGE:CXX>:-fms-extensions -fno-operator-names -Wno-register>
+    $<$<COMPILE_LANGUAGE:CXX>:-fms-extensions -fno-operator-names -Wno-register -fdelayed-template-parsing>
     -fno-strict-aliasing -msse4.2)
 target_compile_definitions(xr_common INTERFACE NDEBUG _CRT_SECURE_NO_WARNINGS)
 target_include_directories(xr_common INTERFACE
@@ -50,6 +52,12 @@ function(xr_module target vcxproj)
     string(REPLACE "\n" ";" _src "${_src}")
     list(FILTER _src EXCLUDE REGEX "^$")
     add_library(${target} STATIC ${_src} ${XM_EXTRA})
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/vcxproj_sources.py --defines ${vcxproj}
+        OUTPUT_VARIABLE _defs)
+    string(REPLACE "\n" ";" _defs "${_defs}")
+    list(FILTER _defs EXCLUDE REGEX "^$")
+    target_compile_definitions(${target} PRIVATE ${_defs})
     get_filename_component(_dir ${vcxproj} DIRECTORY)
     target_include_directories(${target} PRIVATE ${_dir} ${XR_SRC}/xrCore ${XR_SRC}/xrEngine)
     target_link_libraries(${target} PUBLIC xr_common xrCore)
@@ -66,3 +74,10 @@ pkg_check_modules(XR_AUDIO REQUIRED IMPORTED_TARGET openal vorbisfile vorbis ogg
 # (OpenAL Soft follows the default device itself).
 xr_module(xrSound ${XR_SRC}/xrSound/xrSound.vcxproj EXCLUDE guids.cpp NotificationClient.cpp)
 target_link_libraries(xrSound PUBLIC PkgConfig::XR_AUDIO xrCDB)
+
+xr_module(ode "${XR_3RD}/ode/contrib/msvc7/ode_default/default.vcxproj")
+target_compile_definitions(ode PUBLIC dSINGLE PRIVATE dNODEBUG)
+target_compile_options(ode PRIVATE -include ${XR_SRC}/Common/linux/ode_prelude.h)
+target_include_directories(ode PUBLIC "${XR_3RD}/ode/include" PRIVATE "${XR_3RD}/ode/ode/src")
+xr_module(xrPhysics ${XR_SRC}/xrPhysics/xrPhysics.vcxproj)
+target_link_libraries(xrPhysics PUBLIC ode xrCDB)

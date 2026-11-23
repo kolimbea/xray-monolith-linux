@@ -13,7 +13,7 @@
 
 namespace MonsterSpace
 {
-	enum EObjectAction;
+	enum EObjectAction : int;
 }
 
 class CAI_Stalker;

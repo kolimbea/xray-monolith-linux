@@ -13,21 +13,21 @@
 
 namespace DetailPathManager
 {
-	enum EDetailPathType;
+	enum EDetailPathType : int;
 };
 
 namespace MonsterSpace
 {
-	enum EBodyState;
-	enum EMovementType;
-	enum EScriptMonsterMoveAction;
-	enum EScriptMonsterSpeedParam;
+	enum EBodyState : int;
+	enum EMovementType : int;
+	enum EScriptMonsterMoveAction : int;
+	enum EScriptMonsterSpeedParam : int;
 };
 
 namespace PatrolPathManager
 {
-	enum EPatrolStartType;
-	enum EPatrolRouteType;
+	enum EPatrolStartType : int;
+	enum EPatrolRouteType : int;
 };
 
 class CPatrolPath;

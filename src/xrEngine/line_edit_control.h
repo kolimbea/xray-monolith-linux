@@ -38,7 +38,7 @@ namespace text_editor
 		ks_force = u32(-1)
 	}; // enum key_state
 
-	enum init_mode
+	enum init_mode : int
 	{
 		im_standart = 0,
 		im_number_only,

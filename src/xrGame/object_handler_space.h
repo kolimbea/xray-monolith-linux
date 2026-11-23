@@ -10,7 +10,7 @@
 
 namespace ObjectHandlerSpace
 {
-	enum EWorldProperties
+	enum EWorldProperties : int
 	{
 		eWorldPropertyItemID = u32(0),
 		eWorldPropertyHidden,
@@ -55,7 +55,7 @@ namespace ObjectHandlerSpace
 
 		eWorldPropertyNoItems = u32((u16(-1) << 16) | eWorldPropertyItemID),
 		eWorldPropertyNoItemsIdle = u32((u16(-1) << 16) | eWorldPropertyIdle),
-		eWorldPropertyDummy = u32(-1),
+		eWorldPropertyDummy = -1,
 	};
 
 	enum EWorldOperators
