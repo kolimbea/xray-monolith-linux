@@ -193,7 +193,7 @@ target_include_directories(xrVK_shaderc PUBLIC ${XR_SRC}/Layers/xrRenderVK)
 target_link_libraries(xrVK_shaderc PRIVATE dxcompiler)
 
 # xrVK_core: the Vulkan device layer, independent of the engine (tests/vk_smoke.cpp links it alone).
-set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp vkShader.cpp vkReflection.cpp vkShaderObjects.cpp)
+set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp vkShader.cpp vkReflection.cpp vkShaderObjects.cpp vkHeap.cpp vkBuffer.cpp vkTexture.cpp vkViews.cpp vkStates.cpp vkContext.cpp vkQuery.cpp)
 list(TRANSFORM XR_VK_CORE_SRC PREPEND ${XR_SRC}/Layers/xrRenderVK/)
 add_library(xrVK_core STATIC ${XR_VK_CORE_SRC})
 target_include_directories(xrVK_core BEFORE PUBLIC ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)
@@ -254,6 +254,9 @@ set_target_properties(xray_vk PROPERTIES BUILD_RPATH "$<TARGET_FILE_DIR:xrCore>"
 # Milestone M2 test of the Vulkan device layer (tests/vk_smoke.cpp).
 add_executable(vk_smoke ${CMAKE_SOURCE_DIR}/../tests/vk_smoke.cpp)
 target_link_libraries(vk_smoke PRIVATE xrVK_core)
+# Milestone M4 test of the draw path (tests/vk_draw.cpp).
+add_executable(vk_draw ${CMAKE_SOURCE_DIR}/../tests/vk_draw.cpp)
+target_link_libraries(vk_draw PRIVATE xrVK_core)
 # Milestone M3 check: every shader of an exported tree through D3DCompile/D3DReflect (tests/vk_shaders.cpp).
 add_executable(vk_shaders ${CMAKE_SOURCE_DIR}/../tests/vk_shaders.cpp)
 target_link_libraries(vk_shaders PRIVATE xrVK_core)

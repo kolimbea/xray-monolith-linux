@@ -152,6 +152,7 @@ namespace xrvk
                     b.descriptorCount = r.count;
                     b.stageFlags = vk_stage(Stage(s));
                     p->bindings.push_back(b);
+                    p->resources.push_back(&r);
                     descriptors += r.count;
                 }
             }

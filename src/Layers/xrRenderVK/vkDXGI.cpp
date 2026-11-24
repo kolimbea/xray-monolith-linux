@@ -419,8 +419,10 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT)
     if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR)
         fail("vkAcquireNextImageKHR: %d", int(r));
 
-    VkCommandBuffer cb = c.cmd();
-    transition(cb, sc->back_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    // end the engine's last rendering scope; the back buffer stays in GENERAL like every engine image
+    VkCommandBuffer cb = impl(static_cast<Device *>(sc->device)->immediate)->outside_rendering();
+    transition(cb, &sc->back_buffer->img, VK_IMAGE_LAYOUT_GENERAL);
+    transfer_barrier(cb, true);
     VkImageMemoryBarrier2 b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
     b.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
     b.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
@@ -440,7 +442,7 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT)
     blit.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
     blit.dstOffsets[1] = {int32_t(sc->extent.width), int32_t(sc->extent.height), 1};
     const bool same = sc->back_buffer->desc.Width == sc->extent.width && sc->back_buffer->desc.Height == sc->extent.height;
-    vkCmdBlitImage(cb, sc->back_buffer->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, sc->images[idx],
+    vkCmdBlitImage(cb, sc->back_buffer->img.image, VK_IMAGE_LAYOUT_GENERAL, sc->images[idx],
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, same ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
     b.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
     b.dstAccessMask = 0;
@@ -540,4 +542,65 @@ HRESULT IDXGISwapChain3::CheckColorSpaceSupport(DXGI_COLOR_SPACE_TYPE colour_spa
 HRESULT IDXGISwapChain3::SetColorSpace1(DXGI_COLOR_SPACE_TYPE colour_space)
 {
     return colour_space == DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709 ? S_OK : E_INVALIDARG;
+}
+
+// ---- the rest of DXGI the engine and imgui touch -------------------------------------------------------
+
+// The parent of an adapter is a factory (as in DXGI); other objects have none here.
+HRESULT IDXGIObject::GetParent(REFIID riid, void **parent)
+{
+    if (!parent)
+        return E_INVALIDARG;
+    *parent = nullptr;
+    if (!has_interface(__uuidof(IDXGIAdapter)))
+        return E_NOINTERFACE;
+    return CreateDXGIFactory2(0, riid, parent);
+}
+
+// The legacy swap-chain call (imgui's multi-viewport windows): same as CreateSwapChainForHwnd.
+HRESULT IDXGIFactory::CreateSwapChain(IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
+{
+    if (!desc || !swapchain)
+        return E_INVALIDARG;
+    DXGI_SWAP_CHAIN_DESC1 d{};
+    d.Width = desc->BufferDesc.Width;
+    d.Height = desc->BufferDesc.Height;
+    d.Format = desc->BufferDesc.Format;
+    d.SampleDesc = desc->SampleDesc;
+    d.BufferUsage = desc->BufferUsage;
+    d.BufferCount = desc->BufferCount;
+    d.SwapEffect = desc->SwapEffect;
+    d.Flags = desc->Flags;
+    IDXGISwapChain1 *sc = nullptr;
+    const HRESULT hr = static_cast<Factory *>(this)->CreateSwapChainForHwnd(device, desc->OutputWindow, &d, nullptr, nullptr, &sc);
+    *swapchain = sc;
+    return hr;
+}
+
+// The display the window is on.
+HRESULT IDXGISwapChain::GetContainingOutput(IDXGIOutput **output)
+{
+    if (!output)
+        return E_INVALIDARG;
+    auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    const SDL_DisplayID id = SDL_GetDisplayForWindow(sc->window);
+    if (!id)
+        return DXGI_ERROR_NOT_FOUND;
+    auto *o = new Output();
+    o->display = id;
+    *output = o;
+    return S_OK;
+}
+
+// Hardware gamma ramps: DXGI offers them only to a full-screen exclusive swap chain and answers
+// DXGI_ERROR_NOT_CURRENTLY_AVAILABLE otherwise, which the engine (CGammaControl) handles by skipping the
+// ramp. The Vulkan swap chain is never exclusive, so that is the answer here too. (Applying the engine's
+// gamma/brightness/contrast in the final blit is a later feature.)
+HRESULT IDXGIOutput::GetGammaControlCapabilities(DXGI_GAMMA_CONTROL_CAPABILITIES *)
+{
+    return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+}
+HRESULT IDXGIOutput::SetGammaControl(const DXGI_GAMMA_CONTROL *)
+{
+    return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
 }

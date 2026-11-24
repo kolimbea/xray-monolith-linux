@@ -1,5 +1,6 @@
 // See vkCore.h.
 #include "vkCore.h"
+#include "vkHeap.h"
 
 #include <type_traits>
 
@@ -263,6 +264,7 @@ namespace xrvk
         need(f13.synchronization2, "synchronization2");
         need(f12.timelineSemaphore, "timelineSemaphore");
         need(so.shaderObject, "shaderObject");
+        need(f12.hostQueryReset, "hostQueryReset");
         need(vids.vertexInputDynamicState, "vertexInputDynamicState");
         // keep the queried values for the optional extended-dynamic-state-3 bits, the 1.1/1.2/1.3 sets and
         // the base features the D3D11 feature level 11_0 implies; drop what is not used to save driver work
@@ -310,6 +312,18 @@ namespace xrvk
         load(c.ext.destroy_shader, "vkDestroyShaderEXT");
         load(c.ext.bind_shaders, "vkCmdBindShadersEXT");
         load(c.ext.push_descriptor_set, "vkCmdPushDescriptorSetKHR");
+        load(c.ext.set_vertex_input, "vkCmdSetVertexInputEXT");
+        load(c.ext.set_polygon_mode, "vkCmdSetPolygonModeEXT");
+        load(c.ext.set_rasterization_samples, "vkCmdSetRasterizationSamplesEXT");
+        load(c.ext.set_sample_mask, "vkCmdSetSampleMaskEXT");
+        load(c.ext.set_alpha_to_coverage, "vkCmdSetAlphaToCoverageEnableEXT");
+        load(c.ext.set_alpha_to_one, "vkCmdSetAlphaToOneEnableEXT");
+        load(c.ext.set_color_blend_enable, "vkCmdSetColorBlendEnableEXT");
+        load(c.ext.set_color_blend_equation, "vkCmdSetColorBlendEquationEXT");
+        load(c.ext.set_color_write_mask, "vkCmdSetColorWriteMaskEXT");
+        load(c.ext.set_depth_clamp, "vkCmdSetDepthClampEnableEXT");
+        load(c.ext.set_tess_domain_origin, "vkCmdSetTessellationDomainOriginEXT");
+        c.features = have.features;
         VkPhysicalDevicePushDescriptorPropertiesKHR pdp{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR};
         VkPhysicalDeviceProperties2 p2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &pdp};
         vkGetPhysicalDeviceProperties2(phys, &p2);
@@ -323,6 +337,8 @@ namespace xrvk
         if (c.memory_budget)
             ai.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
         XRVK_CHECK(vmaCreateAllocator(&ai, &c.vma));
+        c.heap = new HostHeap();
+        c.heap->init(c.vma);
 
         VkSemaphoreTypeCreateInfo tci{VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO};
         tci.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
@@ -339,6 +355,7 @@ namespace xrvk
             cai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cai.commandBufferCount = 1;
             XRVK_CHECK(vkAllocateCommandBuffers(c.device, &cai, &f.cmd));
+            XRVK_CHECK(vkAllocateCommandBuffers(c.device, &cai, &f.upload));
         }
         // NVIDIA packs its driver version as 10.8.8.6 bits; others use the Vulkan encoding
         const uint32_t dv = c.props.driverVersion;
@@ -362,12 +379,61 @@ namespace xrvk
         return f.cmd;
     }
 
+    VkCommandBuffer Core::upload_cmd()
+    {
+        Frame &f = frames[frame];
+        if (!f.upload_recording)
+        {
+            VkCommandBufferBeginInfo bi{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+            bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            XRVK_CHECK(vkBeginCommandBuffer(f.upload, &bi));
+            f.upload_recording = true;
+        }
+        return f.upload;
+    }
+
+    void Core::defer(std::function<void()> fn)
+    {
+        std::lock_guard<std::mutex> g(deferred_lock);
+        deferred.emplace_back(recording_value(), std::move(fn));
+    }
+
+    uint64_t Core::completed_value()
+    {
+        uint64_t v = 0;
+        XRVK_CHECK(vkGetSemaphoreCounterValue(device, timeline, &v));
+        return v;
+    }
+
     void Core::submit(VkSemaphore wait, VkPipelineStageFlags2 wait_stage, VkSemaphore signal)
     {
         VkCommandBuffer cb = cmd(); // an empty frame still submits, so the timeline keeps advancing
+        if (before_submit)
+            before_submit(cb);
         XRVK_CHECK(vkEndCommandBuffer(cb));
         recording = false;
         Frame &f = frames[frame];
+        VkCommandBufferSubmitInfo cbi[2] = {{VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO}, {VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO}};
+        uint32_t ncb = 0;
+        {
+            std::lock_guard<std::mutex> g(upload_lock);
+            if (f.upload_recording)
+            {
+                VkMemoryBarrier2 mb{VK_STRUCTURE_TYPE_MEMORY_BARRIER_2};
+                mb.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                mb.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+                mb.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                mb.dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+                VkDependencyInfo d{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+                d.memoryBarrierCount = 1;
+                d.pMemoryBarriers = &mb;
+                vkCmdPipelineBarrier2(f.upload, &d);
+                XRVK_CHECK(vkEndCommandBuffer(f.upload));
+                f.upload_recording = false;
+                cbi[ncb++].commandBuffer = f.upload;
+            }
+        }
+        cbi[ncb++].commandBuffer = cb;
         f.done_value = ++timeline_value;
 
         VkSemaphoreSubmitInfo waits{VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO};
@@ -379,13 +445,11 @@ namespace xrvk
         signals[0].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
         signals[1].semaphore = signal;
         signals[1].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-        VkCommandBufferSubmitInfo cbi{VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO};
-        cbi.commandBuffer = cb;
         VkSubmitInfo2 si{VK_STRUCTURE_TYPE_SUBMIT_INFO_2};
         si.waitSemaphoreInfoCount = wait ? 1 : 0;
         si.pWaitSemaphoreInfos = &waits;
-        si.commandBufferInfoCount = 1;
-        si.pCommandBufferInfos = &cbi;
+        si.commandBufferInfoCount = ncb;
+        si.pCommandBufferInfos = cbi;
         si.signalSemaphoreInfoCount = signal ? 2 : 1;
         si.pSignalSemaphoreInfos = signals;
         XRVK_CHECK(vkQueueSubmit2(queue, 1, &si, VK_NULL_HANDLE));
@@ -403,12 +467,40 @@ namespace xrvk
             wi.pValues = &f.done_value;
             XRVK_CHECK(vkWaitSemaphores(device, &wi, UINT64_MAX));
         }
+        std::lock_guard<std::mutex> g(upload_lock); // the pool also holds the upload command buffer
         XRVK_CHECK(vkResetCommandPool(device, f.pool, 0));
+        const uint64_t done = completed_value();
+        heap->collect(done);
+        std::deque<std::function<void()>> run;
+        {
+            std::lock_guard<std::mutex> d(deferred_lock);
+            while (!deferred.empty() && deferred.front().first <= done)
+            {
+                run.push_back(std::move(deferred.front().second));
+                deferred.pop_front();
+            }
+        }
+        for (auto &fn : run)
+            fn();
+    }
+
+    void Core::flush()
+    {
+        if (recording)
+        {
+            submit();
+            next_frame();
+        }
     }
 
     void Core::flush_and_wait()
     {
-        if (recording)
+        bool upload;
+        {
+            std::lock_guard<std::mutex> g(upload_lock);
+            upload = frames[frame].upload_recording;
+        }
+        if (recording || upload)
         {
             submit();
             next_frame();
@@ -422,9 +514,14 @@ namespace xrvk
         {
             Core &c = *g_core;
             vkDeviceWaitIdle(c.device);
+            for (auto &d : c.deferred)
+                d.second();
+            c.deferred.clear();
             for (Frame &f : c.frames)
                 vkDestroyCommandPool(c.device, f.pool, nullptr);
             vkDestroySemaphore(c.device, c.timeline, nullptr);
+            c.heap->destroy(c.vma);
+            delete c.heap;
             vmaDestroyAllocator(c.vma);
             vkDestroyDevice(c.device, nullptr);
             delete g_core;
