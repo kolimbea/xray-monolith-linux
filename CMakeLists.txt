@@ -173,6 +173,8 @@ xr_module(xrRender_VK ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj
     EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp xrRenderDX10/dx10HW.cpp
     EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/dds_codec.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp)
 target_compile_definitions(xrRender_VK PRIVATE USE_DX11 USE_VK)
+file(GLOB XR_VK_SRC CONFIGURE_DEPENDS ${XR_SRC}/Layers/xrRenderVK/*.cpp)
+target_sources(xrRender_VK PRIVATE ${XR_VK_SRC})
 # stand-in d3d11.h/dxgi*.h/d3dcompiler.h first: they lead to xrRenderVK/vkCommonTypes.h
 target_include_directories(xrRender_VK BEFORE PRIVATE ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)
 target_include_directories(xrRender_VK PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 ${XR_DXSDK_CI}
@@ -193,8 +195,11 @@ target_link_libraries(crypto PUBLIC xr_common xrCore OpenSSL::Crypto)
 xr_module(cximage "${XR_3RD}/cximage/cximage.vcxproj")
 target_compile_options(cximage PRIVATE -include ${XR_SRC}/Common/linux/cximage_prelude.h)
 target_link_libraries(cximage PUBLIC PkgConfig::XR_MEDIA)
-target_sources(imgui PRIVATE "${XR_3RD}/imgui/backends/imgui_impl_dx11.cpp") # works on dxvk-native
-target_include_directories(imgui PRIVATE "${XR_3RD}/imgui/backends")
+# The imgui D3D11 backend is compiled into each renderer against that renderer's D3D11 types.
+foreach(r xrRender_R4 xrRender_VK)
+    target_sources(${r} PRIVATE "${XR_3RD}/imgui/backends/imgui_impl_dx11.cpp")
+    target_include_directories(${r} PRIVATE "${XR_3RD}/imgui/backends")
+endforeach()
 
 # --- the game executable (all-in-one, like Monolith on Windows) ---
 add_executable(xray ${XR_SRC}/Common/linux/exe_main_stub.cpp ${XR_SRC}/Common/linux/reshade_stub.cpp)
@@ -208,3 +213,14 @@ target_link_libraries(xray PRIVATE
     xrCore)
 target_link_options(xray PRIVATE -rdynamic)  # symbol names in xrDebug backtraces
 set_target_properties(xray PROPERTIES BUILD_RPATH "${DXVK_NATIVE_DIR}/lib;$<TARGET_FILE_DIR:xrCore>")
+
+# The same game linked with the Vulkan renderer instead of R4-on-dxvk (stage 2, ADR 0001).
+add_executable(xray_vk ${XR_SRC}/Common/linux/exe_main_stub.cpp ${XR_SRC}/Common/linux/reshade_stub.cpp)
+target_link_libraries(xray_vk PRIVATE
+    -Wl,--start-group
+    xrGame xrRender_VK xrEngine xrNetServer xrPhysics ode xrSound xrParticles xrCPU_Pipe xrCDB xrXMLParser
+    imgui luabind lua_extensions luajit xrAPI crypto cximage
+    -Wl,--end-group
+    gif)
+target_link_options(xray_vk PRIVATE -rdynamic)
+set_target_properties(xray_vk PROPERTIES BUILD_RPATH "$<TARGET_FILE_DIR:xrCore>")
