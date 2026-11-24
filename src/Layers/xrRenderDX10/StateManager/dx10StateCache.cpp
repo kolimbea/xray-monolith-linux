@@ -148,3 +148,9 @@ dx10StateCache< ID3DxxBlendState , D3D_BLEND_DESC >
 	}
 }
 */
+
+// Members are defined here, not in the header: instantiate them for the users in other TUs
+// (MSVC emitted them implicitly).
+template class dx10StateCache<ID3DRasterizerState, D3D_RASTERIZER_DESC>;
+template class dx10StateCache<ID3DDepthStencilState, D3D_DEPTH_STENCIL_DESC>;
+template class dx10StateCache<ID3DBlendState, D3D_BLEND_DESC>;

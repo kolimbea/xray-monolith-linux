@@ -4,7 +4,6 @@ list(REMOVE_ITEM XRCORE_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/xrDebug.cpp                  # excluded on Windows too
     ${CMAKE_CURRENT_SOURCE_DIR}/xrDebugNew.cpp               # replaced by Common/linux/xrDebug_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LocatorAPI_Notifications.cpp # excluded on Windows; unused
-    ${CMAKE_CURRENT_SOURCE_DIR}/_std_extensions.cpp          # excluded on Windows
     ${CMAKE_CURRENT_SOURCE_DIR}/FileSystem_borland.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/xrMemory_subst_borland.cpp)
 
