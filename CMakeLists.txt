@@ -167,13 +167,14 @@ target_link_directories(xrRender_R4 PUBLIC ${DXVK_NATIVE_DIR}/lib)
 target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)
 
 # --- Stage 2: own Vulkan renderer (ADR 0001). Same R4 pipeline + shared layer sources, compiled with
-# USE_VK (and USE_DX11 for the R3/R4 pipeline logic); the D3D11 backend files (xrRenderDX10/dx10*,
-# StateManager, 3DFluid) are replaced by Layers/xrRenderVK. Not linked against dxvk.
+# USE_VK (and USE_DX11 for the R3/R4 pipeline logic). xrRenderDX10's logic is reused; dx10HW.cpp and the
+# D3D11 objects themselves are replaced by Layers/xrRenderVK (ADR 0001 refinement). Not linked against dxvk.
 xr_module(xrRender_VK ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj
-    EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp xrRenderDX10/dx10 xrRenderDX10/StateManager/ xrRenderDX10/3DFluid/
-    EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/dds_codec.cpp)
+    EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp xrRenderDX10/dx10HW.cpp
+    EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/dds_codec.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp)
 target_compile_definitions(xrRender_VK PRIVATE USE_DX11 USE_VK)
-target_include_directories(xrRender_VK BEFORE PRIVATE ${XR_SRC}/Layers/xrRenderVK)
+# stand-in d3d11.h/dxgi*.h/d3dcompiler.h first: they lead to xrRenderVK/vkCommonTypes.h
+target_include_directories(xrRender_VK BEFORE PRIVATE ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)
 target_include_directories(xrRender_VK PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 ${XR_DXSDK_CI}
     "${XR_3RD}/imgui")
 find_package(Vulkan REQUIRED)
