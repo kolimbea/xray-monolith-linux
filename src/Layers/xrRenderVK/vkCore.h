@@ -50,6 +50,16 @@ namespace xrvk
         VmaAllocator vma = nullptr;
         bool validation = false;
         bool memory_budget = false;
+        uint32_t max_push_descriptors = 0; // VK_KHR_push_descriptor limit per set
+
+        // device-level entry points of the required extensions (the loader exports core functions only)
+        struct
+        {
+            PFN_vkCreateShadersEXT create_shaders = nullptr;
+            PFN_vkDestroyShaderEXT destroy_shader = nullptr;
+            PFN_vkCmdBindShadersEXT bind_shaders = nullptr;
+            PFN_vkCmdPushDescriptorSetKHR push_descriptor_set = nullptr;
+        } ext;
 
         VkSemaphore timeline = VK_NULL_HANDLE;
         uint64_t timeline_value = 0; // last value submitted

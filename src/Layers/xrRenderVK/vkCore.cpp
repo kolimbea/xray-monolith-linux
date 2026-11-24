@@ -1,6 +1,8 @@
 // See vkCore.h.
 #include "vkCore.h"
 
+#include <type_traits>
+
 #include <SDL3/SDL_vulkan.h>
 
 #include <cstdarg>
@@ -298,6 +300,20 @@ namespace xrvk
         dci.ppEnabledExtensionNames = ext.data();
         XRVK_CHECK(vkCreateDevice(phys, &dci, nullptr, &c.device));
         vkGetDeviceQueue(c.device, c.queue_family, 0, &c.queue);
+        auto load = [&c](auto &fn, const char *name)
+        {
+            fn = reinterpret_cast<std::remove_reference_t<decltype(fn)>>(vkGetDeviceProcAddr(c.device, name));
+            if (!fn)
+                fail("vkGetDeviceProcAddr(%s) failed", name);
+        };
+        load(c.ext.create_shaders, "vkCreateShadersEXT");
+        load(c.ext.destroy_shader, "vkDestroyShaderEXT");
+        load(c.ext.bind_shaders, "vkCmdBindShadersEXT");
+        load(c.ext.push_descriptor_set, "vkCmdPushDescriptorSetKHR");
+        VkPhysicalDevicePushDescriptorPropertiesKHR pdp{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR};
+        VkPhysicalDeviceProperties2 p2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &pdp};
+        vkGetPhysicalDeviceProperties2(phys, &p2);
+        c.max_push_descriptors = pdp.maxPushDescriptors;
 
         VmaAllocatorCreateInfo ai{};
         ai.physicalDevice = phys;

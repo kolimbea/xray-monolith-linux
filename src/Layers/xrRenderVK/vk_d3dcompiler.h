@@ -1,5 +1,5 @@
 // Shader-compiler API of the Vulkan build: same names/signatures as d3dcompiler.h, implemented by the
-// backend (HLSL -> SPIR-V with DXC, reflection from SPIR-V; xrRenderVK/vkShaderCompiler.cpp).
+// backend (HLSL -> SPIR-V with DXC, reflection from SPIR-V; xrRenderVK/vkShader.cpp, vkReflection.cpp).
 #pragma once
 #include "vkCommonTypes.h"
 

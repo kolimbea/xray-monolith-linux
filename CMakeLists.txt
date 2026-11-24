@@ -174,14 +174,32 @@ xr_module(xrRender_VK ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj
     EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/dds_codec.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp)
 target_compile_definitions(xrRender_VK PRIVATE USE_DX11 USE_VK)
 find_package(Vulkan REQUIRED)
+# Shader toolchain of the Vulkan renderer (tools/fetch_deps.sh puts both into build/deps):
+# DXC 1.9.2609 (libdxcompiler.so, in-process HLSL -> SPIR-V) and SPIRV-Reflect vulkan-sdk-1.4.363.0.
+set(DXC_DIR "${CMAKE_SOURCE_DIR}/../build/deps/dxc-1.9.2609" CACHE PATH "DXC release directory")
+set(SPIRV_REFLECT_DIR "${CMAKE_SOURCE_DIR}/../build/deps/spirv-reflect-1.4.363.0" CACHE PATH "SPIRV-Reflect source")
+if(NOT EXISTS "${DXC_DIR}/lib/libdxcompiler.so" OR NOT EXISTS "${SPIRV_REFLECT_DIR}/spirv_reflect.c")
+    message(FATAL_ERROR "DXC or SPIRV-Reflect missing in build/deps (run tools/fetch_deps.sh)")
+endif()
+add_library(dxcompiler SHARED IMPORTED)
+set_target_properties(dxcompiler PROPERTIES IMPORTED_LOCATION "${DXC_DIR}/lib/libdxcompiler.so"
+    INTERFACE_INCLUDE_DIRECTORIES "${DXC_DIR}/include")
+add_library(spirv_reflect STATIC ${SPIRV_REFLECT_DIR}/spirv_reflect.c)
+target_include_directories(spirv_reflect SYSTEM PUBLIC ${SPIRV_REFLECT_DIR})
+# DXC wrapper + HLSL compat rules: std types only, deliberately without the engine's include paths
+# (DXC's COM headers and the engine's Win32 stand-ins cannot share a translation unit).
+add_library(xrVK_shaderc STATIC ${XR_SRC}/Layers/xrRenderVK/vkDxc.cpp ${XR_SRC}/Layers/xrRenderVK/vkHlslRewrite.cpp)
+target_include_directories(xrVK_shaderc PUBLIC ${XR_SRC}/Layers/xrRenderVK)
+target_link_libraries(xrVK_shaderc PRIVATE dxcompiler)
+
 # xrVK_core: the Vulkan device layer, independent of the engine (tests/vk_smoke.cpp links it alone).
-set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp)
+set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp vkShader.cpp vkReflection.cpp vkShaderObjects.cpp)
 list(TRANSFORM XR_VK_CORE_SRC PREPEND ${XR_SRC}/Layers/xrRenderVK/)
 add_library(xrVK_core STATIC ${XR_VK_CORE_SRC})
 target_include_directories(xrVK_core BEFORE PUBLIC ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)
-target_link_libraries(xrVK_core PUBLIC xr_common Vulkan::Vulkan SDL3::SDL3)
+target_link_libraries(xrVK_core PUBLIC xr_common Vulkan::Vulkan SDL3::SDL3 PRIVATE xrVK_shaderc spirv_reflect dxcompiler)
 file(GLOB XR_VK_SRC CONFIGURE_DEPENDS ${XR_SRC}/Layers/xrRenderVK/*.cpp)
-list(REMOVE_ITEM XR_VK_SRC ${XR_VK_CORE_SRC})
+list(REMOVE_ITEM XR_VK_SRC ${XR_VK_CORE_SRC} ${XR_SRC}/Layers/xrRenderVK/vkDxc.cpp ${XR_SRC}/Layers/xrRenderVK/vkHlslRewrite.cpp)
 target_sources(xrRender_VK PRIVATE ${XR_VK_SRC})
 target_link_libraries(xrRender_VK PUBLIC xrVK_core)
 # stand-in d3d11.h/dxgi*.h/d3dcompiler.h first: they lead to xrRenderVK/vkCommonTypes.h
@@ -236,3 +254,12 @@ set_target_properties(xray_vk PROPERTIES BUILD_RPATH "$<TARGET_FILE_DIR:xrCore>"
 # Milestone M2 test of the Vulkan device layer (tests/vk_smoke.cpp).
 add_executable(vk_smoke ${CMAKE_SOURCE_DIR}/../tests/vk_smoke.cpp)
 target_link_libraries(vk_smoke PRIVATE xrVK_core)
+# Milestone M3 check: every shader of an exported tree through D3DCompile/D3DReflect (tests/vk_shaders.cpp).
+add_executable(vk_shaders ${CMAKE_SOURCE_DIR}/../tests/vk_shaders.cpp)
+target_link_libraries(vk_shaders PRIVATE xrVK_core)
+# Reflection dump against the Vulkan backend (tests/reflect_dump.cpp; R4 counterpart: tests/reflect_dump_r4.sh).
+add_executable(reflect_dump_vk ${CMAKE_SOURCE_DIR}/../tests/reflect_dump.cpp)
+target_link_libraries(reflect_dump_vk PRIVATE xrVK_core)
+# Unit test of the HLSL compat rules (tests/vk_hlsl_rewrite.cpp).
+add_executable(vk_hlsl_rewrite ${CMAKE_SOURCE_DIR}/../tests/vk_hlsl_rewrite.cpp)
+target_link_libraries(vk_hlsl_rewrite PRIVATE xrVK_shaderc)

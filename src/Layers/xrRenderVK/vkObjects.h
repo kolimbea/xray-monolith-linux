@@ -5,9 +5,11 @@
 #include "vkCommonTypes.h"
 
 #include <initializer_list>
+#include <memory>
 #include <vector>
 
 #include "vkCore.h"
+#include "vkShader.h"
 
 struct SDL_Window;
 
@@ -71,10 +73,53 @@ namespace xrvk
         bool has_interface(REFIID riid) const override;
     };
 
+    // A compiled shader: its reflection and the module for vkCreateShadersEXT. Shared by the D3D shader
+    // object and every program that uses it.
+    struct ShaderModule
+    {
+        ShaderInfo info;
+        std::vector<uint32_t> code; // SPIR-V without the reflection-only decorations
+        uint64_t id = 0;            // unique per module; program cache key
+    };
+
+    template <class I> struct Shader final : public I
+    {
+        std::shared_ptr<const ShaderModule> module;
+        bool has_interface(REFIID r) const override
+        {
+            return iid_in(r, {__uuidof(ID3D11DeviceChild), __uuidof(I)});
+        }
+    };
+    using VertexShader = Shader<ID3D11VertexShader>;
+    using HullShader = Shader<ID3D11HullShader>;
+    using DomainShader = Shader<ID3D11DomainShader>;
+    using GeometryShader = Shader<ID3D11GeometryShader>;
+    using PixelShader = Shader<ID3D11PixelShader>;
+    using ComputeShader = Shader<ID3D11ComputeShader>;
+
+    // The shader stages bound for a draw (or one compute shader) as linked shader objects with one
+    // push-descriptor set layout: the union of the stages' bindings (see vkShader.h).
+    struct Program
+    {
+        std::shared_ptr<const ShaderModule> modules[size_t(Stage::Count)];
+        VkShaderEXT shaders[size_t(Stage::Count)] = {};
+        VkDescriptorSetLayout set_layout = VK_NULL_HANDLE;
+        VkPipelineLayout layout = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSetLayoutBinding> bindings;
+        ~Program();
+    };
+    struct ProgramCache;
+
     struct Device final : public ID3D11Device2
     {
         ID3D11DeviceContext *immediate = nullptr;
+        std::unique_ptr<ProgramCache> programs;
         bool has_interface(REFIID riid) const override;
+        Device();
+        ~Device() override;
+        // The program of these stages (null where a stage is unbound; compute alone or graphics without
+        // compute), created on first use; null with a logged reason if Vulkan rejects it.
+        const Program *program(const std::shared_ptr<const ShaderModule> (&stages)[size_t(Stage::Count)]);
     };
 
     struct Context final : public ID3D11DeviceContext2

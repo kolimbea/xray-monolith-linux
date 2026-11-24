@@ -3,41 +3,6 @@
 #include "stdafx.h"
 #include "vkBase.h"
 
-extern "C" HRESULT WINAPI D3DCompile(const void* data, SIZE_T data_size, const char* filename, const D3D_SHADER_MACRO* defines, ID3DInclude* include, const char* entrypoint, const char* target, UINT sflags, UINT eflags, ID3DBlob** shader, ID3DBlob** error_messages)
-{
-    xrvk::not_implemented("D3DCompile");
-}
-
-extern "C" HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob** blob)
-{
-    xrvk::not_implemented("D3DCreateBlob");
-}
-
-extern "C" HRESULT WINAPI D3DDisassemble(const void* data, SIZE_T data_size, UINT flags, const char* comments, ID3DBlob** disassembly)
-{
-    xrvk::not_implemented("D3DDisassemble");
-}
-
-extern "C" HRESULT WINAPI D3DGetInputSignatureBlob(const void* data, SIZE_T data_size, ID3DBlob** blob)
-{
-    xrvk::not_implemented("D3DGetInputSignatureBlob");
-}
-
-extern "C" HRESULT WINAPI D3DReflect(const void* data, SIZE_T data_size, REFIID riid, void** reflector)
-{
-    xrvk::not_implemented("D3DReflect");
-}
-
-void * ID3D10Blob::GetBufferPointer()
-{
-    xrvk::not_implemented("ID3D10Blob::GetBufferPointer");
-}
-
-SIZE_T ID3D10Blob::GetBufferSize()
-{
-    xrvk::not_implemented("ID3D10Blob::GetBufferSize");
-}
-
 void ID3D11BlendState::GetDesc(D3D11_BLEND_DESC *pDesc)
 {
     xrvk::not_implemented("ID3D11BlendState::GetDesc");
@@ -63,39 +28,14 @@ HRESULT ID3D11Device::CreateBuffer(const D3D11_BUFFER_DESC *pDesc, const D3D11_S
     xrvk::not_implemented("ID3D11Device::CreateBuffer");
 }
 
-HRESULT ID3D11Device::CreateComputeShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11ComputeShader **ppComputeShader)
-{
-    xrvk::not_implemented("ID3D11Device::CreateComputeShader");
-}
-
 HRESULT ID3D11Device::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC *pDepthStencilDesc, ID3D11DepthStencilState **ppDepthStencilState)
 {
     xrvk::not_implemented("ID3D11Device::CreateDepthStencilState");
 }
 
-HRESULT ID3D11Device::CreateDomainShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11DomainShader **ppDomainShader)
-{
-    xrvk::not_implemented("ID3D11Device::CreateDomainShader");
-}
-
-HRESULT ID3D11Device::CreateGeometryShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11GeometryShader **ppGeometryShader)
-{
-    xrvk::not_implemented("ID3D11Device::CreateGeometryShader");
-}
-
-HRESULT ID3D11Device::CreateHullShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11HullShader **ppHullShader)
-{
-    xrvk::not_implemented("ID3D11Device::CreateHullShader");
-}
-
 HRESULT ID3D11Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs, UINT NumElements, const void *pShaderBytecodeWithInputSignature, SIZE_T BytecodeLength, ID3D11InputLayout **ppInputLayout)
 {
     xrvk::not_implemented("ID3D11Device::CreateInputLayout");
-}
-
-HRESULT ID3D11Device::CreatePixelShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11PixelShader **ppPixelShader)
-{
-    xrvk::not_implemented("ID3D11Device::CreatePixelShader");
 }
 
 HRESULT ID3D11Device::CreateQuery(const D3D11_QUERY_DESC *pQueryDesc, ID3D11Query **ppQuery)
@@ -131,11 +71,6 @@ HRESULT ID3D11Device::CreateTexture3D(const D3D11_TEXTURE3D_DESC *pDesc, const D
 HRESULT ID3D11Device::CreateUnorderedAccessView(ID3D11Resource *pResource, const D3D11_UNORDERED_ACCESS_VIEW_DESC *pDesc, ID3D11UnorderedAccessView **ppUAView)
 {
     xrvk::not_implemented("ID3D11Device::CreateUnorderedAccessView");
-}
-
-HRESULT ID3D11Device::CreateVertexShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11VertexShader **ppVertexShader)
-{
-    xrvk::not_implemented("ID3D11Device::CreateVertexShader");
 }
 
 HRESULT ID3D11Device::GetDeviceRemovedReason()
@@ -451,46 +386,6 @@ void ID3D11RasterizerState::GetDesc(D3D11_RASTERIZER_DESC *pDesc)
 void ID3D11SamplerState::GetDesc(D3D11_SAMPLER_DESC *pDesc)
 {
     xrvk::not_implemented("ID3D11SamplerState::GetDesc");
-}
-
-struct ID3D11ShaderReflectionConstantBuffer * ID3D11ShaderReflection::GetConstantBufferByIndex(UINT index)
-{
-    xrvk::not_implemented("ID3D11ShaderReflection::GetConstantBufferByIndex");
-}
-
-HRESULT ID3D11ShaderReflection::GetDesc(D3D11_SHADER_DESC *desc)
-{
-    xrvk::not_implemented("ID3D11ShaderReflection::GetDesc");
-}
-
-HRESULT ID3D11ShaderReflection::GetResourceBindingDesc(UINT index, D3D11_SHADER_INPUT_BIND_DESC *desc)
-{
-    xrvk::not_implemented("ID3D11ShaderReflection::GetResourceBindingDesc");
-}
-
-HRESULT ID3D11ShaderReflectionConstantBuffer::GetDesc(D3D11_SHADER_BUFFER_DESC *desc)
-{
-    xrvk::not_implemented("ID3D11ShaderReflectionConstantBuffer::GetDesc");
-}
-
-struct ID3D11ShaderReflectionVariable * ID3D11ShaderReflectionConstantBuffer::GetVariableByIndex(UINT index)
-{
-    xrvk::not_implemented("ID3D11ShaderReflectionConstantBuffer::GetVariableByIndex");
-}
-
-HRESULT ID3D11ShaderReflectionType::GetDesc(D3D11_SHADER_TYPE_DESC *desc)
-{
-    xrvk::not_implemented("ID3D11ShaderReflectionType::GetDesc");
-}
-
-HRESULT ID3D11ShaderReflectionVariable::GetDesc(D3D11_SHADER_VARIABLE_DESC *desc)
-{
-    xrvk::not_implemented("ID3D11ShaderReflectionVariable::GetDesc");
-}
-
-struct ID3D11ShaderReflectionType * ID3D11ShaderReflectionVariable::GetType()
-{
-    xrvk::not_implemented("ID3D11ShaderReflectionVariable::GetType");
 }
 
 void ID3D11Texture1D::GetDesc(D3D11_TEXTURE1D_DESC *pDesc)
