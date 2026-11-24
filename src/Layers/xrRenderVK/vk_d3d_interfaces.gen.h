@@ -39,6 +39,14 @@ struct IDXGISwapChain3;
 struct IDXGIOutput4;
 struct IDXGIFactory4;
 struct IDXGIAdapter3;
+struct IDXGIOutput5;
+struct IDXGISwapChain4;
+struct IDXGIDevice4;
+struct IDXGIFactory5;
+struct IDXGIAdapter4;
+struct IDXGIOutput6;
+struct IDXGIFactory6;
+struct IDXGIFactory7;
 struct ID3D11DeviceChild;
 struct ID3D11Asynchronous;
 struct ID3D11Query;
@@ -468,6 +476,65 @@ struct IDXGIAdapter3 : public IDXGIAdapter2
     void UnregisterVideoMemoryBudgetChangeNotification(DWORD cookie);
 #ifdef XRVK_EXTRA_IDXGIAdapter3
     XRVK_EXTRA_IDXGIAdapter3
+#endif
+};
+struct IDXGIOutput5 : public IDXGIOutput4
+{
+    HRESULT DuplicateOutput1(IUnknown *device, UINT flags, UINT format_count, const DXGI_FORMAT *formats, IDXGIOutputDuplication **duplication);
+#ifdef XRVK_EXTRA_IDXGIOutput5
+    XRVK_EXTRA_IDXGIOutput5
+#endif
+};
+struct IDXGISwapChain4 : public IDXGISwapChain3
+{
+    HRESULT SetHDRMetaData(DXGI_HDR_METADATA_TYPE type, UINT size, void *metadata);
+#ifdef XRVK_EXTRA_IDXGISwapChain4
+    XRVK_EXTRA_IDXGISwapChain4
+#endif
+};
+struct IDXGIDevice4 : public IDXGIDevice3
+{
+    HRESULT OfferResources1(UINT resource_count, IDXGIResource *const *resources, DXGI_OFFER_RESOURCE_PRIORITY priority, UINT flags);
+    HRESULT ReclaimResources1(UINT resource_count, IDXGIResource *const *resources, DXGI_RECLAIM_RESOURCE_RESULTS *results);
+#ifdef XRVK_EXTRA_IDXGIDevice4
+    XRVK_EXTRA_IDXGIDevice4
+#endif
+};
+struct IDXGIFactory5 : public IDXGIFactory4
+{
+    HRESULT CheckFeatureSupport(DXGI_FEATURE feature, void *support_data, UINT support_data_size);
+#ifdef XRVK_EXTRA_IDXGIFactory5
+    XRVK_EXTRA_IDXGIFactory5
+#endif
+};
+struct IDXGIAdapter4 : public IDXGIAdapter3
+{
+    HRESULT GetDesc3(DXGI_ADAPTER_DESC3 *desc);
+#ifdef XRVK_EXTRA_IDXGIAdapter4
+    XRVK_EXTRA_IDXGIAdapter4
+#endif
+};
+struct IDXGIOutput6 : public IDXGIOutput5
+{
+    HRESULT GetDesc1(DXGI_OUTPUT_DESC1 *desc);
+    HRESULT CheckHardwareCompositionSupport(UINT *flags);
+#ifdef XRVK_EXTRA_IDXGIOutput6
+    XRVK_EXTRA_IDXGIOutput6
+#endif
+};
+struct IDXGIFactory6 : public IDXGIFactory5
+{
+    HRESULT EnumAdapterByGpuPreference(UINT adapter_idx, DXGI_GPU_PREFERENCE gpu_preference, REFIID iid, void **adapter);
+#ifdef XRVK_EXTRA_IDXGIFactory6
+    XRVK_EXTRA_IDXGIFactory6
+#endif
+};
+struct IDXGIFactory7 : public IDXGIFactory6
+{
+    HRESULT RegisterAdaptersChangedEvent(HANDLE event, DWORD *cookie);
+    HRESULT UnregisterAdaptersChangedEvent(DWORD cookie);
+#ifdef XRVK_EXTRA_IDXGIFactory7
+    XRVK_EXTRA_IDXGIFactory7
 #endif
 };
 struct ID3D11DeviceChild : public xrvk::ComBase
@@ -1243,6 +1310,14 @@ DECLARE_UUIDOF_HELPER(IDXGISwapChain3, 0x94d99bdb, 0xf1f8, 0x4ab0, 0xb2, 0x36, 0
 DECLARE_UUIDOF_HELPER(IDXGIOutput4, 0xdc7dca35, 0x2196, 0x414d, 0x9f, 0x53, 0x61, 0x78, 0x84, 0x03, 0x2a, 0x60)
 DECLARE_UUIDOF_HELPER(IDXGIFactory4, 0x1bc6ea02, 0xef36, 0x464f, 0xbf, 0x0c, 0x21, 0xca, 0x39, 0xe5, 0x16, 0x8a)
 DECLARE_UUIDOF_HELPER(IDXGIAdapter3, 0x645967a4, 0x1392, 0x4310, 0xa7, 0x98, 0x80, 0x53, 0xce, 0x3e, 0x93, 0xfd)
+DECLARE_UUIDOF_HELPER(IDXGIOutput5, 0x80a07424, 0xab52, 0x42eb, 0x83, 0x3c, 0x0c, 0x42, 0xfd, 0x28, 0x2d, 0x98)
+DECLARE_UUIDOF_HELPER(IDXGISwapChain4, 0x3d585d5a, 0xbd4a, 0x489e, 0xb1, 0xf4, 0x3d, 0xbc, 0xb6, 0x45, 0x2f, 0xfb)
+DECLARE_UUIDOF_HELPER(IDXGIDevice4, 0x95b4f95f, 0xd8da, 0x4ca4, 0x9e, 0xe6, 0x3b, 0x76, 0xd5, 0x96, 0x8a, 0x10)
+DECLARE_UUIDOF_HELPER(IDXGIFactory5, 0x7632e1f5, 0xee65, 0x4dca, 0x87, 0xfd, 0x84, 0xcd, 0x75, 0xf8, 0x83, 0x8d)
+DECLARE_UUIDOF_HELPER(IDXGIAdapter4, 0x3c8d99d1, 0x4fbf, 0x4181, 0xa8, 0x2c, 0xaf, 0x66, 0xbf, 0x7b, 0xd2, 0x4e)
+DECLARE_UUIDOF_HELPER(IDXGIOutput6, 0x068346e8, 0xaaec, 0x4b84, 0xad, 0xd7, 0x13, 0x7f, 0x51, 0x3f, 0x77, 0xa1)
+DECLARE_UUIDOF_HELPER(IDXGIFactory6, 0xc1b6694f, 0xff09, 0x44a9, 0xb0, 0x3c, 0x77, 0x90, 0x0a, 0x0a, 0x1d, 0x17)
+DECLARE_UUIDOF_HELPER(IDXGIFactory7, 0xa4966eed, 0x76db, 0x44da, 0x84, 0xc1, 0xee, 0x9a, 0x7a, 0xfb, 0x20, 0xa8)
 DECLARE_UUIDOF_HELPER(ID3D11DeviceChild, 0x1841e5c8, 0x16b0, 0x489b, 0xbc, 0xc8, 0x44, 0xcf, 0xb0, 0xd5, 0xde, 0xae)
 DECLARE_UUIDOF_HELPER(ID3D11Asynchronous, 0x4b35d0cd, 0x1e15, 0x4258, 0x9c, 0x98, 0x1b, 0x13, 0x33, 0xf6, 0xdd, 0x3b)
 DECLARE_UUIDOF_HELPER(ID3D11Query, 0xd6c00747, 0x87b7, 0x425e, 0xb8, 0x4d, 0x44, 0xd1, 0x08, 0x56, 0x0a, 0xfd)

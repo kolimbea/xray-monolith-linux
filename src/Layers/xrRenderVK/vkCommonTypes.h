@@ -18,6 +18,9 @@ namespace xrvk
     struct ComBase : public IUnknown
     {
         virtual ~ComBase() = default;
+    using IUnknown::QueryInterface; // keep the QueryInterface(T**) convenience overload visible
+    // The leaf classes (xrRenderVK/vkObjects.h) list the interfaces they implement.
+    virtual bool has_interface(REFIID) const { return false; }
         HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **out) override;
         ULONG STDMETHODCALLTYPE AddRef() override
         {
@@ -64,3 +67,16 @@ inline UINT D3D11CalcSubresource(UINT mip_slice, UINT array_slice, UINT mip_leve
 // GetBuffer accepts it as well as ID3D11Texture2D's).
 struct ID3D10Texture2D;
 DECLARE_UUIDOF_HELPER(ID3D10Texture2D, 0x9b7e4c04, 0x342c, 0x4106, 0xa1, 0x9f, 0x4f, 0x27, 0x04, 0xf6, 0x89, 0xf0)
+
+// Entry points dx10HW.cpp calls; implemented on Vulkan in vkDXGI.cpp / vkDevice.cpp.
+extern "C" {
+HRESULT WINAPI CreateDXGIFactory(REFIID riid, void** factory);
+HRESULT WINAPI CreateDXGIFactory1(REFIID riid, void** factory);
+HRESULT WINAPI CreateDXGIFactory2(UINT flags, REFIID riid, void** factory);
+HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter* adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
+    const D3D_FEATURE_LEVEL* feature_levels, UINT levels, UINT sdk_version, ID3D11Device** device,
+    D3D_FEATURE_LEVEL* obtained_feature_level, ID3D11DeviceContext** immediate_context);
+}
+#ifndef D3D11_SDK_VERSION
+#define D3D11_SDK_VERSION 7
+#endif

@@ -3,6 +3,31 @@
 #include "stdafx.h"
 #include "vkBase.h"
 
+extern "C" HRESULT WINAPI D3DCompile(const void* data, SIZE_T data_size, const char* filename, const D3D_SHADER_MACRO* defines, ID3DInclude* include, const char* entrypoint, const char* target, UINT sflags, UINT eflags, ID3DBlob** shader, ID3DBlob** error_messages)
+{
+    xrvk::not_implemented("D3DCompile");
+}
+
+extern "C" HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob** blob)
+{
+    xrvk::not_implemented("D3DCreateBlob");
+}
+
+extern "C" HRESULT WINAPI D3DDisassemble(const void* data, SIZE_T data_size, UINT flags, const char* comments, ID3DBlob** disassembly)
+{
+    xrvk::not_implemented("D3DDisassemble");
+}
+
+extern "C" HRESULT WINAPI D3DGetInputSignatureBlob(const void* data, SIZE_T data_size, ID3DBlob** blob)
+{
+    xrvk::not_implemented("D3DGetInputSignatureBlob");
+}
+
+extern "C" HRESULT WINAPI D3DReflect(const void* data, SIZE_T data_size, REFIID riid, void** reflector)
+{
+    xrvk::not_implemented("D3DReflect");
+}
+
 void * ID3D10Blob::GetBufferPointer()
 {
     xrvk::not_implemented("ID3D10Blob::GetBufferPointer");
@@ -28,11 +53,6 @@ void ID3D11DepthStencilState::GetDesc(D3D11_DEPTH_STENCIL_DESC *pDesc)
     xrvk::not_implemented("ID3D11DepthStencilState::GetDesc");
 }
 
-void ID3D11DepthStencilView::GetDesc(D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc)
-{
-    xrvk::not_implemented("ID3D11DepthStencilView::GetDesc");
-}
-
 HRESULT ID3D11Device::CreateBlendState(const D3D11_BLEND_DESC *pBlendStateDesc, ID3D11BlendState **ppBlendState)
 {
     xrvk::not_implemented("ID3D11Device::CreateBlendState");
@@ -51,11 +71,6 @@ HRESULT ID3D11Device::CreateComputeShader(const void *pShaderBytecode, SIZE_T By
 HRESULT ID3D11Device::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC *pDepthStencilDesc, ID3D11DepthStencilState **ppDepthStencilState)
 {
     xrvk::not_implemented("ID3D11Device::CreateDepthStencilState");
-}
-
-HRESULT ID3D11Device::CreateDepthStencilView(ID3D11Resource *pResource, const D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc, ID3D11DepthStencilView **ppDepthStencilView)
-{
-    xrvk::not_implemented("ID3D11Device::CreateDepthStencilView");
 }
 
 HRESULT ID3D11Device::CreateDomainShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11DomainShader **ppDomainShader)
@@ -93,11 +108,6 @@ HRESULT ID3D11Device::CreateRasterizerState(const D3D11_RASTERIZER_DESC *pRaster
     xrvk::not_implemented("ID3D11Device::CreateRasterizerState");
 }
 
-HRESULT ID3D11Device::CreateRenderTargetView(ID3D11Resource *pResource, const D3D11_RENDER_TARGET_VIEW_DESC *pDesc, ID3D11RenderTargetView **ppRTView)
-{
-    xrvk::not_implemented("ID3D11Device::CreateRenderTargetView");
-}
-
 HRESULT ID3D11Device::CreateSamplerState(const D3D11_SAMPLER_DESC *pSamplerDesc, ID3D11SamplerState **ppSamplerState)
 {
     xrvk::not_implemented("ID3D11Device::CreateSamplerState");
@@ -111,11 +121,6 @@ HRESULT ID3D11Device::CreateShaderResourceView(ID3D11Resource *pResource, const 
 HRESULT ID3D11Device::CreateTexture1D(const D3D11_TEXTURE1D_DESC *pDesc, const D3D11_SUBRESOURCE_DATA *pInitialData, ID3D11Texture1D **ppTexture1D)
 {
     xrvk::not_implemented("ID3D11Device::CreateTexture1D");
-}
-
-HRESULT ID3D11Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC *pDesc, const D3D11_SUBRESOURCE_DATA *pInitialData, ID3D11Texture2D **ppTexture2D)
-{
-    xrvk::not_implemented("ID3D11Device::CreateTexture2D");
 }
 
 HRESULT ID3D11Device::CreateTexture3D(const D3D11_TEXTURE3D_DESC *pDesc, const D3D11_SUBRESOURCE_DATA *pInitialData, ID3D11Texture3D **ppTexture3D)
@@ -136,11 +141,6 @@ HRESULT ID3D11Device::CreateVertexShader(const void *pShaderBytecode, SIZE_T Byt
 HRESULT ID3D11Device::GetDeviceRemovedReason()
 {
     xrvk::not_implemented("ID3D11Device::GetDeviceRemovedReason");
-}
-
-void ID3D11DeviceChild::GetDevice(ID3D11Device **ppDevice)
-{
-    xrvk::not_implemented("ID3D11DeviceChild::GetDevice");
 }
 
 void ID3D11DeviceContext::Begin(ID3D11Asynchronous *pAsync)
@@ -173,24 +173,9 @@ void ID3D11DeviceContext::CSSetUnorderedAccessViews(UINT StartSlot, UINT NumUAVs
     xrvk::not_implemented("ID3D11DeviceContext::CSSetUnorderedAccessViews");
 }
 
-void ID3D11DeviceContext::ClearDepthStencilView(ID3D11DepthStencilView *pDepthStencilView, UINT ClearFlags, FLOAT Depth, UINT8 Stencil)
-{
-    xrvk::not_implemented("ID3D11DeviceContext::ClearDepthStencilView");
-}
-
-void ID3D11DeviceContext::ClearRenderTargetView(ID3D11RenderTargetView *pRenderTargetView, const FLOAT ColorRGBA[4])
-{
-    xrvk::not_implemented("ID3D11DeviceContext::ClearRenderTargetView");
-}
-
 void ID3D11DeviceContext::ClearState()
 {
     xrvk::not_implemented("ID3D11DeviceContext::ClearState");
-}
-
-void ID3D11DeviceContext::CopyResource(ID3D11Resource *pDstResource, ID3D11Resource *pSrcResource)
-{
-    xrvk::not_implemented("ID3D11DeviceContext::CopyResource");
 }
 
 void ID3D11DeviceContext::CopySubresourceRegion(ID3D11Resource *pDstResource, UINT DstSubresource, UINT DstX, UINT DstY, UINT DstZ, ID3D11Resource *pSrcResource, UINT SrcSubresource, const D3D11_BOX *pSrcBox)
@@ -328,11 +313,6 @@ void ID3D11DeviceContext::IASetVertexBuffers(UINT StartSlot, UINT NumBuffers, ID
     xrvk::not_implemented("ID3D11DeviceContext::IASetVertexBuffers");
 }
 
-HRESULT ID3D11DeviceContext::Map(ID3D11Resource *pResource, UINT Subresource, D3D11_MAP MapType, UINT MapFlags, D3D11_MAPPED_SUBRESOURCE *pMappedResource)
-{
-    xrvk::not_implemented("ID3D11DeviceContext::Map");
-}
-
 void ID3D11DeviceContext::OMGetBlendState(ID3D11BlendState **ppBlendState, FLOAT BlendFactor[4], UINT *pSampleMask)
 {
     xrvk::not_implemented("ID3D11DeviceContext::OMGetBlendState");
@@ -356,11 +336,6 @@ void ID3D11DeviceContext::OMSetBlendState(ID3D11BlendState *pBlendState, const F
 void ID3D11DeviceContext::OMSetDepthStencilState(ID3D11DepthStencilState *pDepthStencilState, UINT StencilRef)
 {
     xrvk::not_implemented("ID3D11DeviceContext::OMSetDepthStencilState");
-}
-
-void ID3D11DeviceContext::OMSetRenderTargets(UINT NumViews, ID3D11RenderTargetView *const *ppRenderTargetViews, ID3D11DepthStencilView *pDepthStencilView)
-{
-    xrvk::not_implemented("ID3D11DeviceContext::OMSetRenderTargets");
 }
 
 void ID3D11DeviceContext::PSGetSamplers(UINT StartSlot, UINT NumSamplers, ID3D11SamplerState **ppSamplers)
@@ -433,11 +408,6 @@ void ID3D11DeviceContext::ResolveSubresource(ID3D11Resource *pDstResource, UINT 
     xrvk::not_implemented("ID3D11DeviceContext::ResolveSubresource");
 }
 
-void ID3D11DeviceContext::Unmap(ID3D11Resource *pResource, UINT Subresource)
-{
-    xrvk::not_implemented("ID3D11DeviceContext::Unmap");
-}
-
 void ID3D11DeviceContext::UpdateSubresource(ID3D11Resource *pDstResource, UINT DstSubresource, const D3D11_BOX *pDstBox, const void *pSrcData, UINT SrcRowPitch, UINT SrcDepthPitch)
 {
     xrvk::not_implemented("ID3D11DeviceContext::UpdateSubresource");
@@ -476,11 +446,6 @@ void ID3D11DeviceContext::VSSetShaderResources(UINT StartSlot, UINT NumViews, ID
 void ID3D11RasterizerState::GetDesc(D3D11_RASTERIZER_DESC *pDesc)
 {
     xrvk::not_implemented("ID3D11RasterizerState::GetDesc");
-}
-
-void ID3D11Resource::GetType(D3D11_RESOURCE_DIMENSION *pResourceDimension)
-{
-    xrvk::not_implemented("ID3D11Resource::GetType");
 }
 
 void ID3D11SamplerState::GetDesc(D3D11_SAMPLER_DESC *pDesc)
@@ -533,29 +498,9 @@ void ID3D11Texture1D::GetDesc(D3D11_TEXTURE1D_DESC *pDesc)
     xrvk::not_implemented("ID3D11Texture1D::GetDesc");
 }
 
-void ID3D11Texture2D::GetDesc(D3D11_TEXTURE2D_DESC *pDesc)
-{
-    xrvk::not_implemented("ID3D11Texture2D::GetDesc");
-}
-
 void ID3D11Texture3D::GetDesc(D3D11_TEXTURE3D_DESC *pDesc)
 {
     xrvk::not_implemented("ID3D11Texture3D::GetDesc");
-}
-
-void ID3D11View::GetResource(ID3D11Resource **ppResource)
-{
-    xrvk::not_implemented("ID3D11View::GetResource");
-}
-
-INT ID3DUserDefinedAnnotation::BeginEvent(LPCWSTR Name)
-{
-    xrvk::not_implemented("ID3DUserDefinedAnnotation::BeginEvent");
-}
-
-INT ID3DUserDefinedAnnotation::EndEvent()
-{
-    xrvk::not_implemented("ID3DUserDefinedAnnotation::EndEvent");
 }
 
 HRESULT IDXGIFactory::CreateSwapChain(IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
@@ -578,27 +523,7 @@ HRESULT IDXGIOutput::SetGammaControl(const DXGI_GAMMA_CONTROL *gamma_control)
     xrvk::not_implemented("IDXGIOutput::SetGammaControl");
 }
 
-HRESULT IDXGISwapChain::GetBuffer(UINT buffer_idx, REFIID riid, void **surface)
-{
-    xrvk::not_implemented("IDXGISwapChain::GetBuffer");
-}
-
 HRESULT IDXGISwapChain::GetContainingOutput(IDXGIOutput **output)
 {
     xrvk::not_implemented("IDXGISwapChain::GetContainingOutput");
-}
-
-HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT flags)
-{
-    xrvk::not_implemented("IDXGISwapChain::Present");
-}
-
-HRESULT IDXGISwapChain::ResizeBuffers(UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
-{
-    xrvk::not_implemented("IDXGISwapChain::ResizeBuffers");
-}
-
-HRESULT IDXGISwapChain::SetFullscreenState(WINBOOL fullscreen, IDXGIOutput *target)
-{
-    xrvk::not_implemented("IDXGISwapChain::SetFullscreenState");
 }

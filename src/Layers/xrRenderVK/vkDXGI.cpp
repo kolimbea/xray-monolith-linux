@@ -1,0 +1,543 @@
+// DXGI on Vulkan + SDL3: factory, adapters (Vulkan GPUs), outputs (SDL displays), swap chain.
+// The swap chain's buffer 0 is an own texture that Present blits into the acquired swapchain image,
+// which also converts between the engine's format and the surface's (e.g. RGBA -> BGRA).
+#include "vkObjects.h"
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
+
+#include <cstring>
+
+#include "vkFormat.h"
+
+namespace xrvk
+{
+    bool Factory::has_interface(REFIID r) const
+    {
+        return iid_in(r, {__uuidof(IDXGIObject), __uuidof(IDXGIFactory), __uuidof(IDXGIFactory1), __uuidof(IDXGIFactory2),
+                          __uuidof(IDXGIFactory3), __uuidof(IDXGIFactory4), __uuidof(IDXGIFactory5), __uuidof(IDXGIFactory6)});
+    }
+    bool Adapter::has_interface(REFIID r) const
+    {
+        return iid_in(r, {__uuidof(IDXGIObject), __uuidof(IDXGIAdapter), __uuidof(IDXGIAdapter1), __uuidof(IDXGIAdapter2),
+                          __uuidof(IDXGIAdapter3), __uuidof(IDXGIAdapter4)});
+    }
+    bool Output::has_interface(REFIID r) const
+    {
+        return iid_in(r, {__uuidof(IDXGIObject), __uuidof(IDXGIOutput), __uuidof(IDXGIOutput1), __uuidof(IDXGIOutput2),
+                          __uuidof(IDXGIOutput3), __uuidof(IDXGIOutput4), __uuidof(IDXGIOutput5), __uuidof(IDXGIOutput6)});
+    }
+    bool SwapChain::has_interface(REFIID r) const
+    {
+        return iid_in(r, {__uuidof(IDXGIObject), __uuidof(IDXGIDeviceSubObject), __uuidof(IDXGISwapChain), __uuidof(IDXGISwapChain1),
+                          __uuidof(IDXGISwapChain2), __uuidof(IDXGISwapChain3), __uuidof(IDXGISwapChain4)});
+    }
+
+    namespace
+    {
+        // DXGI adapter order: the preferred GPU first (adapter 0 is the one D3D11CreateDevice(nullptr) uses).
+        std::vector<VkPhysicalDevice> adapter_order()
+        {
+            std::vector<VkPhysicalDevice> v = physical_devices();
+            const VkPhysicalDevice best = preferred_physical_device();
+            for (size_t i = 0; i < v.size(); ++i)
+                if (v[i] == best)
+                {
+                    v.erase(v.begin() + i);
+                    break;
+                }
+            v.insert(v.begin(), best);
+            return v;
+        }
+
+        void to_wide(WCHAR *dst, size_t n, const char *src)
+        {
+            size_t i = 0;
+            for (; src && src[i] && i + 1 < n; ++i)
+                dst[i] = WCHAR(uint8_t(src[i]));
+            dst[i] = 0;
+        }
+
+        VkPresentModeKHR pick_mode(VkPhysicalDevice phys, VkSurfaceKHR surface, UINT sync_interval)
+        {
+            if (sync_interval)
+                return VK_PRESENT_MODE_FIFO_KHR; // always available
+            uint32_t n = 0;
+            vkGetPhysicalDeviceSurfacePresentModesKHR(phys, surface, &n, nullptr);
+            std::vector<VkPresentModeKHR> modes(n);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(phys, surface, &n, modes.data());
+            for (VkPresentModeKHR want : {VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR})
+                for (VkPresentModeKHR m : modes)
+                    if (m == want)
+                        return m;
+            return VK_PRESENT_MODE_FIFO_KHR;
+        }
+
+        void window_pixels(SDL_Window *w, uint32_t &width, uint32_t &height)
+        {
+            int x = 0, y = 0;
+            SDL_GetWindowSizeInPixels(w, &x, &y);
+            width = x > 0 ? uint32_t(x) : 1;
+            height = y > 0 ? uint32_t(y) : 1;
+        }
+    } // namespace
+
+    void SwapChain::create_swapchain(uint32_t width, uint32_t height)
+    {
+        Core &c = *core();
+        VkSurfaceCapabilitiesKHR caps;
+        XRVK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(c.phys, surface, &caps));
+        if (caps.currentExtent.width != UINT32_MAX)
+            extent = caps.currentExtent;
+        else
+            extent = {width, height};
+        if (!extent.width || !extent.height)
+            return; // minimised; recreated on the next Present/ResizeBuffers
+
+        uint32_t nf = 0;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(c.phys, surface, &nf, nullptr);
+        std::vector<VkSurfaceFormatKHR> formats(nf);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(c.phys, surface, &nf, formats.data());
+        VkSurfaceFormatKHR chosen = formats.empty() ? VkSurfaceFormatKHR{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR} : formats[0];
+        for (const auto &f : formats) // UNORM: the engine writes already-encoded colour, like DXGI's R8G8B8A8_UNORM
+            if ((f.format == VK_FORMAT_B8G8R8A8_UNORM || f.format == VK_FORMAT_R8G8B8A8_UNORM) && f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            {
+                chosen = f;
+                break;
+            }
+        swap_format = chosen.format;
+
+        VkBool32 present_ok = VK_FALSE;
+        XRVK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(c.phys, c.queue_family, surface, &present_ok));
+        if (!present_ok)
+            fail("the chosen GPU cannot present to this window");
+
+        uint32_t count = desc.BufferCount > caps.minImageCount ? desc.BufferCount : caps.minImageCount + 1;
+        if (caps.maxImageCount && count > caps.maxImageCount)
+            count = caps.maxImageCount;
+        VkSwapchainCreateInfoKHR ci{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+        ci.surface = surface;
+        ci.minImageCount = count;
+        ci.imageFormat = chosen.format;
+        ci.imageColorSpace = chosen.colorSpace;
+        ci.imageExtent = extent;
+        ci.imageArrayLayers = 1;
+        ci.imageUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        ci.preTransform = caps.currentTransform;
+        ci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        ci.presentMode = mode;
+        ci.clipped = VK_TRUE;
+        ci.oldSwapchain = swapchain;
+        VkSwapchainKHR next;
+        XRVK_CHECK(vkCreateSwapchainKHR(c.device, &ci, nullptr, &next));
+        if (swapchain)
+            vkDestroySwapchainKHR(c.device, swapchain, nullptr);
+        swapchain = next;
+        uint32_t n = 0;
+        vkGetSwapchainImagesKHR(c.device, swapchain, &n, nullptr);
+        images.resize(n);
+        vkGetSwapchainImagesKHR(c.device, swapchain, &n, images.data());
+        for (VkSemaphore s : present_ready)
+            vkDestroySemaphore(c.device, s, nullptr);
+        present_ready.assign(n, VK_NULL_HANDLE);
+        VkSemaphoreCreateInfo si{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+        for (VkSemaphore &s : present_ready)
+            XRVK_CHECK(vkCreateSemaphore(c.device, &si, nullptr, &s));
+        for (VkSemaphore &s : acquired)
+            if (!s)
+                XRVK_CHECK(vkCreateSemaphore(c.device, &si, nullptr, &s));
+        log("* vk: swapchain %ux%u, %u images, present mode %d", extent.width, extent.height, n, int(mode));
+    }
+
+    void SwapChain::destroy_swapchain()
+    {
+        Core &c = *core();
+        vkDeviceWaitIdle(c.device);
+        for (VkSemaphore s : present_ready)
+            vkDestroySemaphore(c.device, s, nullptr);
+        present_ready.clear();
+        if (swapchain)
+            vkDestroySwapchainKHR(c.device, swapchain, nullptr);
+        swapchain = VK_NULL_HANDLE;
+        images.clear();
+    }
+
+    void SwapChain::create_back_buffer()
+    {
+        if (back_buffer)
+            back_buffer->Release();
+        D3D11_TEXTURE2D_DESC d{};
+        d.Width = desc.Width;
+        d.Height = desc.Height;
+        d.MipLevels = 1;
+        d.ArraySize = 1;
+        d.Format = desc.Format;
+        d.SampleDesc = {1, 0};
+        d.Usage = D3D11_USAGE_DEFAULT;
+        d.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+        back_buffer = create_texture2d(static_cast<Device *>(device), d, nullptr);
+        if (!back_buffer)
+            fail("cannot create the %ux%u back buffer (format %u)", d.Width, d.Height, unsigned(d.Format));
+    }
+
+    SwapChain::~SwapChain()
+    {
+        if (!core())
+            return;
+        destroy_swapchain();
+        Core &c = *core();
+        for (VkSemaphore s : acquired)
+            if (s)
+                vkDestroySemaphore(c.device, s, nullptr);
+        if (surface)
+            SDL_Vulkan_DestroySurface(c.instance, surface, nullptr);
+        if (back_buffer)
+            back_buffer->Release();
+        if (device)
+            device->Release();
+    }
+} // namespace xrvk
+
+using namespace xrvk;
+
+extern "C" HRESULT WINAPI CreateDXGIFactory2(UINT, REFIID riid, void **factory)
+{
+    if (!factory)
+        return E_POINTER;
+    create_instance();
+    auto *f = new Factory();
+    const HRESULT hr = f->QueryInterface(riid, factory);
+    f->Release();
+    return hr;
+}
+extern "C" HRESULT WINAPI CreateDXGIFactory1(REFIID riid, void **factory)
+{
+    return CreateDXGIFactory2(0, riid, factory);
+}
+extern "C" HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
+{
+    return CreateDXGIFactory2(0, riid, factory);
+}
+
+HRESULT IDXGIFactory1::EnumAdapters1(UINT Adapter, IDXGIAdapter1 **ppAdapter)
+{
+    const auto order = adapter_order();
+    if (!ppAdapter)
+        return E_INVALIDARG;
+    if (Adapter >= order.size())
+        return DXGI_ERROR_NOT_FOUND;
+    auto *a = new xrvk::Adapter();
+    a->phys = order[Adapter];
+    *ppAdapter = a;
+    return S_OK;
+}
+
+HRESULT IDXGIFactory::EnumAdapters(UINT adapter_idx, IDXGIAdapter **adapter)
+{
+    IDXGIAdapter1 *a = nullptr;
+    const HRESULT hr = static_cast<IDXGIFactory1 *>(this)->EnumAdapters1(adapter_idx, &a);
+    *adapter = a;
+    return hr;
+}
+
+HRESULT IDXGIFactory5::CheckFeatureSupport(DXGI_FEATURE feature, void *support_data, UINT support_data_size)
+{
+    if (feature == DXGI_FEATURE_PRESENT_ALLOW_TEARING && support_data && support_data_size == sizeof(BOOL))
+    {
+        *static_cast<BOOL *>(support_data) = FALSE; // tearing/VRR present path not implemented yet
+        return S_OK;
+    }
+    return DXGI_ERROR_UNSUPPORTED;
+}
+
+HRESULT IDXGIFactory2::CreateSwapChainForHwnd(IUnknown *pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1 *pDesc,
+                                              const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *, IDXGIOutput *, IDXGISwapChain1 **ppSwapChain)
+{
+    if (!pDevice || !hWnd || !pDesc || !ppSwapChain || !core())
+        return E_INVALIDARG;
+    auto *sc = new SwapChain();
+    sc->window = static_cast<SDL_Window *>(hWnd); // HWND is the SDL_Window (Common/linux/win32_window)
+    sc->desc = *pDesc;
+    if (!sc->desc.Width || !sc->desc.Height)
+        window_pixels(sc->window, sc->desc.Width, sc->desc.Height);
+    ID3D11Device *dev = nullptr;
+    if (FAILED(pDevice->QueryInterface(__uuidof(ID3D11Device), reinterpret_cast<void **>(&dev))))
+    {
+        sc->Release();
+        return E_INVALIDARG;
+    }
+    sc->device = dev; // the swap chain keeps its device alive
+    if (!SDL_Vulkan_CreateSurface(sc->window, core()->instance, nullptr, &sc->surface))
+    {
+        log("! vk: SDL_Vulkan_CreateSurface: %s", SDL_GetError());
+        sc->Release();
+        return E_FAIL;
+    }
+    sc->mode = pick_mode(core()->phys, sc->surface, 1);
+    sc->create_swapchain(sc->desc.Width, sc->desc.Height);
+    sc->create_back_buffer();
+    *ppSwapChain = sc;
+    return S_OK;
+}
+
+HRESULT IDXGIAdapter::GetDesc(DXGI_ADAPTER_DESC *desc)
+{
+    if (!desc)
+        return E_INVALIDARG;
+    auto *a = static_cast<xrvk::Adapter *>(static_cast<IDXGIAdapter4 *>(this));
+    VkPhysicalDeviceProperties p;
+    vkGetPhysicalDeviceProperties(a->phys, &p);
+    VkPhysicalDeviceMemoryProperties m;
+    vkGetPhysicalDeviceMemoryProperties(a->phys, &m);
+    *desc = {};
+    to_wide(desc->Description, 128, p.deviceName);
+    desc->VendorId = p.vendorID;
+    desc->DeviceId = p.deviceID;
+    for (uint32_t h = 0; h < m.memoryHeapCount; ++h)
+        if (m.memoryHeaps[h].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+            desc->DedicatedVideoMemory += SIZE_T(m.memoryHeaps[h].size);
+        else
+            desc->SharedSystemMemory += SIZE_T(m.memoryHeaps[h].size);
+    return S_OK;
+}
+
+HRESULT IDXGIAdapter1::GetDesc1(DXGI_ADAPTER_DESC1 *pDesc)
+{
+    if (!pDesc)
+        return E_INVALIDARG;
+    DXGI_ADAPTER_DESC d;
+    static_cast<IDXGIAdapter *>(this)->GetDesc(&d);
+    *pDesc = {};
+    memcpy(pDesc->Description, d.Description, sizeof(d.Description));
+    pDesc->VendorId = d.VendorId;
+    pDesc->DeviceId = d.DeviceId;
+    pDesc->DedicatedVideoMemory = d.DedicatedVideoMemory;
+    pDesc->SharedSystemMemory = d.SharedSystemMemory;
+    return S_OK;
+}
+
+HRESULT IDXGIAdapter::EnumOutputs(UINT output_idx, IDXGIOutput **output)
+{
+    if (!output)
+        return E_INVALIDARG;
+    int n = 0;
+    SDL_DisplayID *ids = SDL_GetDisplays(&n);
+    if (!ids || output_idx >= UINT(n))
+    {
+        SDL_free(ids);
+        return DXGI_ERROR_NOT_FOUND;
+    }
+    auto *o = new Output();
+    o->display = ids[output_idx];
+    SDL_free(ids);
+    *output = o;
+    return S_OK;
+}
+
+HRESULT IDXGIOutput::GetDesc(DXGI_OUTPUT_DESC *desc)
+{
+    if (!desc)
+        return E_INVALIDARG;
+    auto *o = static_cast<Output *>(static_cast<IDXGIOutput6 *>(this));
+    *desc = {};
+    to_wide(desc->DeviceName, 32, SDL_GetDisplayName(o->display));
+    SDL_Rect r{};
+    SDL_GetDisplayBounds(o->display, &r);
+    desc->DesktopCoordinates = RECT{r.x, r.y, r.x + r.w, r.y + r.h};
+    desc->AttachedToDesktop = TRUE;
+    desc->Rotation = DXGI_MODE_ROTATION_IDENTITY;
+    desc->Monitor = reinterpret_cast<HMONITOR>(uintptr_t(o->display)); // the encoding win32_window uses
+    return S_OK;
+}
+
+HRESULT IDXGIOutput::GetDisplayModeList(DXGI_FORMAT format, UINT, UINT *mode_count, DXGI_MODE_DESC *desc)
+{
+    if (!mode_count)
+        return E_INVALIDARG;
+    auto *o = static_cast<Output *>(static_cast<IDXGIOutput6 *>(this));
+    int n = 0;
+    SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(o->display, &n);
+    if (!modes)
+        n = 0;
+    if (!desc)
+    {
+        *mode_count = UINT(n);
+        SDL_free(modes);
+        return S_OK;
+    }
+    const UINT k = *mode_count < UINT(n) ? *mode_count : UINT(n);
+    for (UINT i = 0; i < k; ++i)
+    {
+        const SDL_DisplayMode *m = modes[i];
+        desc[i] = {};
+        desc[i].Width = UINT(m->w * (m->pixel_density > 0 ? m->pixel_density : 1.f));
+        desc[i].Height = UINT(m->h * (m->pixel_density > 0 ? m->pixel_density : 1.f));
+        desc[i].RefreshRate.Numerator = m->refresh_rate_numerator ? UINT(m->refresh_rate_numerator) : UINT(m->refresh_rate + 0.5f);
+        desc[i].RefreshRate.Denominator = m->refresh_rate_numerator ? UINT(m->refresh_rate_denominator) : 1;
+        desc[i].Format = format;
+    }
+    SDL_free(modes);
+    *mode_count = k;
+    return k < UINT(n) ? DXGI_ERROR_MORE_DATA : S_OK;
+}
+
+HRESULT IDXGISwapChain::GetBuffer(UINT buffer_idx, REFIID riid, void **surface)
+{
+    auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    if (buffer_idx != 0 || !surface)
+        return E_INVALIDARG; // flip model: only buffer 0 is accessible
+    return sc->back_buffer->QueryInterface(riid, surface);
+}
+
+HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT)
+{
+    auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    Core &c = *core();
+    const VkPresentModeKHR want = pick_mode(c.phys, sc->surface, sync_interval);
+    if (want != sc->mode || !sc->swapchain)
+    {
+        sc->mode = want;
+        vkDeviceWaitIdle(c.device);
+        sc->create_swapchain(sc->desc.Width, sc->desc.Height);
+        if (!sc->swapchain)
+        {
+            c.submit(); // minimised: still execute the frame's work
+            c.next_frame();
+            return S_OK;
+        }
+    }
+    uint32_t idx = 0;
+    VkSemaphore acquire = sc->acquired[c.frame];
+    VkResult r = vkAcquireNextImageKHR(c.device, sc->swapchain, UINT64_MAX, acquire, VK_NULL_HANDLE, &idx);
+    if (r == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        vkDeviceWaitIdle(c.device);
+        sc->create_swapchain(sc->desc.Width, sc->desc.Height);
+        r = vkAcquireNextImageKHR(c.device, sc->swapchain, UINT64_MAX, acquire, VK_NULL_HANDLE, &idx);
+    }
+    if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR)
+        fail("vkAcquireNextImageKHR: %d", int(r));
+
+    VkCommandBuffer cb = c.cmd();
+    transition(cb, sc->back_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    VkImageMemoryBarrier2 b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
+    b.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    b.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    b.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    b.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    b.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    b.srcQueueFamilyIndex = b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    b.image = sc->images[idx];
+    b.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    VkDependencyInfo dep{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+    dep.imageMemoryBarrierCount = 1;
+    dep.pImageMemoryBarriers = &b;
+    vkCmdPipelineBarrier2(cb, &dep);
+    VkImageBlit blit{};
+    blit.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    blit.srcOffsets[1] = {int32_t(sc->back_buffer->desc.Width), int32_t(sc->back_buffer->desc.Height), 1};
+    blit.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    blit.dstOffsets[1] = {int32_t(sc->extent.width), int32_t(sc->extent.height), 1};
+    const bool same = sc->back_buffer->desc.Width == sc->extent.width && sc->back_buffer->desc.Height == sc->extent.height;
+    vkCmdBlitImage(cb, sc->back_buffer->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, sc->images[idx],
+                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, same ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+    b.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    b.dstAccessMask = 0;
+    b.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    b.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    vkCmdPipelineBarrier2(cb, &dep);
+
+    c.submit(acquire, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, sc->present_ready[idx]);
+    VkPresentInfoKHR pi{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+    pi.waitSemaphoreCount = 1;
+    pi.pWaitSemaphores = &sc->present_ready[idx];
+    pi.swapchainCount = 1;
+    pi.pSwapchains = &sc->swapchain;
+    pi.pImageIndices = &idx;
+    r = vkQueuePresentKHR(c.queue, &pi);
+    if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR)
+    {
+        vkDeviceWaitIdle(c.device);
+        sc->create_swapchain(sc->desc.Width, sc->desc.Height);
+    }
+    else if (r != VK_SUCCESS)
+        fail("vkQueuePresentKHR: %d", int(r));
+    c.next_frame();
+    return S_OK;
+}
+
+HRESULT IDXGISwapChain::ResizeBuffers(UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
+{
+    auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    if (buffer_count)
+        sc->desc.BufferCount = buffer_count;
+    if (format != DXGI_FORMAT_UNKNOWN)
+        sc->desc.Format = format;
+    sc->desc.Flags = flags;
+    if (!width || !height)
+        window_pixels(sc->window, width, height);
+    sc->desc.Width = width;
+    sc->desc.Height = height;
+    core()->flush_and_wait();
+    sc->create_swapchain(width, height);
+    sc->create_back_buffer();
+    return S_OK;
+}
+
+HRESULT IDXGISwapChain::ResizeTarget(const DXGI_MODE_DESC *target_mode_desc)
+{
+    auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    if (!target_mode_desc)
+        return E_INVALIDARG;
+    if (target_mode_desc->Width && target_mode_desc->Height)
+        SDL_SetWindowSize(sc->window, int(target_mode_desc->Width), int(target_mode_desc->Height));
+    return S_OK;
+}
+
+HRESULT IDXGISwapChain::SetFullscreenState(WINBOOL fullscreen, IDXGIOutput *)
+{
+    auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    return SDL_SetWindowFullscreen(sc->window, fullscreen != FALSE) ? S_OK : DXGI_ERROR_UNSUPPORTED;
+}
+
+HRESULT IDXGISwapChain::GetDesc(DXGI_SWAP_CHAIN_DESC *desc)
+{
+    auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    if (!desc)
+        return E_INVALIDARG;
+    *desc = {};
+    desc->BufferDesc.Width = sc->desc.Width;
+    desc->BufferDesc.Height = sc->desc.Height;
+    desc->BufferDesc.Format = sc->desc.Format;
+    desc->SampleDesc = sc->desc.SampleDesc;
+    desc->BufferUsage = sc->desc.BufferUsage;
+    desc->BufferCount = sc->desc.BufferCount;
+    desc->OutputWindow = static_cast<HWND>(sc->window);
+    desc->Windowed = !(SDL_GetWindowFlags(sc->window) & SDL_WINDOW_FULLSCREEN);
+    desc->SwapEffect = sc->desc.SwapEffect;
+    desc->Flags = sc->desc.Flags;
+    return S_OK;
+}
+
+HRESULT IDXGISwapChain1::GetDesc1(DXGI_SWAP_CHAIN_DESC1 *pDesc)
+{
+    if (!pDesc)
+        return E_INVALIDARG;
+    *pDesc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this))->desc;
+    return S_OK;
+}
+
+HRESULT IDXGISwapChain3::CheckColorSpaceSupport(DXGI_COLOR_SPACE_TYPE colour_space, UINT *colour_space_support)
+{
+    if (!colour_space_support)
+        return E_INVALIDARG;
+    // only SDR sRGB output so far (HDR10 needs an HDR10 surface colour space; not implemented)
+    *colour_space_support = colour_space == DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709 ? DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT : 0;
+    return S_OK;
+}
+
+HRESULT IDXGISwapChain3::SetColorSpace1(DXGI_COLOR_SPACE_TYPE colour_space)
+{
+    return colour_space == DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709 ? S_OK : E_INVALIDARG;
+}

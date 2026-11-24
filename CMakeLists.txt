@@ -167,19 +167,27 @@ target_link_directories(xrRender_R4 PUBLIC ${DXVK_NATIVE_DIR}/lib)
 target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)
 
 # --- Stage 2: own Vulkan renderer (ADR 0001). Same R4 pipeline + shared layer sources, compiled with
-# USE_VK (and USE_DX11 for the R3/R4 pipeline logic). xrRenderDX10's logic is reused; dx10HW.cpp and the
-# D3D11 objects themselves are replaced by Layers/xrRenderVK (ADR 0001 refinement). Not linked against dxvk.
+# USE_VK (and USE_DX11 for the R3/R4 pipeline logic). all of xrRenderDX10 is reused; the D3D11/DXGI
+# objects themselves are implemented by Layers/xrRenderVK (ADR 0001 refinement). Not linked against dxvk.
 xr_module(xrRender_VK ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj
-    EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp xrRenderDX10/dx10HW.cpp
+    EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp
     EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/dds_codec.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp)
 target_compile_definitions(xrRender_VK PRIVATE USE_DX11 USE_VK)
+find_package(Vulkan REQUIRED)
+# xrVK_core: the Vulkan device layer, independent of the engine (tests/vk_smoke.cpp links it alone).
+set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp)
+list(TRANSFORM XR_VK_CORE_SRC PREPEND ${XR_SRC}/Layers/xrRenderVK/)
+add_library(xrVK_core STATIC ${XR_VK_CORE_SRC})
+target_include_directories(xrVK_core BEFORE PUBLIC ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)
+target_link_libraries(xrVK_core PUBLIC xr_common Vulkan::Vulkan SDL3::SDL3)
 file(GLOB XR_VK_SRC CONFIGURE_DEPENDS ${XR_SRC}/Layers/xrRenderVK/*.cpp)
+list(REMOVE_ITEM XR_VK_SRC ${XR_VK_CORE_SRC})
 target_sources(xrRender_VK PRIVATE ${XR_VK_SRC})
+target_link_libraries(xrRender_VK PUBLIC xrVK_core)
 # stand-in d3d11.h/dxgi*.h/d3dcompiler.h first: they lead to xrRenderVK/vkCommonTypes.h
 target_include_directories(xrRender_VK BEFORE PRIVATE ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)
 target_include_directories(xrRender_VK PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 ${XR_DXSDK_CI}
     "${XR_3RD}/imgui")
-find_package(Vulkan REQUIRED)
 target_link_libraries(xrRender_VK PUBLIC xrEngine Vulkan::Vulkan)
 
 # --- libraries the executable needs besides the engine modules ---
@@ -224,3 +232,7 @@ target_link_libraries(xray_vk PRIVATE
     gif)
 target_link_options(xray_vk PRIVATE -rdynamic)
 set_target_properties(xray_vk PROPERTIES BUILD_RPATH "$<TARGET_FILE_DIR:xrCore>")
+
+# Milestone M2 test of the Vulkan device layer (tests/vk_smoke.cpp).
+add_executable(vk_smoke ${CMAKE_SOURCE_DIR}/../tests/vk_smoke.cpp)
+target_link_libraries(vk_smoke PRIVATE xrVK_core)
