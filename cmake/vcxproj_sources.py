@@ -24,6 +24,8 @@ for m in re.finditer(r'<ClCompile Include="([^"]+)"\s*(/>|>(.*?)</ClCompile>)', 
     body = m.group(3) or ""
     if re.search(r"ExcludedFromBuild Condition=\"'\$\(Configuration\)\|\$\(Platform\)'=='Release\|x64'\">true", body):
         continue
+    if re.search(r"<ExcludedFromBuild>\s*true\s*</ExcludedFromBuild>", body):
+        continue  # excluded in every configuration
     rel = m.group(1).replace("\\", "/")
     if any(s in rel.lower() for s in skip):
         continue

@@ -465,3 +465,55 @@ inline void GetLocalTime(LPSYSTEMTIME st)
 }
 inline char* ultoa(unsigned long v, char* buf, int radix) { return xr_linux_itoa((long long)(unsigned long long)v, buf, 33, radix); }
 #define _ultoa ultoa
+
+typedef unsigned char boolean; // rpcndr.h
+typedef int32_t __time32_t;    // MSVC 32-bit time_t
+
+// Windows registry: there is none on Linux. Every key is "not found", so callers use their defaults.
+typedef void* HKEY;
+typedef HKEY* PHKEY;
+#define HKEY_CLASSES_ROOT ((HKEY)(uintptr_t)0x80000000)
+#define HKEY_CURRENT_USER ((HKEY)(uintptr_t)0x80000001)
+#define HKEY_LOCAL_MACHINE ((HKEY)(uintptr_t)0x80000002)
+#define KEY_READ 0x20019
+#define KEY_WRITE 0x20006
+#define KEY_ALL_ACCESS 0xF003F
+#define REG_SZ 1
+#define REG_BINARY 3
+#define REG_DWORD 4
+#define REG_OPTION_NON_VOLATILE 0
+#ifndef ERROR_SUCCESS
+#define ERROR_SUCCESS 0L
+#endif
+#define ERROR_FILE_NOT_FOUND 2L
+inline LONG RegOpenKeyEx(HKEY, const char*, DWORD, DWORD, PHKEY out) { if (out) *out = nullptr; return ERROR_FILE_NOT_FOUND; }
+inline LONG RegCreateKeyEx(HKEY, const char*, DWORD, char*, DWORD, DWORD, void*, PHKEY out, DWORD*) { if (out) *out = nullptr; return ERROR_FILE_NOT_FOUND; }
+inline LONG RegQueryValueEx(HKEY, const char*, DWORD*, DWORD*, BYTE*, DWORD*) { return ERROR_FILE_NOT_FOUND; }
+inline LONG RegSetValueEx(HKEY, const char*, DWORD, DWORD, const BYTE*, DWORD) { return ERROR_FILE_NOT_FOUND; }
+inline LONG RegCloseKey(HKEY) { return ERROR_SUCCESS; }
+#define RegOpenKeyExA RegOpenKeyEx
+#define RegCreateKeyExA RegCreateKeyEx
+#define RegQueryValueExA RegQueryValueEx
+#define RegSetValueExA RegSetValueEx
+
+// GetFullPathName via realpath semantics (path need not exist: then it is made absolute textually).
+inline DWORD GetFullPathName(const char* path, DWORD size, char* out, char** file_part)
+{
+    std::string p = xr_resolve_path(path);
+    if (p.empty() || p[0] != '/')
+    {
+        char cwd[PATH_MAX];
+        if (getcwd(cwd, sizeof(cwd)))
+            p = std::string(cwd) + "/" + p;
+    }
+    if (!out || size <= p.size())
+        return (DWORD)p.size() + 1;
+    memcpy(out, p.c_str(), p.size() + 1);
+    if (file_part)
+    {
+        char* slash = strrchr(out, '/');
+        *file_part = slash ? slash + 1 : out;
+    }
+    return (DWORD)p.size();
+}
+#define GetFullPathNameA GetFullPathName

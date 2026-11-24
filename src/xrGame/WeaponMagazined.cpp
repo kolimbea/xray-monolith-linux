@@ -1233,7 +1233,7 @@ void CWeaponMagazined::PlayAnimFireModeSwitch()
 	{
 		SetPending(TRUE);
 		iAmmoElapsed == 0 && HudAnimationExist("anm_switch_mode_empty")
-			? PlayHUDMotion("anm_switch_mode_empty", TRUE, this, eSwitchMode)
+			? (void)PlayHUDMotion("anm_switch_mode_empty", TRUE, this, eSwitchMode)
 			: PlayHUDMotion("anm_switch_mode", TRUE, this, eSwitchMode);
 	}
 	else
@@ -1257,7 +1257,7 @@ bool CWeaponMagazined::TryPlayAnimBore()
 void CWeaponMagazined::PlayAnimIdleSprint()
 {
 	iAmmoElapsed == 0 && HudAnimationExist("anm_idle_sprint_empty")
-		? PlayHUDMotion("anm_idle_sprint_empty", TRUE, NULL, GetState())
+		? (void)PlayHUDMotion("anm_idle_sprint_empty", TRUE, NULL, GetState())
 		: inherited::PlayAnimIdleSprint();
 }
 
@@ -1266,7 +1266,7 @@ void CWeaponMagazined::PlayAnimIdleMoving()
 	bool bAccelerated = isActorAccelerated(Actor()->MovingState(), IsZoomed());
 
 	iAmmoElapsed == 0 && HudAnimationExist("anm_idle_moving_empty")
-		? PlayHUDMotion("anm_idle_moving_empty", TRUE, NULL, GetState(), bAccelerated ? 1.f : .75f)
+		? (void)PlayHUDMotion("anm_idle_moving_empty", TRUE, NULL, GetState(), bAccelerated ? 1.f : .75f)
 		: inherited::PlayAnimIdleMoving();
 }
 
@@ -1275,8 +1275,8 @@ bool CWeaponMagazined::PlayAnimCrouchIdleMoving()
 	if (iAmmoElapsed == 0)
 	{
 		HudAnimationExist("anm_idle_moving_crouch_empty")
-			? PlayHUDMotion("anm_idle_moving_crouch_empty", TRUE, NULL, GetState())
-			: HudAnimationExist("anm_idle_moving_empty") ? PlayHUDMotion("anm_idle_moving_empty", TRUE, NULL, GetState(), .7f) : inherited::PlayAnimCrouchIdleMoving();
+			? (void)PlayHUDMotion("anm_idle_moving_crouch_empty", TRUE, NULL, GetState())
+			: HudAnimationExist("anm_idle_moving_empty") ? (void)PlayHUDMotion("anm_idle_moving_empty", TRUE, NULL, GetState(), .7f) : inherited::PlayAnimCrouchIdleMoving();
 
 		return true;
 	}
@@ -1665,7 +1665,7 @@ void CWeaponMagazined::PlayAnimShow()
 
 	VERIFY(GetState() == eShowing);
 	iAmmoElapsed == 0 && HudAnimationExist("anm_show_empty")
-		? PlayHUDMotion("anm_show_empty", FALSE, this, GetState(), 1.f, 0.f, false)
+		? (void)PlayHUDMotion("anm_show_empty", FALSE, this, GetState(), 1.f, 0.f, false)
 		: PlayHUDMotion("anm_show", FALSE, this, GetState(), 1.f, 0.f, false);
 }
 
@@ -1673,7 +1673,7 @@ void CWeaponMagazined::PlayAnimHide()
 {
 	VERIFY(GetState() == eHiding);
 	iAmmoElapsed == 0 && HudAnimationExist("anm_hide_empty")
-		? PlayHUDMotion("anm_hide_empty", TRUE, this, GetState())
+		? (void)PlayHUDMotion("anm_hide_empty", TRUE, this, GetState())
 		: PlayHUDMotion("anm_hide", TRUE, this, GetState());
 }
 
@@ -1715,7 +1715,7 @@ void CWeaponMagazined::PlayAnimReload()
 void CWeaponMagazined::PlayAnimAim()
 {
 	iAmmoElapsed == 0 && HudAnimationExist("anm_idle_aim_empty")
-		? PlayHUDMotion("anm_idle_aim_empty", TRUE, NULL, GetState())
+		? (void)PlayHUDMotion("anm_idle_aim_empty", TRUE, NULL, GetState())
 		: PlayHUDMotion("anm_idle_aim", TRUE, NULL, GetState());
 }
 
@@ -1734,7 +1734,7 @@ void CWeaponMagazined::PlayAnimIdle()
 	if (TryPlayAnimIdle()) return;
 
 	iAmmoElapsed == 0 && HudAnimationExist("anm_idle_empty")
-		? PlayHUDMotion("anm_idle_empty", TRUE, NULL, GetState())
+		? (void)PlayHUDMotion("anm_idle_empty", TRUE, NULL, GetState())
 		: PlayHUDMotion("anm_idle", TRUE, NULL, GetState());
 }
 

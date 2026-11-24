@@ -9,7 +9,9 @@
 	#define CXIMAGE_AS_SHARED_LIBRARY
 #endif
 
+#ifndef __linux__
 #include <ddraw.h>
+#endif
 #include "ximage.h"
 #include "xmemfile.h"
 #include "profiler.h"
