@@ -3,6 +3,8 @@
 
 #include <cerrno>
 #include <fcntl.h>
+#include <chrono>
+#include <condition_variable>
 #include <mutex>
 #include <pthread.h>
 #include <sched.h>
@@ -15,7 +17,7 @@
 
 namespace
 {
-enum class Kind { File, Mapping, Thread };
+enum class Kind { File, Mapping, Thread, Event };
 struct Handle
 {
     Kind kind;
@@ -25,6 +27,11 @@ struct Handle
     bool joined = false;
     LPTHREAD_START_ROUTINE fn = nullptr;
     void* arg = nullptr;
+    // Event
+    std::mutex m;
+    std::condition_variable cv;
+    bool signaled = false;
+    bool manual = false;
 };
 
 std::mutex g_views_lock;
@@ -131,7 +138,7 @@ int CloseHandle(HANDLE handle)
         if (!h->joined)
             pthread_detach(h->tid); // Win32 lets a thread outlive its closed handle
     }
-    else
+    else if (h->kind != Kind::Event)
         close(h->fd);
     delete h;
     return 1;
@@ -165,6 +172,18 @@ HANDLE CreateThread(_SECURITY_ATTRIBUTES*, size_t stack, LPTHREAD_START_ROUTINE 
 uint32_t WaitForSingleObject(HANDLE handle, uint32_t ms)
 {
     Handle* h = as(handle);
+    if (h && h->kind == Kind::Event)
+    {
+        std::unique_lock<std::mutex> lk(h->m);
+        auto ready = [h] { return h->signaled; };
+        if (ms == INFINITE)
+            h->cv.wait(lk, ready);
+        else if (!h->cv.wait_for(lk, std::chrono::milliseconds(ms), ready))
+            return WAIT_TIMEOUT;
+        if (!h->manual)
+            h->signaled = false; // auto-reset: one waiter consumes the signal
+        return WAIT_OBJECT_0;
+    }
     if (!h || h->kind != Kind::Thread || ms != INFINITE)
         return WAIT_FAILED;
     if (!h->joined)
@@ -269,4 +288,38 @@ HANDLE CreateMutex(_SECURITY_ATTRIBUTES*, int, const char* name)
         return nullptr;
     SetLastError(flock(fd, LOCK_EX | LOCK_NB) == 0 ? 0 : ERROR_ALREADY_EXISTS);
     return new Handle{Kind::File, fd, false};
+}
+
+HANDLE CreateEvent(_SECURITY_ATTRIBUTES*, int manual_reset, int initial_state, const char*)
+{
+    auto* h = new Handle{Kind::Event, -1, false};
+    h->manual = manual_reset != 0;
+    h->signaled = initial_state != 0;
+    return h;
+}
+
+int SetEvent(HANDLE e)
+{
+    Handle* h = as(e);
+    if (!h || h->kind != Kind::Event)
+        return 0;
+    {
+        std::lock_guard<std::mutex> g(h->m);
+        h->signaled = true;
+    }
+    if (h->manual)
+        h->cv.notify_all();
+    else
+        h->cv.notify_one();
+    return 1;
+}
+
+int ResetEvent(HANDLE e)
+{
+    Handle* h = as(e);
+    if (!h || h->kind != Kind::Event)
+        return 0;
+    std::lock_guard<std::mutex> g(h->m);
+    h->signaled = false;
+    return 1;
 }

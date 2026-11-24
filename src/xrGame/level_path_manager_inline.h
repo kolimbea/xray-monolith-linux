@@ -84,8 +84,8 @@ IC bool CLevelManagerTemplate::check_vertex(const _vertex_id_type vertex_id) con
 TEMPLATE_SPECIALIZATION
 IC void CLevelManagerTemplate::on_restrictions_change()
 {
-	m_failed_start_vertex_id = _vertex_id_type(-1);
-	m_failed_dest_vertex_id = _vertex_id_type(-1);
+	this->m_failed_start_vertex_id = _vertex_id_type(-1);
+	this->m_failed_dest_vertex_id = _vertex_id_type(-1);
 }
 
 #undef TEMPLATE_SPECIALIZATION

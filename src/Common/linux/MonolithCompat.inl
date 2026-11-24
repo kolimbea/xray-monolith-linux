@@ -517,3 +517,24 @@ inline DWORD GetFullPathName(const char* path, DWORD size, char* out, char** fil
     return (DWORD)p.size();
 }
 #define GetFullPathNameA GetFullPathName
+
+typedef uintptr_t DWORD_PTR;
+inline HANDLE GetCurrentProcess() { return (HANDLE)(intptr_t)-1; } // pseudo-handle, as on Windows
+// Affinity of this process (first 64 CPUs) for both masks.
+inline BOOL GetProcessAffinityMask(HANDLE, DWORD_PTR* process_mask, DWORD_PTR* system_mask)
+{
+    cpu_set_t set;
+    CPU_ZERO(&set);
+    if (sched_getaffinity(0, sizeof(set), &set) != 0)
+        return FALSE;
+    DWORD_PTR m = 0;
+    for (int i = 0; i < 64 && i < CPU_SETSIZE; ++i)
+        if (CPU_ISSET(i, &set))
+            m |= DWORD_PTR(1) << i;
+    if (process_mask) *process_mask = m;
+    if (system_mask) *system_mask = m;
+    return TRUE;
+}
+#define FILE_ATTRIBUTE_HIDDEN 0x2u
+inline __time32_t _time32(__time32_t* t) { const __time32_t v = (__time32_t)time(nullptr); if (t) *t = v; return v; }
+inline errno_t _strupr_s(char* s, size_t) { strupr(s); return 0; }

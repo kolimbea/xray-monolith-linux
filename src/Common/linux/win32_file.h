@@ -75,3 +75,17 @@ uint32_t SetFilePointer(HANDLE file, int32_t distance, int32_t* distance_high, u
 #endif
 HANDLE CreateMutex(_SECURITY_ATTRIBUTES*, int initial_owner, const char* name);
 #define CreateMutexA CreateMutex
+
+// Win32 events (manual- or auto-reset) on a mutex + condition variable; waitable via
+// WaitForSingleObject (INFINITE or a timeout in ms), closed with CloseHandle.
+HANDLE CreateEvent(_SECURITY_ATTRIBUTES*, int manual_reset, int initial_state, const char* name);
+#define CreateEventA CreateEvent
+int SetEvent(HANDLE e);
+int ResetEvent(HANDLE e);
+
+// Mailslots back the Lua script debugger's IPC only; not available on Linux.
+#define MAILSLOT_WAIT_FOREVER ((DWORD)-1)
+#define MAILSLOT_NO_MESSAGE ((DWORD)-1)
+inline HANDLE CreateMailslot(const char*, DWORD, DWORD, _SECURITY_ATTRIBUTES*) { return INVALID_HANDLE_VALUE; }
+inline int GetMailslotInfo(HANDLE, DWORD*, DWORD*, DWORD*, DWORD*) { return 0; }
+typedef _SECURITY_ATTRIBUTES* LPSECURITY_ATTRIBUTES;
