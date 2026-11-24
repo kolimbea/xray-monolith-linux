@@ -47,7 +47,7 @@ IC void CGameManagerTemplate::after_search()
 TEMPLATE_SPECIALIZATION
 IC bool CGameManagerTemplate::completed() const
 {
-	if (path().empty() || (m_intermediate_index >= (_vertex_id_type)path().size() - 1))
+	if (this->path().empty() || (m_intermediate_index >= (_vertex_id_type)this->path().size() - 1))
 		return (inherited::completed());
 	return (false);
 }
