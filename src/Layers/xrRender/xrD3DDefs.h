@@ -2,7 +2,9 @@
 #define	xrD3DDefs_included
 #pragma once
 
-#if defined(USE_DX11) || defined(USE_DX10)
+#if defined(USE_VK) // Vulkan backend (xrRender_VK); it also defines USE_DX11 for the R3/R4 pipeline logic
+#	include "../xrRenderVK/vkCommonTypes.h"
+#elif defined(USE_DX11) || defined(USE_DX10)
 
 #	include "../xrRenderDX10/DXCommonTypes.h"
 

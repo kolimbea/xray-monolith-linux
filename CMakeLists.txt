@@ -166,6 +166,19 @@ target_include_directories(xrRender_R4 PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SR
 target_link_directories(xrRender_R4 PUBLIC ${DXVK_NATIVE_DIR}/lib)
 target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)
 
+# --- Stage 2: own Vulkan renderer (ADR 0001). Same R4 pipeline + shared layer sources, compiled with
+# USE_VK (and USE_DX11 for the R3/R4 pipeline logic); the D3D11 backend files (xrRenderDX10/dx10*,
+# StateManager, 3DFluid) are replaced by Layers/xrRenderVK. Not linked against dxvk.
+xr_module(xrRender_VK ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj
+    EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp xrRenderDX10/dx10 xrRenderDX10/StateManager/ xrRenderDX10/3DFluid/
+    EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/dds_codec.cpp)
+target_compile_definitions(xrRender_VK PRIVATE USE_DX11 USE_VK)
+target_include_directories(xrRender_VK BEFORE PRIVATE ${XR_SRC}/Layers/xrRenderVK)
+target_include_directories(xrRender_VK PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 ${XR_DXSDK_CI}
+    "${XR_3RD}/imgui")
+find_package(Vulkan REQUIRED)
+target_link_libraries(xrRender_VK PUBLIC xrEngine Vulkan::Vulkan)
+
 # --- libraries the executable needs besides the engine modules ---
 xr_module(xrAPI ${XR_SRC}/Layers/xrAPI/xrAPI.vcxproj)
 target_include_directories(xrAPI PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 ${XR_DXSDK_CI})
