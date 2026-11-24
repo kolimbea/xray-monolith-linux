@@ -352,6 +352,8 @@ public:
 	void RemoveBoneCallback(LPCSTR bone) { RemoveBoneCallback(bone_id(bone)); }
 
 	Fmatrix GetTransform() { return renderable.xform; }
+	// Callers that keep a pointer need the live matrix: &GetTransform() pointed at a temporary.
+	Fmatrix& GetTransformRef() { return renderable.xform; }
 	Fmatrix& XFORM() { return renderable.xform; }
     const Fmatrix& XFORM_prev() { return m_previous_matrix; }
 	IRenderVisual* Visual() const;

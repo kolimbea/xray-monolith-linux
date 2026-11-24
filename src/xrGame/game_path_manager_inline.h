@@ -58,7 +58,7 @@ IC void CGameManagerTemplate::select_intermediate_vertex()
 	VERIFY(!path().empty());
 	if (this->m_intermediate_index != _index_type(-1))
 		++this->m_intermediate_index;
-	else if (path().size() < 2)
+	else if (this->path().size() < 2)
 		this->m_intermediate_index = 0;
 	else
 		this->m_intermediate_index = 1;

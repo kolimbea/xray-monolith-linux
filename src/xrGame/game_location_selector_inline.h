@@ -52,7 +52,7 @@ IC void CGameLocationSelector::select_location(const _vertex_id_type start_verte
 	{
 	case eSelectionTypeMask:
 		{
-			if (used())
+			if (this->used())
 				this->perform_search(start_vertex_id);
 			else
 				this->m_failed = false;
@@ -177,8 +177,8 @@ IC bool CGameLocationSelector::actual(const _vertex_id_type start_vertex_id, boo
 TEMPLATE_SPECIALIZATION
 IC bool CGameLocationSelector::accessible(const _vertex_id_type vertex_id) const
 {
-	return (m_restricted_object
-		        ? m_restricted_object->accessible(this->m_graph->vertex(vertex_id)->level_vertex_id())
+	return (this->m_restricted_object
+		        ? this->m_restricted_object->accessible(this->m_graph->vertex(vertex_id)->level_vertex_id())
 		        : true);
 }
 

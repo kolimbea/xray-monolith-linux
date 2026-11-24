@@ -50,7 +50,7 @@
  #define CXIMAGE_SUPPORT_WMF 0
 #endif
 
-#if !defined(WIN32) && !defined(_WIN32_WCE) && !defined(__linux__) // Linux: Win32 types come from the engine compat layer
+#if !defined(WIN32) && !defined(_WIN32_WCE)
  #undef CXIMAGE_SUPPORT_WINDOWS
  #define CXIMAGE_SUPPORT_WINDOWS 0
 #endif
@@ -90,7 +90,7 @@ typedef struct tagcomplex {
 #endif
 
 
-#if !defined(WIN32) && !defined(_WIN32_WCE)
+#if !defined(WIN32) && !defined(_WIN32_WCE) && !defined(__linux__) // Linux: Win32 types come from the engine compat layer
 
 #include <stdlib.h>
 #include <string.h>

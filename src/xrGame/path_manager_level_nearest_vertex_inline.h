@@ -54,27 +54,27 @@ IC void CNearestVertexPathManager::setup(
 	);
 
 	this->graph->unpack_xz(*this->graph->vertex(_start_node_index), x0, y0);
-	max_range_sqr = iFloor(_sqr(this->max_range) / m_sqr_distance_xz + .5f);
+	max_range_sqr = iFloor(_sqr(this->max_range) / this->m_sqr_distance_xz + .5f);
 	m_cell_dist = this->graph->header().cell_size();
 
 	m_target_position = parameters.m_target_position;
 	m_best_distance_to_target = flt_max;
 	VERIFY(path);
-	path->clear();
+	this->path->clear();
 }
 
 TEMPLATE_SPECIALIZATION
 IC bool CNearestVertexPathManager::is_goal_reached(const _index_type& node_index)
 {
 	VERIFY(path);
-	best_node = this->graph->vertex(node_index);
+	this->best_node = this->graph->vertex(node_index);
 
-	float current_distance = m_target_position.distance_to_xz_sqr(this->graph->vertex_position(best_node));
+	float current_distance = m_target_position.distance_to_xz_sqr(this->graph->vertex_position(this->best_node));
 	if (current_distance < m_best_distance_to_target)
 	{
 		m_best_distance_to_target = current_distance;
-		path->clear();
-		path->push_back(node_index);
+		this->path->clear();
+		this->path->push_back(node_index);
 	}
 
 	return (false);

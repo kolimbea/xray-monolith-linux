@@ -618,7 +618,7 @@ void script_attachment::ForceUpdateXFORM(bool recursive)
 			else if (itm)
 			{
 				model = itm->HudItemData()->m_model;
-				matrix = itm->m_instance_holder_hud ? &itm->m_instance_holder_hud->GetTransform() : &itm->HudItemData()->m_item_transform;
+				matrix = itm->m_instance_holder_hud ? &itm->m_instance_holder_hud->GetTransformRef() : &itm->HudItemData()->m_item_transform;
 			}
 			else
 			{
@@ -632,7 +632,7 @@ void script_attachment::ForceUpdateXFORM(bool recursive)
 			break;
 		case eSA_World:
 			model = m_parent_object->Visual() ? m_parent_object->Visual()->dcast_PKinematics() : nullptr;
-			matrix = m_parent_object->m_instance_holder ? &m_parent_object->m_instance_holder->GetTransform() : & m_parent_object->XFORM();
+			matrix = m_parent_object->m_instance_holder ? &m_parent_object->m_instance_holder->GetTransformRef() : & m_parent_object->XFORM();
 
 			if (!model || (m_bone_callbacks[0] && m_bone_callbacks[0]->m_bone_id != BI_NONE))
 				renderable.xform = *matrix;
@@ -1804,7 +1804,7 @@ void script_attachment::SetName(LPCSTR name)
 		// Remove old instance from parent (without destroying it)
 		Level().remove_child(GetName(), false);
 
-		auto& pair = Level().GetAttachments()->find(name);
+		auto pair = Level().GetAttachments()->find(name);
 		if (pair != Level().GetAttachments()->end())
 		{
 			// Attachment with name exists, replace it
@@ -1822,7 +1822,7 @@ void script_attachment::SetName(LPCSTR name)
 		// Remove old instance from parent (without destroying it)
 		m_parent_object->remove_child(GetName(), false);
 
-		auto& pair = m_parent_object->GetAttachments()->find(name);
+		auto pair = m_parent_object->GetAttachments()->find(name);
 		if (pair != m_parent_object->GetAttachments()->end())
 		{
 			// Attachment with name exists, replace it
@@ -1841,7 +1841,7 @@ void script_attachment::SetName(LPCSTR name)
 		// Remove old instance from parent (without destroying it)
 		m_parent_attachment->RemoveChild(GetName(), false);
 
-		auto& pair = m_parent_attachment->m_children.find(name);
+		auto pair = m_parent_attachment->m_children.find(name);
 		if (pair != m_parent_attachment->m_children.end())
 		{
 			// Attachment with name exists, replace it
@@ -1862,7 +1862,7 @@ const ::luabind::object& script_attachment::GetUserdata() const
 {
 	if (!m_userdata)
 	{
-		const_cast<::luabind::object*>(m_userdata) = xr_new<::luabind::object>();
+		const_cast<script_attachment*>(this)->m_userdata = xr_new<::luabind::object>(); // lazily created in a const getter
 		*m_userdata = ::luabind::newtable(ai().script_engine().lua());
 	}
 	return *m_userdata;
@@ -2142,7 +2142,7 @@ bool script_attachment::has_shapes()
                 {
                     script_attachment* instance_holder = itm->m_instance_holder_hud;
                     if (instance_holder)
-                        obj_xform = &instance_holder->GetTransform();
+                        obj_xform = &instance_holder->GetTransformRef();
                     else
                         obj_xform = &itm->HudItemData()->m_item_transform;
                 }
