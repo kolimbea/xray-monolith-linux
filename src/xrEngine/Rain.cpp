@@ -5,7 +5,7 @@
 #include "IGame_Persistent.h"
 #include "Environment.h"
 
-#include "../../xrEngine/perlin.h"
+#include "perlin.h"
 
 #ifdef _EDITOR
 #include "ui_toolscustom.h"
