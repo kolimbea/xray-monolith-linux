@@ -122,7 +122,8 @@ target_include_directories(xrEngine PRIVATE "${XR_3RD}/discord")
 target_link_libraries(xrEngine PUBLIC imgui luabind lua_extensions xrCDB xrSound xrParticles xrXMLParser)
 
 # --- Stage 1c: game ---
-xr_module(xrGame ${XR_SRC}/xrGame/xrGame.vcxproj)
+# lua_studio.cpp: Lua Studio debugger backend, only used when USE_LUA_STUDIO (non-MASTER_GOLD builds)
+xr_module(xrGame ${XR_SRC}/xrGame/xrGame.vcxproj EXCLUDE lua_studio.cpp)
 target_include_directories(xrGame BEFORE PRIVATE ${XR_SRC}/Common/linux/pch/xrGame)
 target_include_directories(xrGame PRIVATE ${XR_SRC}/xrServerEntities "${XR_3RD}/luajit-2/src" "${XR_3RD}/luabind"
     "${XR_3RD}/cximage")

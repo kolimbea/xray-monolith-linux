@@ -1276,7 +1276,7 @@ bool CWeaponMagazined::PlayAnimCrouchIdleMoving()
 	{
 		HudAnimationExist("anm_idle_moving_crouch_empty")
 			? (void)PlayHUDMotion("anm_idle_moving_crouch_empty", TRUE, NULL, GetState())
-			: HudAnimationExist("anm_idle_moving_empty") ? (void)PlayHUDMotion("anm_idle_moving_empty", TRUE, NULL, GetState(), .7f) : inherited::PlayAnimCrouchIdleMoving();
+			: HudAnimationExist("anm_idle_moving_empty") ? (void)PlayHUDMotion("anm_idle_moving_empty", TRUE, NULL, GetState(), .7f) : (void)inherited::PlayAnimCrouchIdleMoving();
 
 		return true;
 	}

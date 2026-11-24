@@ -1179,7 +1179,7 @@ void script_attachment::DBGDrawPhysicsShell()
 				if (cylinder)
 				{
 					Fmatrix xform;
-					cylinder->get_Box(xform, Fvector());
+					{ Fvector unused_half_size; cylinder->get_Box(xform, unused_half_size); } // out-param was a temporary
 					Level().debug_renderer().draw_cylinder(xform, cylinder->height(), cylinder->radius(), color_xrgb(255, 0, 255), false);
 					continue;
 				}
@@ -1219,7 +1219,7 @@ script_attachment* script_attachment::AddChild(LPCSTR name, script_attachment* a
 
 script_attachment* script_attachment::GetChild(LPCSTR name)
 {
-		auto& pair = m_children.find(name);
+		auto pair = m_children.find(name);
 		if (pair != m_children.end())
 			return pair->second;
 
@@ -1228,7 +1228,7 @@ script_attachment* script_attachment::GetChild(LPCSTR name)
 
 void script_attachment::RemoveChild(LPCSTR name, bool destroy)
 {
-	auto& pair = m_children.find(name);
+	auto pair = m_children.find(name);
 	if (pair == m_children.end())
 		return;
 	

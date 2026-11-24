@@ -702,7 +702,7 @@ void CALifeSimulator::script_register(lua_State* L)
 		.def("register", &reprocess_spawn)
 		.def("set_objects_per_update", &set_objects_per_update)
 		.def("objects_per_update", &get_objects_per_update)
-		.def("set_process_time", &set_process_time)
+		.def("set_process_time", &::set_process_time)
 		.def("force_update", &force_update)
 		.def("get_children", &get_children, return_stl_iterator)
 		//Alundaio: END

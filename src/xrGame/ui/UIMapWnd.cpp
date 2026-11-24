@@ -601,7 +601,7 @@ Fvector2 CUIMapWnd::GetGlobalMapCoordsForMouse()
 
 	// Get absolute left top of the current area of the map
 	Fvector2 map_abs = { 0, 0 };
-	Fvector2& current_zoom = gm->GetCurrentZoom();
+	Fvector2 current_zoom = gm->GetCurrentZoom(); // returned by value
 	gm->GetAbsolutePos(map_abs);
 	map_abs.sub(gm->WorkingArea().lt);
 	map_abs.div(current_zoom);

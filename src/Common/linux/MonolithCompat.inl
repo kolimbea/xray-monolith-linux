@@ -542,3 +542,9 @@ inline errno_t _strupr_s(char* s, size_t) { strupr(s); return 0; }
 // Address of a temporary for the rest of the full-expression (MSVC allows &T(args)).
 template <class T> inline T* xr_tmp_addr(T&& t) { return &t; }
 typedef struct _OVERLAPPED* LPOVERLAPPED;
+template <size_t N> inline errno_t _strupr_s(char (&s)[N]) { strupr(s); return 0; }
+typedef struct _OVERLAPPED { uintptr_t Internal, InternalHigh; DWORD Offset, OffsetHigh; HANDLE hEvent; } OVERLAPPED;
+// TCHAR is char in this build (no _UNICODE)
+#ifndef _tfopen
+#define _tfopen fopen
+#endif

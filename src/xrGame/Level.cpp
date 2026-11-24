@@ -683,6 +683,7 @@ void CLevel::ProcessSpawnEvents()
 			goto spawn;
 		}
 
+        { // scope: "goto spawn" above may not jump over spawn_data_it's initialisation
         // If the object was in alife, but now its absent, skip it
         auto spawn_data_it = spawn_events_data_copy.find(obj_id);
         if (spawn_data_it != spawn_events_data_copy.end())
@@ -708,6 +709,7 @@ void CLevel::ProcessSpawnEvents()
 				continue;
 			}
 		}
+        }
 
 	spawn:
 		u16 dummy16;
@@ -1507,7 +1509,7 @@ script_attachment* CLevel::get_attachment(LPCSTR name)
 {
 	if (m_script_attachments.size())
 	{
-		auto& att = m_script_attachments.find(name);
+		auto att = m_script_attachments.find(name); // find returns an iterator by value
 		if (att != m_script_attachments.end())
 			return att->second;
 	}

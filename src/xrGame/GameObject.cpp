@@ -907,7 +907,7 @@ script_attachment* CGameObject::get_attachment(LPCSTR name)
 {
 	if (m_script_attachments.size())
 	{
-		auto& att = m_script_attachments.find(name);
+		auto att = m_script_attachments.find(name); // find returns an iterator by value
 		if (att != m_script_attachments.end())
 			return att->second;
 	}
@@ -1381,7 +1381,7 @@ void CGameObject::DBGDrawPhysicsShell()
 				if (cylinder)
 				{
 					Fmatrix xform;
-					cylinder->get_Box(xform, Fvector());
+					{ Fvector unused_half_size; cylinder->get_Box(xform, unused_half_size); } // out-param was a temporary
 					Level().debug_renderer().draw_cylinder(xform, cylinder->height(), cylinder->radius(), color_xrgb(255, 0, 255), false);
 					continue;
 				}

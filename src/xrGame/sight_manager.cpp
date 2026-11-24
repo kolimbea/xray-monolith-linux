@@ -614,7 +614,7 @@ Fvector CSightManager::aiming_position() const
 	return (result);
 }
 
-static inline float lerp(float low, float high, float value)
+static inline float sight_lerp(float low, float high, float value)
 {
 	float result;
 	if (low > high)
@@ -658,15 +658,15 @@ void CSightManager::process_action(float const time_delta)
 	//	}
 
 	VERIFY(_valid(m_current.m_head.m_factor));
-	m_current.m_head.m_factor = lerp(m_current.m_head.m_factor, factors.x, s_factor_lerp_speed * time_delta);
+	m_current.m_head.m_factor = sight_lerp(m_current.m_head.m_factor, factors.x, s_factor_lerp_speed * time_delta);
 	VERIFY(_valid(m_current.m_head.m_factor));
 
 	VERIFY(_valid(m_current.m_shoulder.m_factor));
-	m_current.m_shoulder.m_factor = lerp(m_current.m_shoulder.m_factor, factors.y, s_factor_lerp_speed * time_delta);
+	m_current.m_shoulder.m_factor = sight_lerp(m_current.m_shoulder.m_factor, factors.y, s_factor_lerp_speed * time_delta);
 	VERIFY(_valid(m_current.m_shoulder.m_factor));
 
 	VERIFY(_valid(m_current.m_spine.m_factor));
-	m_current.m_spine.m_factor = lerp(m_current.m_spine.m_factor, factors.z, s_factor_lerp_speed * time_delta);
+	m_current.m_spine.m_factor = sight_lerp(m_current.m_spine.m_factor, factors.z, s_factor_lerp_speed * time_delta);
 	VERIFY(_valid(m_current.m_spine.m_factor));
 
 	Fvector const angles =
