@@ -22,7 +22,11 @@
 
 #include "ui/UICDkey.h"
 
+#ifdef __linux__
+#include <SDL3/SDL_misc.h> // SDL_OpenURL
+#else
 #include <shellapi.h>
+#endif
 #pragma comment(lib, "shell32.lib")
 
 #include "object_broker.h"
@@ -935,6 +939,10 @@ demo_info const* CMainMenu::GetDemoInfo(LPCSTR file_name)
 
 void open_originals_link()
 {
+#ifdef __linux__
+	SDL_OpenURL("https://www.stalker-game.com/en/available-on");
+#else
 	LPCSTR params = "/C start https://www.stalker-game.com/en/available-on";
 	ShellExecute(0, "open", "cmd.exe", params, NULL, SW_SHOW);
+#endif
 }

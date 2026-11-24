@@ -7,7 +7,9 @@
 #include "ui/UICDkey.h"
 #include "secure_messaging.h"
 
+#ifndef __linux__
 #include <shellapi.h>
+#endif
 
 //#pragma comment(lib, "shell32.lib")
 

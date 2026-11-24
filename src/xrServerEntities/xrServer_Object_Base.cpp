@@ -6,7 +6,7 @@
 //	Description : Server base object
 ////////////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
+#include "stdafx.h"
 #include "xrServer_Objects.h"
 #include "xrMessages.h"
 #include "game_base_space.h"
@@ -185,10 +185,10 @@ CInifile& CSE_Abstract::spawn_ini()
 #pragma warning(push)
 #pragma warning(disable:4238)
 		m_ini_file = xr_new<CInifile>(
-			&IReader(
+			xr_tmp_addr(IReader(
 				(void*)(*(m_ini_string)),
 				m_ini_string.size()
-			),
+			)),
 			FS.get_path("$game_config$")->m_Path
 		);
 #pragma warning(pop)

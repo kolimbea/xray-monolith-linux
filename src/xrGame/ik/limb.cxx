@@ -795,6 +795,9 @@ int Limb::try_singularities(int solves, float& swivel_angle, float x[])
 //
 // Assumes that either SetGoal or SetGoalPos has been called first
 //
+#ifndef XRPHYSICS_API
+#define XRPHYSICS_API
+#endif
 extern XRPHYSICS_API const float phInfinity;
 
 int Limb::Solve(float x[], float* new_swivel, float* new_pos)
@@ -974,6 +977,9 @@ int Limb::InLimits(const float x[7]) const
 	return 1;
 }
 
+#ifdef roundup
+#undef roundup // <sys/param.h> macro
+#endif
 float roundup(float x)
 {
 	if (x < 0)

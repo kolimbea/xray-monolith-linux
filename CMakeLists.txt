@@ -123,6 +123,7 @@ target_link_libraries(xrEngine PUBLIC imgui luabind lua_extensions xrCDB xrSound
 
 # --- Stage 1c: game ---
 xr_module(xrGame ${XR_SRC}/xrGame/xrGame.vcxproj)
+target_include_directories(xrGame BEFORE PRIVATE ${XR_SRC}/Common/linux/pch/xrGame)
 target_include_directories(xrGame PRIVATE ${XR_SRC}/xrServerEntities "${XR_3RD}/luajit-2/src" "${XR_3RD}/luabind"
     "${XR_3RD}/cximage")
 target_link_libraries(xrGame PUBLIC xrEngine xrPhysics xrNetServer luabind lua_extensions)

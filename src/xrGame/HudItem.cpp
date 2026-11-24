@@ -503,7 +503,7 @@ float CHudItem::GetNearWallRange()
 	return m_nearwall_dist_max - m_nearwall_dist_min;
 }
 
-static float lerp(float a, float b, float t)
+static float hud_item_lerp(float a, float b, float t)
 {
 	clamp(t, 0.f, 1.f);
 	return a * (1 - t) + b * t;
@@ -1188,10 +1188,10 @@ void CHudItem::OnFrame()
 	float t = m_nearwall_speed_mod * Device.fTimeDelta;
 
 	float target_fov = GetTargetHudFov();
-	m_hud_fov = lerp(m_hud_fov, target_fov, t);
+	m_hud_fov = hud_item_lerp(m_hud_fov, target_fov, t);
 
 	float target_ofs = GetTargetNearWallOffset();
-	m_nearwall_ofs = lerp(m_nearwall_ofs, target_ofs, t);
+	m_nearwall_ofs = hud_item_lerp(m_nearwall_ofs, target_ofs, t);
 }
 
 void CHudItem::net_Relcase(CObject* O)

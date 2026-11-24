@@ -3,7 +3,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
+#include "stdafx.h"
 #include "character_info.h"
 
 #ifdef XRGAME_EXPORTS

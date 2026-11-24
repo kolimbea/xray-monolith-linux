@@ -17,7 +17,7 @@ template <
 >
 class CSetupManager
 {
-private:
+public: // derived managers name these types (MSVC did not enforce access here)
 	typedef std::pair<_action_id_type, _action_type*> setup_pair;
 	typedef xr_vector<setup_pair> setup_actions;
 

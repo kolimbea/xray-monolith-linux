@@ -89,7 +89,7 @@ Fmatrix CPda::RayTransform()
 	return matrix;
 }
 
-static float lerp(float a, float b, float t)
+static float pda_lerp(float a, float b, float t)
 {
 	return a * (1 - t) + b * t;
 }
@@ -99,7 +99,7 @@ float CPda::GetNearWallOffset()
 	float ofs = CHudItem::GetNearWallOffset();
 	float ofs_ads = ofs;
 	clamp(ofs_ads, ofs_ads, m_nearwall_zoomed_range);
-	return lerp(ofs, ofs_ads, m_fZoomfactor);
+	return pda_lerp(ofs, ofs_ads, m_fZoomfactor);
 }
 
 void CPda::OnStateSwitch(u32 S, u32 oldState)

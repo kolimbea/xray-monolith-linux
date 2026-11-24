@@ -6,7 +6,7 @@
 //	Description : Server objects items for ALife simulator
 ////////////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h" // xrGame precompiled header (Windows found it case-insensitively)
+#include "stdafx.h"
 #include "xrMessages.h"
 #include "xrServer_Objects_ALife_Items.h"
 #include "clsid_game.h"

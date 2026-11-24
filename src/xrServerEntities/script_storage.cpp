@@ -730,7 +730,9 @@ bool CScriptStorage::load_buffer(lua_State* L, LPCSTR caBuffer, size_t tSize, LP
 		LPSTR script = 0;
 		bool dynamic_allocation = false;
 
-		__try
+		#ifndef __linux__ // no SEH: on Linux a stack overflow ends in xrDebug's SIGSEGV handler
+__try
+#endif
 		{
 			if (total_size < 768 * 1024)
 				script = (LPSTR)_alloca(total_size);
@@ -744,7 +746,8 @@ bool CScriptStorage::load_buffer(lua_State* L, LPCSTR caBuffer, size_t tSize, LP
 				dynamic_allocation = true;
 			}
 		}
-		__except (GetExceptionCode() == STATUS_STACK_OVERFLOW)
+		#ifndef __linux__
+__except (GetExceptionCode() == STATUS_STACK_OVERFLOW)
 		{
 			int errcode = _resetstkoflw();
 			R_ASSERT2(errcode, "Could not reset the stack after \"Stack overflow\" exception!");
@@ -754,7 +757,8 @@ bool CScriptStorage::load_buffer(lua_State* L, LPCSTR caBuffer, size_t tSize, LP
 			script = (LPSTR)Memory.mem_alloc(total_size);
 #endif //#ifdef DEBUG
 			dynamic_allocation = true;
-		};
+		}
+#endif;
 
 		xr_strcpy(script, total_size, insert);
 		CopyMemory(script + str_len, caBuffer, u32(tSize));

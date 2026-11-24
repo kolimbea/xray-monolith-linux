@@ -19,7 +19,7 @@ Fvector get_matrix_hpb(Fmatrix* self)
 }
 
 #pragma optimize("s",on)
-void CScriptFmatrix::script_register(lua_State* L)
+template<> void CScriptFmatrix::script_register(lua_State* L)
 {
 	module(L)
 		[

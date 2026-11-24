@@ -151,8 +151,8 @@ void CCustomDevice::OnStateSwitch(u32 S, u32 oldState)
 			m_fZoomfactor = .51f;
 
 		m_bZoomed && HudAnimationExist("anm_zoom_show")
-			? PlayHUDMotion("anm_zoom_show", FALSE, this, GetState(), 1.f, 0.f, false) 
-			: PlayHUDMotion(m_bFastAnimMode ? "anm_show_fast" : "anm_show", FALSE, this, GetState(), 1.f, 0.f, false);
+			? (void)PlayHUDMotion("anm_zoom_show", FALSE, this, GetState(), 1.f, 0.f, false) 
+			: (void)PlayHUDMotion(m_bFastAnimMode ? "anm_show_fast" : "anm_show", FALSE, this, GetState(), 1.f, 0.f, false);
 		SetPending(TRUE);
 	}
 	break;
@@ -163,8 +163,8 @@ void CCustomDevice::OnStateSwitch(u32 S, u32 oldState)
 			m_sounds.PlaySound("sndHide", Fvector().set(0, 0, 0), this, true, false);
 
 			m_fZoomfactor > .5f && (oldState == eIdleZoom || oldState == eIdleZoomIn || oldState == eIdleZoomOut || oldState == eShowing) && HudAnimationExist(m_bFastAnimMode ? "anm_zoom_hide_fast" : "anm_zoom_hide")
-				? PlayHUDMotion(m_bFastAnimMode ? "anm_zoom_hide_fast" : "anm_zoom_hide", TRUE, this, GetState()) 
-				: PlayHUDMotion(m_bFastAnimMode ? "anm_hide_fast" : "anm_hide", TRUE, this, GetState());
+				? (void)PlayHUDMotion(m_bFastAnimMode ? "anm_zoom_hide_fast" : "anm_zoom_hide", TRUE, this, GetState()) 
+				: (void)PlayHUDMotion(m_bFastAnimMode ? "anm_hide_fast" : "anm_hide", TRUE, this, GetState());
 			SetPending(TRUE);
 
 			m_bZoomed = false;
@@ -190,7 +190,7 @@ void CCustomDevice::OnStateSwitch(u32 S, u32 oldState)
 		m_bZoomed = true;
 
 		HudAnimationExist(m_bOldZoom ? "anm_zoom_in" : "anm_zoom")
-			? PlayHUDMotion(m_bOldZoom ? "anm_zoom_in" : "anm_zoom", TRUE, this, GetState())
+			? (void)PlayHUDMotion(m_bOldZoom ? "anm_zoom_in" : "anm_zoom", TRUE, this, GetState())
 			: SwitchState(eIdleZoom);
 		SetPending(FALSE);
 	}
@@ -199,7 +199,7 @@ void CCustomDevice::OnStateSwitch(u32 S, u32 oldState)
 	{
 		m_bZoomed = false;
 		HudAnimationExist(m_bOldZoom ? "anm_zoom_out" : "anm_zoom")
-			? PlayHUDMotion(m_bOldZoom ? "anm_zoom_out" : "anm_zoom", TRUE, this, GetState())
+			? (void)PlayHUDMotion(m_bOldZoom ? "anm_zoom_out" : "anm_zoom", TRUE, this, GetState())
 			: SwitchState(eIdle);
 		SetPending(FALSE);
 	}

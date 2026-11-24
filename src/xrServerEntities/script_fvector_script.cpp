@@ -336,7 +336,7 @@ IC bool intersect(const Fobb& b, const Fcylinder& c)
 }
 
 #pragma optimize("s",on)
-void CScriptFvector::script_register(lua_State* L)
+template<> void CScriptFvector::script_register(lua_State* L)
 {
 	module(L)
 	[

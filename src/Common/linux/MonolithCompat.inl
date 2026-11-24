@@ -538,3 +538,7 @@ inline BOOL GetProcessAffinityMask(HANDLE, DWORD_PTR* process_mask, DWORD_PTR* s
 #define FILE_ATTRIBUTE_HIDDEN 0x2u
 inline __time32_t _time32(__time32_t* t) { const __time32_t v = (__time32_t)time(nullptr); if (t) *t = v; return v; }
 inline errno_t _strupr_s(char* s, size_t) { strupr(s); return 0; }
+
+// Address of a temporary for the rest of the full-expression (MSVC allows &T(args)).
+template <class T> inline T* xr_tmp_addr(T&& t) { return &t; }
+typedef struct _OVERLAPPED* LPOVERLAPPED;

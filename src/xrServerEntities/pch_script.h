@@ -9,7 +9,7 @@
 #ifndef PCH_SCRIPT_H
 #define PCH_SCRIPT_H
 
-#include "StdAfx.h" // xrGame precompiled header
+#include "stdafx.h"
 
 
 //AVO: lua re-org

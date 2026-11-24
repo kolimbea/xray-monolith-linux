@@ -91,10 +91,10 @@ CScriptIniFile* create_ini_file(LPCSTR ini_string)
 	return (
 		(CScriptIniFile*)
 		xr_new<CInifile>(
-			&IReader(
+			xr_tmp_addr(IReader(
 				(void*)ini_string,
 				xr_strlen(ini_string)
-			),
+			)),
 			FS.get_path("$game_config$")->m_Path
 		)
 	);
