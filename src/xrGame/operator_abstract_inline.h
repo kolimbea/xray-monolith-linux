@@ -237,58 +237,58 @@ template <typename T>
 IC bool CAbstractOperator::applicable(const CSConditionState& current, const CSConditionState& start,
                                       const CSConditionState& conditions, T& problem_solver) const
 {
-	typename xr_vector<COperatorCondition>::const_iterator this->I = current.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->E = current.conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->i = conditions.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->e = conditions.conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->II = start.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->EE = start.conditions().end();
-	for (; (this->I != this->E) && (this->i != this->e);)
+	typename xr_vector<COperatorCondition>::const_iterator I = current.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator E = current.conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator i = conditions.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator e = conditions.conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator II = start.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator EE = start.conditions().end();
+	for (; (I != E) && (i != e);)
 	{
-		if ((*this->I).condition() < (*this->i).condition())
-			++this->I;
-		else if ((*this->I).condition() > (*this->i).condition())
+		if ((*I).condition() < (*i).condition())
+			++I;
+		else if ((*I).condition() > (*i).condition())
 		{
-			for (; (this->II != this->EE) && ((*this->II).condition() < (*this->i).condition());)
-				++this->II;
-			if ((this->II == this->EE) || ((*this->II).condition() > (*this->i).condition()))
-				problem_solver.evaluate_condition(this->II, this->EE, (*this->i).condition());
-			if ((*this->II).value() != (*this->i).value())
+			for (; (II != EE) && ((*II).condition() < (*i).condition());)
+				++II;
+			if ((II == EE) || ((*II).condition() > (*i).condition()))
+				problem_solver.evaluate_condition(II, EE, (*i).condition());
+			if ((*II).value() != (*i).value())
 				return (false);
-			++this->II;
-			++this->i;
+			++II;
+			++i;
 		}
 		else
 		{
-			if ((*this->I).value() != (*this->i).value())
+			if ((*I).value() != (*i).value())
 				return (false);
-			++this->I;
-			++this->i;
+			++I;
+			++i;
 		}
 	}
 
-	if (this->I == this->E)
+	if (I == E)
 	{
-		this->I = this->II;
-		this->E = this->EE;
+		I = II;
+		E = EE;
 	}
 	else
 		return (true);
 
-	for (; this->i != this->e;)
+	for (; i != e;)
 	{
-		if ((this->I == this->E) || ((*this->I).condition() > (*this->i).condition()))
-			problem_solver.evaluate_condition(this->I, this->E, (*this->i).condition());
+		if ((I == E) || ((*I).condition() > (*i).condition()))
+			problem_solver.evaluate_condition(I, E, (*i).condition());
 
-		if ((*this->I).condition() < (*this->i).condition())
-			++this->I;
+		if ((*I).condition() < (*i).condition())
+			++I;
 		else
 		{
 			VERIFY((*I).condition() == (*i).condition());
-			if ((*this->I).value() != (*this->i).value())
+			if ((*I).value() != (*i).value())
 				return (false);
-			++this->I;
-			++this->i;
+			++I;
+			++i;
 		}
 	}
 
@@ -302,64 +302,64 @@ IC const typename CAbstractOperator::CSConditionState&CAbstractOperator::apply(
 	T& problem_solver) const
 {
 	result.clear();
-	typename xr_vector<COperatorCondition>::const_iterator this->I = current.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->E = current.conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->i = effects.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->e = effects.conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->II = start.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->EE = start.conditions().end();
-	for (; (this->I != this->E) && (this->i != this->e);)
+	typename xr_vector<COperatorCondition>::const_iterator I = current.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator E = current.conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator i = effects.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator e = effects.conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator II = start.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator EE = start.conditions().end();
+	for (; (I != E) && (i != e);)
 	{
-		if ((*this->I).condition() < (*this->i).condition())
+		if ((*I).condition() < (*i).condition())
 		{
-			result.add_condition_back(*this->I);
-			++this->I;
+			result.add_condition_back(*I);
+			++I;
 		}
-		else if ((*this->I).condition() > (*this->i).condition())
+		else if ((*I).condition() > (*i).condition())
 		{
-			for (; (this->II != this->EE) && ((*this->II).condition() < (*this->i).condition());)
-				++this->II;
-			if ((this->II == this->EE) || ((*this->II).condition() > (*this->i).condition()))
-				problem_solver.evaluate_condition(this->II, this->EE, (*this->i).condition());
-			if ((*this->II).value() != (*this->i).value())
-				result.add_condition_back(*this->i);
-			++this->II;
-			++this->i;
+			for (; (II != EE) && ((*II).condition() < (*i).condition());)
+				++II;
+			if ((II == EE) || ((*II).condition() > (*i).condition()))
+				problem_solver.evaluate_condition(II, EE, (*i).condition());
+			if ((*II).value() != (*i).value())
+				result.add_condition_back(*i);
+			++II;
+			++i;
 		}
 		else
 		{
-			if ((*this->I).value() == (*this->i).value())
-				result.add_condition_back(*this->i);
-			++this->I;
-			++this->i;
+			if ((*I).value() == (*i).value())
+				result.add_condition_back(*i);
+			++I;
+			++i;
 		}
 	}
-	if (this->I == this->E)
+	if (I == E)
 	{
-		this->I = this->II;
-		this->E = this->EE;
+		I = II;
+		E = EE;
 	}
 	else
 	{
-		for (; this->I != this->E; ++this->I)
-			result.add_condition_back(*this->I);
+		for (; I != E; ++I)
+			result.add_condition_back(*I);
 		return (result);
 	}
 
-	for (; this->i != this->e;)
+	for (; i != e;)
 	{
-		if ((this->I == this->E) || ((*this->I).condition() > (*this->i).condition()))
-			problem_solver.evaluate_condition(this->I, this->E, (*this->i).condition());
+		if ((I == E) || ((*I).condition() > (*i).condition()))
+			problem_solver.evaluate_condition(I, E, (*i).condition());
 
-		if ((*this->I).condition() < (*this->i).condition())
-			++this->I;
+		if ((*I).condition() < (*i).condition())
+			++I;
 		else
 		{
 			VERIFY((*I).condition() == (*i).condition());
-			if ((*this->I).value() != (*this->i).value())
-				result.add_condition_back(*this->i);
-			++this->I;
-			++this->i;
+			if ((*I).value() != (*i).value())
+				result.add_condition_back(*i);
+			++I;
+			++i;
 		}
 	}
 

@@ -274,60 +274,60 @@ TEMPLATE_SPECIALIZATION
 IC bool CProblemSolverAbstract::is_goal_reached_impl(const _index_type& vertex_index) const
 {
 	STATIC_CHECK(!reverse_search, This_function_cannot_be_used_in_the_REVERSE_search);
-	typename xr_vector<COperatorCondition>::const_iterator this->I = vertex_index.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->E = vertex_index.conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->i = target_state().conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->e = target_state().conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->II = current_state().conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->EE = current_state().conditions().end();
-	for (; (this->i != this->e) && (this->I != this->E);)
+	typename xr_vector<COperatorCondition>::const_iterator I = vertex_index.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator E = vertex_index.conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator i = target_state().conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator e = target_state().conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator II = current_state().conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator EE = current_state().conditions().end();
+	for (; (i != e) && (I != E);)
 	{
-		if ((*this->I).condition() < (*this->i).condition())
+		if ((*I).condition() < (*i).condition())
 		{
-			++this->I;
+			++I;
 		}
-		else if ((*this->I).condition() > (*this->i).condition())
+		else if ((*I).condition() > (*i).condition())
 		{
-			for (; (this->II != this->EE) && ((*this->II).condition() < (*this->i).condition());)
-				++this->II;
-			if ((this->II == this->EE) || ((*this->II).condition() > (*this->i).condition()))
-				evaluate_condition(this->II, this->EE, (*this->i).condition());
-			if ((*this->II).value() != (*this->i).value())
+			for (; (II != EE) && ((*II).condition() < (*i).condition());)
+				++II;
+			if ((II == EE) || ((*II).condition() > (*i).condition()))
+				evaluate_condition(II, EE, (*i).condition());
+			if ((*II).value() != (*i).value())
 				return (false);
-			++this->II;
-			++this->i;
+			++II;
+			++i;
 		}
 		else
 		{
-			if ((*this->I).value() != (*this->i).value())
+			if ((*I).value() != (*i).value())
 				return (false);
-			++this->I;
-			++this->i;
+			++I;
+			++i;
 		}
 	}
 
-	if (this->I == this->E)
+	if (I == E)
 	{
-		this->I = this->II;
-		this->E = this->EE;
+		I = II;
+		E = EE;
 	}
 	else
 		return (true);
 
-	for (; this->i != this->e;)
+	for (; i != e;)
 	{
-		if ((this->I == this->E) || ((*this->I).condition() > (*this->i).condition()))
-			evaluate_condition(this->I, this->E, (*this->i).condition());
+		if ((I == E) || ((*I).condition() > (*i).condition()))
+			evaluate_condition(I, E, (*i).condition());
 
-		if ((*this->I).condition() < (*this->i).condition())
-			++this->I;
+		if ((*I).condition() < (*i).condition())
+			++I;
 		else
 		{
 			VERIFY((*I).condition() == (*i).condition());
-			if ((*this->I).value() != (*this->i).value())
+			if ((*I).value() != (*i).value())
 				return (false);
-			++this->I;
-			++this->i;
+			++I;
+			++i;
 		}
 	}
 	return (true);
@@ -337,23 +337,23 @@ TEMPLATE_SPECIALIZATION
 IC bool CProblemSolverAbstract::is_goal_reached_impl(const _index_type& vertex_index, bool) const
 {
 	STATIC_CHECK(reverse_search, This_function_cannot_be_used_in_the_STRAIGHT_search);
-	typename xr_vector<COperatorCondition>::const_iterator this->I = m_current_state.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->E = m_current_state.conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->i = vertex_index.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->e = vertex_index.conditions().end();
-	for (; this->i != this->e;)
+	typename xr_vector<COperatorCondition>::const_iterator I = m_current_state.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator E = m_current_state.conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator i = vertex_index.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator e = vertex_index.conditions().end();
+	for (; i != e;)
 	{
-		if ((this->I == this->E) || ((*this->I).condition() > (*this->i).condition()))
-			evaluate_condition(this->I, this->E, (*this->i).condition());
+		if ((I == E) || ((*I).condition() > (*i).condition()))
+			evaluate_condition(I, E, (*i).condition());
 
-		if ((*this->I).condition() < (*this->i).condition())
-			++this->I;
+		if ((*I).condition() < (*i).condition())
+			++I;
 		else
 		{
-			if ((*this->I).value() != (*this->i).value())
+			if ((*I).value() != (*i).value())
 				return (false);
-			++this->I;
-			++this->i;
+			++I;
+			++i;
 		}
 	}
 	return (true);
@@ -415,26 +415,26 @@ IC typename CProblemSolverAbstract::_edge_value_type CProblemSolverAbstract::est
 {
 	STATIC_CHECK(!reverse_search, This_function_cannot_be_used_in_the_REVERSE_search);
 	_edge_value_type result = 0;
-	typename xr_vector<COperatorCondition>::const_iterator this->I = target_state().conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->E = target_state().conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->i = condition.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->e = condition.conditions().end();
-	for (; (this->I != this->E) && (this->i != this->e);)
-		if ((*this->I).condition() < (*this->i).condition())
+	typename xr_vector<COperatorCondition>::const_iterator I = target_state().conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator E = target_state().conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator i = condition.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator e = condition.conditions().end();
+	for (; (I != E) && (i != e);)
+		if ((*I).condition() < (*i).condition())
 		{
 			++result;
-			++this->I;
+			++I;
 		}
-		else if ((*this->I).condition() > (*this->i).condition())
-			++this->i;
+		else if ((*I).condition() > (*i).condition())
+			++i;
 		else
 		{
-			if ((*this->I).value() != (*this->i).value())
+			if ((*I).value() != (*i).value())
 				++result;
-			++this->I;
-			++this->i;
+			++I;
+			++i;
 		}
-	return (result + _edge_value_type(this->E - this->I));
+	return (result + _edge_value_type(E - I));
 }
 
 TEMPLATE_SPECIALIZATION
@@ -443,24 +443,24 @@ IC typename CProblemSolverAbstract::_edge_value_type CProblemSolverAbstract::est
 {
 	STATIC_CHECK(reverse_search, This_function_cannot_be_used_in_the_STRAIGHT_search);
 	_edge_value_type result = 0;
-	typename xr_vector<COperatorCondition>::const_iterator this->I = current_state().conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->E = current_state().conditions().end();
-	typename xr_vector<COperatorCondition>::const_iterator this->i = condition.conditions().begin();
-	typename xr_vector<COperatorCondition>::const_iterator this->e = condition.conditions().end();
-	for (; (this->i != this->e);)
+	typename xr_vector<COperatorCondition>::const_iterator I = current_state().conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator E = current_state().conditions().end();
+	typename xr_vector<COperatorCondition>::const_iterator i = condition.conditions().begin();
+	typename xr_vector<COperatorCondition>::const_iterator e = condition.conditions().end();
+	for (; (i != e);)
 	{
-		if ((this->I == this->E) || ((*this->I).condition() > (*this->i).condition()))
-			evaluate_condition(this->I, this->E, (*this->i).condition());
+		if ((I == E) || ((*I).condition() > (*i).condition()))
+			evaluate_condition(I, E, (*i).condition());
 
-		if ((*this->I).condition() < (*this->i).condition())
-			++this->I;
+		if ((*I).condition() < (*i).condition())
+			++I;
 		else
 		{
 			VERIFY((*I).condition() == (*i).condition());
-			if ((*this->I).value() != (*this->i).value())
+			if ((*I).value() != (*i).value())
 				++result;
-			++this->I;
-			++this->i;
+			++I;
+			++i;
 		}
 	}
 	return (result);
