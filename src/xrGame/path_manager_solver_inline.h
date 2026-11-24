@@ -109,7 +109,7 @@ IC void CSolverPathManager::create_path(T& vertex)
 {
 	VERIFY(this->data_storage);
 	if (m_edge_path)
-		this->data_storage->get_edge_path(*m_edge_path, &vertex, typename _Graph::reverse_search);
+		this->data_storage->get_edge_path(*m_edge_path, &vertex, _Graph::reverse_search); // a value, not a type
 }
 
 #undef TEMPLATE_SPECIALIZATION

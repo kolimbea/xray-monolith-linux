@@ -65,7 +65,7 @@ void CHUDCrosshair::SetDispersion(float d)
 
 extern ENGINE_API BOOL g_bRendering;
 
-static float lerp(float a, float b, float t)
+static float hud_lerp(float a, float b, float t)
 {
 	clamp(t, 0.f, 1.f);
 	return a * (1 - t) + b * t;

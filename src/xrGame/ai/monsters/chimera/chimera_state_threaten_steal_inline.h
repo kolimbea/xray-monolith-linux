@@ -10,15 +10,15 @@ void CStateChimeraThreatenStealAbstract::initialize()
 {
 	inherited::initialize();
 
-	data.action.action = ACT_STEAL;
+	this->data.action.action = ACT_STEAL;
 
-	data.accelerated = true;
-	data.braking = false;
-	data.accel_type = eAT_Calm;
+	this->data.accelerated = true;
+	this->data.braking = false;
+	this->data.accel_type = eAT_Calm;
 
-	data.completion_dist = 2.f;
-	data.action.sound_type = MonsterSound::eMonsterSoundIdle;
-	data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
+	this->data.completion_dist = 2.f;
+	this->data.action.sound_type = MonsterSound::eMonsterSoundIdle;
+	this->data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
 }
 
 TEMPLATE_SPECIALIZATION
@@ -31,9 +31,9 @@ void CStateChimeraThreatenStealAbstract::finalize()
 TEMPLATE_SPECIALIZATION
 void CStateChimeraThreatenStealAbstract::execute()
 {
-	data.point = this->object->EnemyMan.get_enemy_position();
-	data.vertex = this->object->EnemyMan.get_enemy_vertex();
-	data.time_to_rebuild = this->object->get_attack_rebuild_time();
+	this->data.point = this->object->EnemyMan.get_enemy_position();
+	this->data.vertex = this->object->EnemyMan.get_enemy_vertex();
+	this->data.time_to_rebuild = this->object->get_attack_rebuild_time();
 
 	inherited::execute();
 }

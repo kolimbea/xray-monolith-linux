@@ -463,3 +463,5 @@ inline void GetLocalTime(LPSYSTEMTIME st)
     st->wSecond = (WORD)t.tm_sec;
     st->wMilliseconds = (WORD)(ts.tv_nsec / 1000000);
 }
+inline char* ultoa(unsigned long v, char* buf, int radix) { return xr_linux_itoa((long long)(unsigned long long)v, buf, 33, radix); }
+#define _ultoa ultoa

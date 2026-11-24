@@ -383,7 +383,7 @@ IC bool ImGui_Shortcut(ImGuiKeyChord keys)
 
 IC Fvector2 ImGui_CalcTextSize(LPCSTR text, bool hide_after_double_hash = false, float wrap_width = -1.f)
 {
-	return *(Fvector2*)&ImGui::CalcTextSize(text, 0, hide_after_double_hash, wrap_width);
+	{ const ImVec2 v = ImGui::CalcTextSize(text, 0, hide_after_double_hash, wrap_width); return Fvector2().set(v.x, v.y); }
 }
 
 IC bool ImGui_IsMouseHoveringRect(Fvector2 min, Fvector2 max)
@@ -413,7 +413,7 @@ IC Fvector2 ImGui_GetMousePosOnOpeningCurrentPopup()
 
 IC Fvector2 ImGui_GetMouseDragDelta(ImGuiMouseButton button = 0, float lock_treshold = -1.f)
 {
-	return *(Fvector2*)&ImGui::GetMouseDragDelta(button, lock_treshold);
+	{ const ImVec2 v = ImGui::GetMouseDragDelta(button, lock_treshold); return Fvector2().set(v.x, v.y); }
 }
 
 IC LPCSTR ImGui_GetClipboardText()

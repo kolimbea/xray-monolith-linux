@@ -76,7 +76,7 @@ IC void update_blend(CBlend* & b)
 		b = 0;
 }
 
-IC float lerp(float t, float a, float b)
+IC float ik_lerp(float t, float a, float b)
 {
 	return (a + t * (b - a));
 }

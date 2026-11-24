@@ -87,6 +87,12 @@ class CGraphAbstractSerialize : public CGraphAbstract<_data_type, _edge_weight_t
                                 public IPureSerializeObject<IReader, IWriter>
 {
 public:
+	// members of the dependent base used by save/load (MSVC found them unqualified)
+	typedef CGraphAbstract<_data_type, _edge_weight_type, _vertex_id_type> inherited;
+	typedef typename inherited::const_vertex_iterator const_vertex_iterator;
+	typedef typename inherited::const_iterator const_iterator;
+	using inherited::vertices;
+	using inherited::clear;
 	virtual void save(IWriter& stream);
 	virtual void load(IReader& stream);
 };

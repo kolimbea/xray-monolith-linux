@@ -2,6 +2,9 @@
 #include "pseudodog.h"
 #include "../../../../xrServerEntities/script_export_space.h"
 
+class CPsyDogPhantom; // befriended and used below before their definitions
+class CPsyDogAura;
+
 class CPsyDogPhantom;
 
 class CPsyDog : public CAI_PseudoDog

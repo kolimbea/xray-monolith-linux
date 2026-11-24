@@ -31,7 +31,7 @@ namespace inventory
 			{
 				IC return_type operator()() const
 				{
-					return functr(parameter);
+					return this->functr(this->parameter);
 				}
 			};
 
@@ -42,7 +42,7 @@ namespace inventory
 
 				IC return_type operator()() const
 				{
-					return functr(parameter, parameter2);
+					return this->functr(this->parameter, parameter2);
 				}
 			};
 

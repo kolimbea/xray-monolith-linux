@@ -12,7 +12,7 @@
 #include "../ik_limb_state_predict.h"
 
 class IKinematics;
-class CDB::TRI;
+namespace CDB { class TRI; } // a qualified forward declaration is MSVC-only
 struct SCalculateData;
 struct SIKCollideData;
 class CGameObject;

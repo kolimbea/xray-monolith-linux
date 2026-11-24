@@ -179,7 +179,7 @@ typedef long LRESULT;
 
 // #define TRUE true  -- defined by windows_base.h
 // #define FALSE false  -- defined by windows_base.h
-#define NONE 0
+// NONE: OpenXRay defined it as 0; it collides with Monolith enumerators named NONE.
 // #define CONST const  -- defined by windows_base.h
 
 typedef dirent DirEntryType;
