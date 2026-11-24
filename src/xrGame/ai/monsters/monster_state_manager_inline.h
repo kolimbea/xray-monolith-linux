@@ -22,12 +22,12 @@ TEMPLATE_SPECIALIZATION
 void CMonsterStateManagerAbstract::update()
 {
 	// Lain: added
-	if (!detail::object_exists_in_alife_registry(object->ID()))
+	if (!detail::object_exists_in_alife_registry(this->object->ID()))
 	{
 		return;
 	}
 
-	if (!object->g_Alive())
+	if (!this->object->g_Alive())
 	{
 		return;
 	}
@@ -52,7 +52,7 @@ void CMonsterStateManagerAbstract::execute_script_state()
 TEMPLATE_SPECIALIZATION
 bool CMonsterStateManagerAbstract::can_eat()
 {
-	if (!object->CorpseMan.get_corpse()) return false;
+	if (!this->object->CorpseMan.get_corpse()) return false;
 
 	return check_state(eStateEat);
 }

@@ -75,29 +75,29 @@ void CStateMonsterTestCoverAbstract::initialize()
 {
 	inherited::initialize();
 
-	m_last_node = object->m_target_node;
+	m_last_node = this->object->m_target_node;
 }
 
 
 TEMPLATE_SPECIALIZATION
 void CStateMonsterTestCoverAbstract::check_force_state()
 {
-	if (m_last_node != object->m_target_node)
+	if (m_last_node != this->object->m_target_node)
 	{
-		m_last_node = object->m_target_node;
+		m_last_node = this->object->m_target_node;
 		current_substate = u32(-1);
 		return;
 	}
 
 	if (current_substate == eStateAttack_CampInCover)
-		if (object->ai_location().level_vertex_id() != m_last_node)
+		if (this->object->ai_location().level_vertex_id() != m_last_node)
 			current_substate = u32(-1);
 }
 
 TEMPLATE_SPECIALIZATION
 void CStateMonsterTestCoverAbstract::reselect_state()
 {
-	if (object->ai_location().level_vertex_id() != m_last_node)
+	if (this->object->ai_location().level_vertex_id() != m_last_node)
 		select_state(eStateAttack_HideInCover);
 	else
 		select_state(eStateAttack_CampInCover);
@@ -120,7 +120,7 @@ void CStateMonsterTestCoverAbstract::setup_substates()
 		data.accel_type = eAT_Aggressive;
 		data.completion_dist = 0.f;
 		data.action.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.action.sound_delay = object->db().m_dwIdleSndDelay;
+		data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
 		data.time_to_rebuild = 0;
 
 		state->fill_data_with(&data, sizeof(SStateDataMoveToPointEx));
@@ -132,7 +132,7 @@ void CStateMonsterTestCoverAbstract::setup_substates()
 		SStateDataAction data;
 		data.action = ACT_STAND_IDLE;
 		data.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.sound_delay = object->db().m_dwIdleSndDelay;
+		data.sound_delay = this->object->db().m_dwIdleSndDelay;
 
 		state->fill_data_with(&data, sizeof(SStateDataAction));
 		return;

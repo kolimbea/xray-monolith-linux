@@ -37,7 +37,7 @@ void CStateBurerAttack<Object>::initialize()
 {
 	inherited::initialize();
 
-	m_last_health = object->conditions().GetHealth();
+	m_last_health = this->object->conditions().GetHealth();
 	m_lost_delta_health = false;
 	m_next_runaway_allowed_tick = 0;
 	m_allow_anti_aim = false;
@@ -54,26 +54,26 @@ void CStateBurerAttack<Object>::initialize()
 template <typename Object>
 void CStateBurerAttack<Object>::execute()
 {
-	CEntityAlive* enemy = const_cast<CEntityAlive*>(object->EnemyMan.get_enemy());
+	CEntityAlive* enemy = const_cast<CEntityAlive*>(this->object->EnemyMan.get_enemy());
 
 	// Notify squad	
-	CMonsterSquad* squad = monster_squad().get_squad(object);
+	CMonsterSquad* squad = monster_squad().get_squad(this->object);
 	if (squad)
 	{
 		SMemberGoal goal;
 		goal.type = MG_AttackEnemy;
 		goal.entity = enemy;
-		squad->UpdateGoal(object, goal);
+		squad->UpdateGoal(this->object, goal);
 	}
 
-	if (object->anim().has_override_animation())
+	if (this->object->anim().has_override_animation())
 	{
-		object->anim().clear_override_animation();
+		this->object->anim().clear_override_animation();
 	}
 
-	if (object->conditions().GetHealth() <= m_last_health - burer::health_delta)
+	if (this->object->conditions().GetHealth() <= m_last_health - burer::health_delta)
 	{
-		m_last_health = object->conditions().GetHealth();
+		m_last_health = this->object->conditions().GetHealth();
 		m_lost_delta_health = true;
 	}
 
@@ -132,12 +132,12 @@ void CStateBurerAttack<Object>::execute()
 	}
 
 	Fvector const enemy_pos = enemy->Position();
-	Fvector const self_pos = object->Position();
+	Fvector const self_pos = this->object->Position();
 	Fvector const self2enemy = enemy_pos - self_pos;
 	float const self2enemy_dist = magnitude(self2enemy);
 
-	bool const in_runaway_range = self2enemy_dist < object->m_runaway_distance;
-	bool const in_normal_range = self2enemy_dist < object->m_normal_distance;
+	bool const in_runaway_range = self2enemy_dist < this->object->m_runaway_distance;
+	bool const in_normal_range = self2enemy_dist < this->object->m_normal_distance;
 
 	if (current_substate == eStateCustomMoveToRestrictor)
 	{
@@ -187,20 +187,20 @@ void CStateBurerAttack<Object>::execute()
 	else
 	{
 		Fvector const self2enemy = enemy_pos - self_pos;
-		bool const good_aiming = angle_between_vectors(self2enemy, object->Direction())
+		bool const good_aiming = angle_between_vectors(self2enemy, this->object->Direction())
 			< deg2rad(20.f);
 
 		select_state(eStateBurerAttack_FaceEnemy);
 
 		if (!good_aiming)
 		{
-			bool const rotate_right = object->control().direction().is_from_right(enemy_pos);
-			object->anim().set_override_animation
+			bool const rotate_right = this->object->control().direction().is_from_right(enemy_pos);
+			this->object->anim().set_override_animation
 				(rotate_right ? eAnimStandTurnRight : eAnimStandTurnLeft, 0);
-			object->dir().face_target(enemy_pos);
+			this->object->dir().face_target(enemy_pos);
 		}
 
-		object->set_action(ACT_STAND_IDLE);
+		this->object->set_action(ACT_STAND_IDLE);
 		return;
 	}
 
@@ -211,9 +211,9 @@ void CStateBurerAttack<Object>::execute()
 template <typename Object>
 void CStateBurerAttack<Object>::finalize()
 {
-	if (object->anim().has_override_animation())
+	if (this->object->anim().has_override_animation())
 	{
-		object->anim().clear_override_animation();
+		this->object->anim().clear_override_animation();
 	}
 
 	inherited::finalize();
@@ -222,9 +222,9 @@ void CStateBurerAttack<Object>::finalize()
 template <typename Object>
 void CStateBurerAttack<Object>::critical_finalize()
 {
-	if (object->anim().has_override_animation())
+	if (this->object->anim().has_override_animation())
 	{
-		object->anim().clear_override_animation();
+		this->object->anim().clear_override_animation();
 	}
 
 	inherited::critical_finalize();

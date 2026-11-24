@@ -47,12 +47,12 @@ void CStateGroupAttackAbstract::initialize()
 {
 	inherited::initialize();
 
-	object->MeleeChecker.init_attack();
+	this->object->MeleeChecker.init_attack();
 	m_drive_out = false;
 
-	m_enemy = object->EnemyMan.get_enemy();
+	m_enemy = this->object->EnemyMan.get_enemy();
 
-	CMonsterSquad* squad = monster_squad().get_squad(object);
+	CMonsterSquad* squad = monster_squad().get_squad(this->object);
 
 	if (squad)
 	{
@@ -61,13 +61,13 @@ void CStateGroupAttackAbstract::initialize()
 		goal.type = MG_AttackEnemy;
 		goal.entity = const_cast<CEntityAlive*>(m_enemy);
 
-		if (squad->get_index(object) == u8(-1))
+		if (squad->get_index(this->object) == u8(-1))
 		{
-			squad->SetLeader(object);
-			monster_squad().get_squad(object)->set_squad_index(object->EnemyMan.get_enemy());
+			squad->SetLeader(this->object);
+			monster_squad().get_squad(this->object)->set_squad_index(this->object->EnemyMan.get_enemy());
 		}
 
-		squad->UpdateGoal(object, goal);
+		squad->UpdateGoal(this->object, goal);
 		squad->UpdateSquadCommands();
 	}
 
@@ -87,7 +87,7 @@ void CStateGroupAttackAbstract::finalize()
 	inherited::finalize();
 	CEntityAlive* enemy = const_cast<CEntityAlive*>(m_enemy);
 	enemy->is_agresive(false);
-	object->EnemyMan.script_enemy();
+	this->object->EnemyMan.script_enemy();
 }
 
 TEMPLATE_SPECIALIZATION
@@ -101,36 +101,36 @@ void CStateGroupAttackAbstract::critical_finalize()
 		enemy->is_agresive(false);
 		enemy->is_start_attack(false);
 	}
-	object->EnemyMan.script_enemy();
+	this->object->EnemyMan.script_enemy();
 }
 
 TEMPLATE_SPECIALIZATION
 void CStateGroupAttackAbstract::execute()
 {
-	bool can_attack_on_move = object->can_attack_on_move();
-	CEntityAlive* enemy = const_cast<CEntityAlive*>(object->EnemyMan.get_enemy());
+	bool can_attack_on_move = this->object->can_attack_on_move();
+	CEntityAlive* enemy = const_cast<CEntityAlive*>(this->object->EnemyMan.get_enemy());
 
 	bool const enemy_is_actor = !!smart_cast<CActor*>(enemy);
 
 	const Fvector3 enemy_pos = enemy->Position();
 
-	const bool enemy_at_max_home = object->Home->at_home(enemy_pos);
-	const bool enemy_at_mid_home = object->Home->at_mid_home(enemy_pos);
+	const bool enemy_at_max_home = this->object->Home->at_home(enemy_pos);
+	const bool enemy_at_mid_home = this->object->Home->at_mid_home(enemy_pos);
 
-	if (enemy == object->EnemyMan.get_script_enemy())
+	if (enemy == this->object->EnemyMan.get_script_enemy())
 	{
-		object->EnemyMan.add_enemy(enemy);
-		object->EnemyMan.script_enemy();
+		this->object->EnemyMan.add_enemy(enemy);
+		this->object->EnemyMan.script_enemy();
 
-		if (!object->EnemyMan.get_enemy())
+		if (!this->object->EnemyMan.get_enemy())
 		{
-			object->SetEnemy(enemy);
+			this->object->SetEnemy(enemy);
 		}
 	}
 
 	bool aggressive = false;
 
-	if (object->Home->is_aggressive())
+	if (this->object->Home->is_aggressive())
 	{
 		aggressive = true;
 	}
@@ -143,7 +143,7 @@ void CStateGroupAttackAbstract::execute()
 
 		if (enemy_at_mid_home)
 		{
-			if (object->hear_dangerous_sound)
+			if (this->object->hear_dangerous_sound)
 			{
 				aggressive = true;
 			}
@@ -151,7 +151,7 @@ void CStateGroupAttackAbstract::execute()
 
 		if (enemy_at_max_home)
 		{
-			if (object->Position().distance_to(enemy_pos) <= 6.f)
+			if (this->object->Position().distance_to(enemy_pos) <= 6.f)
 			{
 				aggressive = true;
 			}
@@ -162,7 +162,7 @@ void CStateGroupAttackAbstract::execute()
 		}
 	}
 
-	CMonsterSquad* squad = monster_squad().get_squad(object);
+	CMonsterSquad* squad = monster_squad().get_squad(this->object);
 
 	// now, if found reasons to be aggressive, mark home to be in danger
 	if (aggressive)
@@ -180,7 +180,7 @@ void CStateGroupAttackAbstract::execute()
 	}
 
 	// a Lua-proposed substate is taken only if registered and its own start conditions pass
-	u32 proposed_substate = object->script_combat_substate();
+	u32 proposed_substate = this->object->script_combat_substate();
 	CSState* proposed_state = (proposed_substate != u32(-1)) ? get_state_if_present(proposed_substate) : 0;
 
 	if (proposed_state && proposed_state->check_start_conditions())
@@ -236,9 +236,9 @@ void CStateGroupAttackAbstract::execute()
 		{
 			if (aggressive)
 			{
-				if (object->get_custom_anim_state())
+				if (this->object->get_custom_anim_state())
 				{
-					object->anim_end_reinit();
+					this->object->anim_end_reinit();
 				}
 
 				select_state(can_attack_on_move ? eStateAttack_Attack_On_Run : eStateAttack_Run);
@@ -261,7 +261,7 @@ void CStateGroupAttackAbstract::execute()
 					}
 					else
 					{
-						if (object->Position().distance_to(enemy->Position()) > 17.f + m_delta_distance)
+						if (this->object->Position().distance_to(enemy->Position()) > 17.f + m_delta_distance)
 						{
 							select_state(eStateAttack_Steal);
 						}
@@ -271,19 +271,19 @@ void CStateGroupAttackAbstract::execute()
 				case eStateCustom:
 					if (get_state_current()->check_completion())
 					{
-						if (object->get_custom_anim_state())
+						if (this->object->get_custom_anim_state())
 						{
 							return;
 						}
 
-						object->set_current_animation(6);
-						object->b_state_check = false;
+						this->object->set_current_animation(6);
+						this->object->b_state_check = false;
 						m_time_start_drive_out = Device.dwTimeGlobal;
 						select_state(eStateAttack_ControlFire);
 					}
 					else
 					{
-						if (object->Position().distance_to(enemy_pos) > 11.f + m_delta_distance)
+						if (this->object->Position().distance_to(enemy_pos) > 11.f + m_delta_distance)
 						{
 							select_state(eStateAttack_AttackHidden);
 							m_drive_out = false;
@@ -292,15 +292,15 @@ void CStateGroupAttackAbstract::execute()
 					break;
 
 				case eStateAttack_ControlFire:
-					if (object->Position().distance_to(enemy_pos) > 7.f + m_delta_distance || Device.dwTimeGlobal -
-						m_time_start_drive_out > object->m_drive_out_time)
+					if (this->object->Position().distance_to(enemy_pos) > 7.f + m_delta_distance || Device.dwTimeGlobal -
+						m_time_start_drive_out > this->object->m_drive_out_time)
 					{
-						if (object->get_custom_anim_state())
+						if (this->object->get_custom_anim_state())
 						{
-							object->anim_end_reinit();
+							this->object->anim_end_reinit();
 						}
 
-						if (Device.dwTimeGlobal - m_time_start_drive_out > object->m_drive_out_time)
+						if (Device.dwTimeGlobal - m_time_start_drive_out > this->object->m_drive_out_time)
 						{
 							m_drive_out = true;
 						}
@@ -309,13 +309,13 @@ void CStateGroupAttackAbstract::execute()
 					}
 					else
 					{
-						if (object->get_custom_anim_state())
+						if (this->object->get_custom_anim_state())
 						{
 							return;
 						}
 
-						object->set_current_animation(6);
-						object->b_state_check = false;
+						this->object->set_current_animation(6);
+						this->object->b_state_check = false;
 						select_state(eStateAttack_ControlFire);
 					}
 					break;
@@ -344,9 +344,9 @@ void CStateGroupAttackAbstract::execute()
 		SMemberGoal goal;
 
 		goal.type = MG_AttackEnemy;
-		goal.entity = const_cast<CEntityAlive*>(object->EnemyMan.get_enemy());
+		goal.entity = const_cast<CEntityAlive*>(this->object->EnemyMan.get_enemy());
 
-		squad->UpdateGoal(object, goal);
+		squad->UpdateGoal(this->object, goal);
 	}
 }
 
@@ -387,16 +387,16 @@ void CStateGroupAttackAbstract::setup_substates()
 		SStateDataMoveToPointEx data;
 
 		data.vertex = 0;
-		data.point = object->EnemyMan.get_enemy()->Position();
+		data.point = this->object->EnemyMan.get_enemy()->Position();
 		data.action.action = ACT_RUN;
 		data.action.time_out = 0; // do not use time out
 		data.completion_dist = 15.f + m_delta_distance; // get exactly to the point
-		data.time_to_rebuild = object->get_attack_rebuild_time();
+		data.time_to_rebuild = this->object->get_attack_rebuild_time();
 		data.accelerated = true;
 		data.braking = false;
 		data.accel_type = eAT_Aggressive;
 		data.action.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.action.sound_delay = object->db().m_dwIdleSndDelay;
+		data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
 
 		state->fill_data_with(&data, sizeof(SStateDataMoveToPointEx));
 
@@ -408,16 +408,16 @@ void CStateGroupAttackAbstract::setup_substates()
 		SStateDataMoveToPointEx data;
 
 		data.vertex = 0;
-		data.point = object->EnemyMan.get_enemy()->Position();
+		data.point = this->object->EnemyMan.get_enemy()->Position();
 		data.action.action = ACT_WALK_FWD;
 		data.action.time_out = 0; // do not use time out
 		data.completion_dist = 10.f + m_delta_distance; // get exactly to the point
-		data.time_to_rebuild = object->get_attack_rebuild_time();
+		data.time_to_rebuild = this->object->get_attack_rebuild_time();
 		data.accelerated = true;
 		data.braking = false;
 		data.accel_type = eAT_Aggressive;
 		data.action.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.action.sound_delay = object->db().m_dwIdleSndDelay;
+		data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
 
 		state->fill_data_with(&data, sizeof(SStateDataMoveToPointEx));
 
@@ -429,7 +429,7 @@ void CStateGroupAttackAbstract::setup_substates()
 		SStateDataMoveToPointEx data;
 
 		data.vertex = 0;
-		data.point = object->EnemyMan.get_enemy()->Position();
+		data.point = this->object->EnemyMan.get_enemy()->Position();
 		data.action.action = ACT_HOME_WALK_GROWL;
 		data.action.time_out = 0; // do not use time out
 
@@ -441,12 +441,12 @@ void CStateGroupAttackAbstract::setup_substates()
 		{
 			data.completion_dist = 6.f + m_delta_distance; // get exactly to the point
 		}
-		data.time_to_rebuild = object->get_attack_rebuild_time();
+		data.time_to_rebuild = this->object->get_attack_rebuild_time();
 		data.accelerated = true;
 		data.braking = false;
 		data.accel_type = eAT_Aggressive;
 		data.action.sound_type = MonsterSound::eMonsterSoundThreaten;
-		data.action.sound_delay = object->db().m_dwIdleSndDelay;
+		data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
 
 		state->fill_data_with(&data, sizeof(SStateDataMoveToPointEx));
 
@@ -456,14 +456,14 @@ void CStateGroupAttackAbstract::setup_substates()
 	if (current_substate == eStateAttack_RunAway)
 	{
 		SStateHideFromPoint data;
-		data.point = object->EnemyMan.get_enemy()->Position();
+		data.point = this->object->EnemyMan.get_enemy()->Position();
 		data.accelerated = true;
 		data.braking = false;
 		data.accel_type = eAT_Aggressive;
 		data.distance = 20.f;
 		data.action.action = ACT_RUN;
 		data.action.sound_type = MonsterSound::eMonsterSoundAggressive;
-		data.action.sound_delay = object->db().m_dwAttackSndDelay;
+		data.action.sound_delay = this->object->db().m_dwAttackSndDelay;
 		data.action.time_out = 5000;
 
 		state->fill_data_with(&data, sizeof(SStateHideFromPoint));

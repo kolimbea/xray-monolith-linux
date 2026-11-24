@@ -35,7 +35,7 @@ void CStateMonsterSmartTerrainTaskAbstract::initialize()
 
 	// save current task
 	CSE_ALifeMonsterAbstract* monster = smart_cast<CSE_ALifeMonsterAbstract*>(
-		ai().alife().objects().object(object->ID()));
+		ai().alife().objects().object(this->object->ID()));
 	VERIFY(monster);
 	VERIFY(monster->m_smart_terrain_id != 0xffff);
 
@@ -49,7 +49,7 @@ bool CStateMonsterSmartTerrainTaskAbstract::check_start_conditions()
 	if (!ai().get_alife()) return false;
 
 	CSE_ALifeMonsterAbstract* monster = smart_cast<CSE_ALifeMonsterAbstract*>(
-		ai().alife().objects().object(object->ID()));
+		ai().alife().objects().object(this->object->ID()));
 	VERIFY(monster);
 
 	CSE_ALifePsyDogPhantom* phantom = smart_cast<CSE_ALifePsyDogPhantom*>(monster);
@@ -71,7 +71,7 @@ TEMPLATE_SPECIALIZATION
 bool CStateMonsterSmartTerrainTaskAbstract::check_completion()
 {
 	CSE_ALifeMonsterAbstract* monster = smart_cast<CSE_ALifeMonsterAbstract*>(
-		ai().alife().objects().object(object->ID()));
+		ai().alife().objects().object(this->object->ID()));
 	VERIFY(monster);
 
 	if (monster->m_smart_terrain_id == 0xffff) return true;
@@ -101,7 +101,7 @@ void CStateMonsterSmartTerrainTaskAbstract::setup_substates()
 		data.braking = false;
 		data.accel_type = eAT_Calm;
 		data.action.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.action.sound_delay = object->db().m_dwIdleSndDelay;
+		data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
 
 		state->fill_data_with(&data, sizeof(SStateDataMoveToPointEx));
 		return;
@@ -113,7 +113,7 @@ void CStateMonsterSmartTerrainTaskAbstract::setup_substates()
 
 		data.action = ACT_REST;
 		data.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.sound_delay = object->db().m_dwIdleSndDelay;
+		data.sound_delay = this->object->db().m_dwIdleSndDelay;
 		data.time_out = 0;
 
 		state->fill_data_with(&data, sizeof(SStateDataAction));
@@ -157,7 +157,7 @@ void CStateMonsterSmartTerrainTaskAbstract::check_force_state()
 {
 	// check smart terrain became busy
 	CSE_ALifeMonsterAbstract* monster = smart_cast<CSE_ALifeMonsterAbstract*>(
-		ai().alife().objects().object(object->ID()));
+		ai().alife().objects().object(this->object->ID()));
 	VERIFY(monster);
 
 	if ((monster->m_smart_terrain_id == 0xffff) || monster->m_task_reached)
