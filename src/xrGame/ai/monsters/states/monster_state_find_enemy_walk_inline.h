@@ -9,6 +9,6 @@
 TEMPLATE_SPECIALIZATION
 void CStateMonsterFindEnemyWalkAbstract::execute()
 {
-	this->object->set_action(ACT_STAND_IDLE);
-	this->object->set_state_sound(MonsterSound::eMonsterSoundAggressive);
+	object->set_action(ACT_STAND_IDLE);
+	object->set_state_sound(MonsterSound::eMonsterSoundAggressive);
 }

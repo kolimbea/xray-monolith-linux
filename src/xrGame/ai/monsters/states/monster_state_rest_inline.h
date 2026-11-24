@@ -48,7 +48,7 @@ void CStateMonsterRestAbstract::initialize()
 
 	time_last_fun = 0;
 	time_idle_selected = Random.randI(2) ? 0 : time();
-	this->object->anomaly_detector().activate();
+	object->anomaly_detector().activate();
 }
 
 TEMPLATE_SPECIALIZATION
@@ -56,7 +56,7 @@ void CStateMonsterRestAbstract::finalize()
 {
 	inherited::finalize();
 
-	this->object->anomaly_detector().deactivate();
+	object->anomaly_detector().deactivate();
 }
 
 TEMPLATE_SPECIALIZATION
@@ -64,7 +64,7 @@ void CStateMonsterRestAbstract::critical_finalize()
 {
 	inherited::critical_finalize();
 
-	this->object->anomaly_detector().deactivate();
+	object->anomaly_detector().deactivate();
 }
 
 TEMPLATE_SPECIALIZATION
@@ -115,12 +115,12 @@ void CStateMonsterRestAbstract::execute()
 				// check squad behaviour
 				bool use_squad = false;
 
-				if (monster_squad().get_squad(this->object)->GetCothis->mmand(this->object).type == SC_REST)
+				if (monster_squad().get_squad(object)->GetCommand(object).type == SC_REST)
 				{
 					select_state(eStateSquad_Rest);
 					use_squad = true;
 				}
-				else if (monster_squad().get_squad(this->object)->GetCothis->mmand(this->object).type == SC_FOLLOW)
+				else if (monster_squad().get_squad(object)->GetCommand(object).type == SC_FOLLOW)
 				{
 					select_state(eStateSquad_RestFollow);
 					use_squad = true;

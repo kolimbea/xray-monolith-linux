@@ -20,7 +20,7 @@ IC CEvaluator::CPropertyEvaluatorConst(_value_type value, LPCSTR evaluator_name)
 {
 	//m_evaluator_name
 	//#ifdef LOG_ACTION
-	this->m_evaluator_name = evaluator_name;
+	m_evaluator_name = evaluator_name;
 	//#endif
 }
 

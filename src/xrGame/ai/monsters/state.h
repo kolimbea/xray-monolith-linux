@@ -97,7 +97,7 @@ public:
 	virtual void initialize()
 	{
 		inherited::initialize();
-		this->object->path().prepare_builder();
+		object->path().prepare_builder();
 	}
 };
 

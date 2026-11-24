@@ -19,9 +19,9 @@ CStateMonsterFindEnemyAngryAbstract::~CStateMonsterFindEnemyAngry()
 TEMPLATE_SPECIALIZATION
 void CStateMonsterFindEnemyAngryAbstract::execute()
 {
-	this->object->set_action(ACT_STAND_IDLE);
-	this->object->anim().SetSpecParams(ASP_THREATEN);
-	this->object->set_state_sound(MonsterSound::eMonsterSoundAggressive);
+	object->set_action(ACT_STAND_IDLE);
+	object->anim().SetSpecParams(ASP_THREATEN);
+	object->set_state_sound(MonsterSound::eMonsterSoundAggressive);
 }
 
 TEMPLATE_SPECIALIZATION

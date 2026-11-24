@@ -25,7 +25,7 @@ void CStateCustomGroupAbstract::execute()
 {
 	// check alife control
 	select_state(eStateCustom);
-	this->object->start_animation();
+	object->start_animation();
 
 	get_state_current()->execute();
 	prev_substate = current_substate;
@@ -41,7 +41,7 @@ void CStateCustomGroupAbstract::setup_substates()
 
 		data.action = ACT_STAND_IDLE;
 		data.time_out = 0; // do not use time out
-		switch (this->object->get_number_animation())
+		switch (object->get_number_animation())
 		{
 		case u32(5):
 			data.sound_type = MonsterSound::eMonsterSoundSteal;
@@ -53,7 +53,7 @@ void CStateCustomGroupAbstract::setup_substates()
 			data.sound_type = MonsterSound::eMonsterSoundIdle;
 			break;
 		}
-		data.sound_delay = this->object->db().m_dwEatSndDelay;
+		data.sound_delay = object->db().m_dwEatSndDelay;
 		state->fill_data_with(&data, sizeof(SStateDataAction));
 
 		return;

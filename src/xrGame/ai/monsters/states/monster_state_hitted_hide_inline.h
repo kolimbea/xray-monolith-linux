@@ -14,31 +14,31 @@ TEMPLATE_SPECIALIZATION
 void CStateMonsterHittedHideAbstract::initialize()
 {
 	inherited::initialize();
-	this->object->path().prepare_builder();
+	object->path().prepare_builder();
 }
 
 TEMPLATE_SPECIALIZATION
 void CStateMonsterHittedHideAbstract::execute()
 {
-	this->object->set_action(ACT_RUN);
-	this->object->set_state_sound(MonsterSound::eMonsterSoundPanic);
-	this->object->anim().accel_activate(eAT_Aggressive);
-	this->object->anim().accel_set_braking(false);
-	this->object->path().set_retreat_from_this->point(this->object->HitMemory.get_last_hit_position());
-	this->object->path().set_generic_parameters();
+	object->set_action(ACT_RUN);
+	object->set_state_sound(MonsterSound::eMonsterSoundPanic);
+	object->anim().accel_activate(eAT_Aggressive);
+	object->anim().accel_set_braking(false);
+	object->path().set_retreat_from_point(object->HitMemory.get_last_hit_position());
+	object->path().set_generic_parameters();
 }
 
 TEMPLATE_SPECIALIZATION
 bool CStateMonsterHittedHideAbstract::check_start_conditions()
 {
-	if (this->object->HitMemory.is_hit(this->) && !this->object->EnemyMan.get_enemy()) return true;
+	if (object->HitMemory.is_hit() && !object->EnemyMan.get_enemy()) return true;
 	return false;
 }
 
 TEMPLATE_SPECIALIZATION
 bool CStateMonsterHittedHideAbstract::check_completion()
 {
-	float dist = this->object->Position().distanthis->ce_to(this->object->HitMemory.get_last_hit_position());
+	float dist = object->Position().distance_to(object->HitMemory.get_last_hit_position());
 
 	// good dist  
 	if (dist < GOOD_DISTANCE_IN_COVER) return false;

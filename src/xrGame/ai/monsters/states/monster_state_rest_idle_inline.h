@@ -29,16 +29,16 @@ void CStateMonsterRestIdleAbstract::initialize()
 	m_target_node = u32(-1);
 
 	// try to get cover
-	const CCoverPoint* point = this->object->CoverMan->find_this->cover(this->object->Position(), 5.f, 10.f);
+	const CCoverPoint* point = object->CoverMan->find_cover(object->Position(), 5.f, 10.f);
 	if (!point)
 	{
-		point = this->object->CoverMan->find_this->cover(this->object->Position(), 10.f, 30.f);
+		point = object->CoverMan->find_cover(object->Position(), 10.f, 30.f);
 		if (!point) return;
 	}
 
 	m_target_node = point->level_vertex_id();
 
-	CMonsterSquad* squad = monster_squad().get_squad(this->object);
+	CMonsterSquad* squad = monster_squad().get_squad(object);
 	squad->lock_cover(m_target_node);
 }
 
@@ -46,7 +46,7 @@ TEMPLATE_SPECIALIZATION
 void CStateMonsterRestIdleAbstract::finalize()
 {
 	inherited::finalize();
-	CMonsterSquad* squad = monster_squad().get_squad(this->object);
+	CMonsterSquad* squad = monster_squad().get_squad(object);
 	squad->unlock_cover(m_target_node);
 }
 
@@ -55,7 +55,7 @@ void CStateMonsterRestIdleAbstract::critical_finalize()
 {
 	inherited::critical_finalize();
 
-	CMonsterSquad* squad = monster_squad().get_squad(this->object);
+	CMonsterSquad* squad = monster_squad().get_squad(object);
 	squad->unlock_cover(m_target_node);
 }
 
@@ -97,7 +97,7 @@ void CStateMonsterRestIdleAbstract::setup_substates()
 		data.braking = true;
 		data.accel_type = eAT_Calm;
 		data.action.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
+		data.action.sound_delay = object->db().m_dwIdleSndDelay;
 
 		state->fill_data_with(&data, sizeof(SStateDataMoveToPointEx));
 		return;
@@ -108,13 +108,13 @@ void CStateMonsterRestIdleAbstract::setup_substates()
 		SStateDataLookToPoint data;
 
 		Fvector dir;
-		this->object->CoverMan->less_cover_direction(dir);
+		object->CoverMan->less_cover_direction(dir);
 
-		data.point.mad(this->object->Position(), dir, 10.f);
+		data.point.mad(object->Position(), dir, 10.f);
 		data.action.action = ACT_STAND_IDLE;
 		data.action.time_out = 2000;
 		data.action.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.action.sound_delay = this->object->db().m_dwIdleSndDelay;
+		data.action.sound_delay = object->db().m_dwIdleSndDelay;
 		data.face_delay = 0;
 
 		state->fill_data_with(&data, sizeof(SStateDataLookToPoint));
@@ -128,7 +128,7 @@ void CStateMonsterRestIdleAbstract::setup_substates()
 		data.action = ACT_REST;
 		data.time_out = 0; // do not use time out
 		data.sound_type = MonsterSound::eMonsterSoundIdle;
-		data.sound_delay = this->object->db().m_dwIdleSndDelay;
+		data.sound_delay = object->db().m_dwIdleSndDelay;
 
 		state->fill_data_with(&data, sizeof(SStateDataAction));
 

@@ -74,7 +74,7 @@ TEMPLATE_SPECIALIZATION
 void CStateMonsterAttackAbstract::initialize()
 {
 	inherited::initialize();
-	this->object->MeleeChecker.init_attack();
+	object->MeleeChecker.init_attack();
 
 	m_time_next_run_away = 0;
 	m_time_start_check_behinder = 0;
@@ -86,10 +86,10 @@ void CStateMonsterAttackAbstract::initialize()
 TEMPLATE_SPECIALIZATION
 void CStateMonsterAttackAbstract::execute()
 {
-	bool can_attack_on_move = this->object->can_attack_on_move();
+	bool can_attack_on_move = object->can_attack_on_move();
 
 	// a Lua-proposed substate is taken only if registered and its own start conditions pass
-	u32 proposed_substate = this->object->script_combat_substate();
+	u32 proposed_substate = object->script_combat_substate();
 	CSState* proposed_state = (proposed_substate != u32(-1)) ? get_state_if_present(proposed_substate) : 0;
 
 	if (proposed_state && proposed_state->check_start_conditions())
@@ -128,14 +128,14 @@ void CStateMonsterAttackAbstract::execute()
 	prev_substate = current_substate;
 
 	// Notify squad	
-	CMonsterSquad* squad = monster_squad().get_squad(this->object);
+	CMonsterSquad* squad = monster_squad().get_squad(object);
 	if (squad)
 	{
 		SMemberGoal goal;
 		goal.type = MG_AttackEnemy;
-		goal.entity = const_cast<CEntityAlive*>(this->object->EnemyMan.get_enemy());
+		goal.entity = const_cast<CEntityAlive*>(object->EnemyMan.get_enemy());
 
-		squad->UpdateGoal(this->object, goal);
+		squad->UpdateGoal(object, goal);
 	}
 	//////////////////////////////////////////////////////////////////////////
 }
@@ -246,14 +246,14 @@ void CStateMonsterAttackAbstract::setup_substates()
 	if (current_substate == eStateAttack_RunAway)
 	{
 		SStateHideFromPoint data;
-		data.point = this->object->EnemyMan.get_enemy_position();
+		data.point = object->EnemyMan.get_enemy_position();
 		data.accelerated = true;
 		data.braking = false;
 		data.accel_type = eAT_Aggressive;
 		data.distance = 20.f;
 		data.action.action = ACT_RUN;
 		data.action.sound_type = MonsterSound::eMonsterSoundAggressive;
-		data.action.sound_delay = this->object->db().m_dwAttackSndDelay;
+		data.action.sound_delay = object->db().m_dwAttackSndDelay;
 		data.action.time_out = 5000;
 
 		state->fill_data_with(&data, sizeof(SStateHideFromPoint));
