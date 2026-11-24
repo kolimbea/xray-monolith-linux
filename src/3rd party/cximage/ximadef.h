@@ -90,19 +90,22 @@ typedef struct tagcomplex {
 #endif
 
 
-#if !defined(WIN32) && !defined(_WIN32_WCE) && !defined(__linux__) // Linux: Win32 types come from the engine compat layer
+#if !defined(WIN32) && !defined(_WIN32_WCE)
 
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+#ifndef __linux__ // Linux: these Win32 types come from the engine compat layer
 typedef unsigned char  BYTE;
 typedef unsigned short WORD;
 typedef unsigned long  DWORD;
 typedef unsigned int   UINT;
 
-typedef DWORD          COLORREF;
 typedef unsigned int   HANDLE;
+
+#endif
+typedef DWORD          COLORREF;
 typedef void*          HRGN;
 
 #ifndef BOOL
@@ -122,6 +125,7 @@ typedef void*          HRGN;
 #define _T
 #endif
 
+#ifndef __linux__ // RECT/POINT: windows_base.h
 typedef struct tagRECT
 {
 	long    left;
@@ -136,6 +140,7 @@ typedef struct tagPOINT
 	long  y;
 } POINT;
 
+#endif
 typedef struct tagRGBQUAD {
 	BYTE    rgbBlue;
 	BYTE    rgbGreen;
