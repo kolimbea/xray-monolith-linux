@@ -128,3 +128,28 @@ target_include_directories(xrGame BEFORE PRIVATE ${XR_SRC}/Common/linux/pch/xrGa
 target_include_directories(xrGame PRIVATE ${XR_SRC}/xrServerEntities "${XR_3RD}/luajit-2/src" "${XR_3RD}/luabind"
     "${XR_3RD}/cximage")
 target_link_libraries(xrGame PUBLIC xrEngine xrPhysics xrNetServer luabind lua_extensions)
+
+# --- Stage 1c: renderer (temporary path: D3D11 on dxvk-native) ---
+xr_module(xrRender_R4 ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp)
+target_compile_definitions(xrRender_R4 PRIVATE USE_DX11)
+# The DirectX SDK's D3DX10/D3DX11 headers include each other with varying letter case. Expose them
+# under lower-case names in the build tree (symlinks), so every spelling resolves on Linux.
+set(XR_DXSDK_CI ${CMAKE_BINARY_DIR}/dxsdk_ci)
+file(MAKE_DIRECTORY ${XR_DXSDK_CI})
+file(GLOB _d3dx_hdrs ${CMAKE_SOURCE_DIR}/sdk/include/dxsdk/D3DX1*.h ${CMAKE_SOURCE_DIR}/sdk/include/dxsdk/d3dx1*.h)
+foreach(h ${_d3dx_hdrs})
+    get_filename_component(n ${h} NAME)
+    string(TOLOWER ${n} ln)
+    file(CREATE_LINK ${h} ${XR_DXSDK_CI}/${ln} SYMBOLIC)
+    # also the mixed spellings used by the sources (D3Dx11core.h, D3DX10Core.h, D3DX10Tex.h ...)
+    foreach(v D3Dx11core.h D3DX10Core.h D3Dx10core.h D3DX10Tex.h)
+        string(TOLOWER ${v} lv)
+        if(lv STREQUAL ln)
+            file(CREATE_LINK ${h} ${XR_DXSDK_CI}/${v} SYMBOLIC)
+        endif()
+    endforeach()
+endforeach()
+target_include_directories(xrRender_R4 PRIVATE ${XR_DXSDK_CI})
+target_include_directories(xrRender_R4 PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 "${XR_3RD}/imgui")
+target_link_directories(xrRender_R4 PUBLIC ${DXVK_NATIVE_DIR}/lib)
+target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)

@@ -10,6 +10,7 @@
 
 // refs
 class CKinematics;
+class CSkeletonX; // used below (MSVC builds got it from the precompiled header)
 class CInifile;
 class CBoneData;
 struct SEnumVerticesCallback;

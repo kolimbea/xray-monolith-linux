@@ -548,3 +548,19 @@ typedef struct _OVERLAPPED { uintptr_t Internal, InternalHigh; DWORD Offset, Off
 #ifndef _tfopen
 #define _tfopen fopen
 #endif
+#include "gdi_types.h"
+
+// SAL annotations used in the DirectX SDK headers: documentation only.
+#ifndef __in_range
+#define __in_range(lo, hi)
+#endif
+#ifndef __in_ecount
+#define __in_ecount(n)
+#endif
+#ifndef __out_ecount
+#define __out_ecount(n)
+#endif
+#ifndef __out_ecount_opt
+#define __out_ecount_opt(n)
+#endif
+inline void _tzset() { tzset(); }

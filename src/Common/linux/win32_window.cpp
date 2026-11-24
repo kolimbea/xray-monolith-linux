@@ -160,8 +160,9 @@ int SetWindowPos(void *hwnd, void *, int x, int y, int w, int h, unsigned flags)
     SDL_Window *sw = win(hwnd);
     if (!sw)
         return 0;
-    SDL_SetWindowPosition(sw, x, y);
-    if (w > 0 && h > 0)
+    if (!(flags & SWP_NOMOVE))
+        SDL_SetWindowPosition(sw, x, y);
+    if (!(flags & SWP_NOSIZE) && w > 0 && h > 0)
         SDL_SetWindowSize(sw, w, h);
     if (flags & SWP_SHOWWINDOW)
         SDL_ShowWindow(sw);
