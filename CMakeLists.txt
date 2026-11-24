@@ -133,11 +133,12 @@ target_link_libraries(xrGame PUBLIC xrEngine xrPhysics xrNetServer luabind lua_e
 # --- Stage 1c: renderer (temporary path: D3D11 on dxvk-native) ---
 xr_module(xrRender_R4 ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp)
 target_compile_definitions(xrRender_R4 PRIVATE USE_DX11)
-# D3DX9/D3DX11 functions (Windows-only libraries) and the D3D shader compiler API (vkd3d-utils).
+# D3DX9/D3DX11 functions and the D3D shader compiler API (Windows-only libraries). The compiler is
+# built on vkd3d-shader's C API: vkd3d-utils uses ms_abi on x86-64 Linux, unlike dxvk-native.
 target_sources(xrRender_R4 PRIVATE ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp
-    ${XR_SRC}/Common/linux/dds_codec.cpp)
-pkg_check_modules(XR_VKD3D_UTILS REQUIRED IMPORTED_TARGET libvkd3d-utils)
-target_link_libraries(xrRender_R4 PUBLIC PkgConfig::XR_VKD3D_UTILS PkgConfig::XR_MEDIA)
+    ${XR_SRC}/Common/linux/dds_codec.cpp ${XR_SRC}/Common/linux/d3dcompiler_linux.cpp)
+pkg_check_modules(XR_VKD3D_SHADER REQUIRED IMPORTED_TARGET libvkd3d-shader)
+target_link_libraries(xrRender_R4 PUBLIC PkgConfig::XR_VKD3D_SHADER PkgConfig::XR_MEDIA)
 # The DirectX SDK's D3DX10/D3DX11 headers include each other with varying letter case. Expose them
 # under lower-case names in the build tree (symlinks), so every spelling resolves on Linux.
 set(XR_DXSDK_CI ${CMAKE_BINARY_DIR}/dxsdk_ci)
