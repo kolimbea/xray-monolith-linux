@@ -10,6 +10,10 @@ xr_dsa::xr_dsa(u8 const p[public_key_length],
 			   u8 const g[public_key_length])
 {
 	m_dsa			= DSA_new();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L // DSA is opaque since OpenSSL 1.1 (system OpenSSL on Linux)
+	DSA_set0_pqg(m_dsa, BN_bin2bn(p, public_key_length, NULL), BN_bin2bn(q, private_key_length, NULL),
+				 BN_bin2bn(g, public_key_length, NULL));
+#else
 	m_dsa->p		= BN_new();
 	m_dsa->q		= BN_new();
 	m_dsa->g		= BN_new();
@@ -19,6 +23,7 @@ xr_dsa::xr_dsa(u8 const p[public_key_length],
 	BN_bin2bn(p, public_key_length, m_dsa->p);
 	BN_bin2bn(q, private_key_length, m_dsa->q);
 	BN_bin2bn(g, public_key_length, m_dsa->g);
+#endif
 }
 
 xr_dsa::~xr_dsa()
@@ -30,6 +35,23 @@ shared_str const xr_dsa::sign		(private_key_t const & priv_key,
 									 u8 const* data,
 									 u32 const data_size)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	{
+		BIGNUM const* cur_pub = NULL;
+		DSA_get0_key(m_dsa, &cur_pub, NULL);
+		// DSA_set0_key needs a public key the first time; signing only uses the private one
+		DSA_set0_key(m_dsa, cur_pub ? NULL : BN_new(), BN_bin2bn(priv_key.m_value, sizeof(priv_key.m_value), NULL));
+	}
+	unsigned int	sign_size = DSA_size(m_dsa);
+	u8*				sign_dest = static_cast<u8*>(_alloca(sign_size));
+	DSA_sign		(0, data, data_size, sign_dest, &sign_size, m_dsa);
+	BIGNUM*			sign_bn = BN_bin2bn(sign_dest, sign_size, NULL);
+	char*			hex = BN_bn2hex(sign_bn);
+	shared_str		result(hex);
+	OPENSSL_free	(hex);
+	BN_free			(sign_bn);
+	return			result;
+#else
 	BN_bin2bn(priv_key.m_value, sizeof(priv_key.m_value), m_dsa->priv_key);
 
 	unsigned int	sign_size = DSA_size(m_dsa);
@@ -43,6 +65,7 @@ shared_str const xr_dsa::sign		(private_key_t const & priv_key,
 	BN_bin2bn		(sign_dest, sign_size, &tmp_sign_res_bn);
 
 	return			shared_str(BN_bn2hex(&tmp_sign_res_bn));
+#endif
 }
 
 bool		xr_dsa::verify				(public_key_t const & pub_key,
@@ -50,13 +73,23 @@ bool		xr_dsa::verify				(public_key_t const & pub_key,
 										 u32 const data_size,
 										 shared_str const & dsign)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	DSA_set0_key(m_dsa, BN_bin2bn(pub_key.m_value, sizeof(pub_key.m_value), NULL), NULL);
+	BIGNUM*	tmp_bn			= NULL;
+	if (!BN_hex2bn(&tmp_bn, dsign.c_str()))
+		return false;
+	int	sig_size			= BN_num_bytes(tmp_bn);
+#else
 	BN_bin2bn(pub_key.m_value, sizeof(pub_key.m_value), m_dsa->pub_key);
 
 	BIGNUM*	tmp_bn			= NULL;
 	BN_hex2bn				(&tmp_bn, dsign.c_str());
 	int	sig_size			= tmp_bn->top * sizeof(unsigned long);
+#endif
 	u8* sig_buff			= static_cast<u8*>(_alloca(sig_size));
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	VERIFY					(sig_size == DSA_size(m_dsa));
+#endif
 	BN_bn2bin				(tmp_bn, sig_buff);
 		
 	bool ret = DSA_verify	(0, data, data_size, sig_buff, sig_size, m_dsa) == 1 ? true : false;

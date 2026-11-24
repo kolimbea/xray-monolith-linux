@@ -20,7 +20,9 @@ CRYPTO_API	void		xr_crypto_init	()
 	string256 random_string;
 	xr_sprintf					(random_string, "%I64d_%s", CPU::QPC(), rnd_seed);
 	//sprintf_s					(random_string, "%s", rnd_seed);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L // the 1.1+ hooks take file/line; system OpenSSL keeps its allocator
 	CRYPTO_set_mem_functions	(xr_malloc, xr_realloc, unsafe_xr_free);
+#endif
 	RAND_seed					(random_string, xr_strlen(random_string));
 	//unsigned int siglen;
 	//tmp_dsa_params->flags |= DSA_FLAG_NO_EXP_CONSTTIME;

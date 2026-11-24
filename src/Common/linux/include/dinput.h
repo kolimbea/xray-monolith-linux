@@ -5,6 +5,9 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#if __has_include(<windows_base.h>)
+#include <windows_base.h> // same GUID as the rest of the engine (dxvk-native)
+#endif
 
 #ifndef DIRECTINPUT_VERSION
 #define DIRECTINPUT_VERSION 0x0800

@@ -79,6 +79,7 @@ xr_module(xrCPU_Pipe ${XR_SRC}/xrCPU_Pipe/xrCPU_Pipe.vcxproj)
 xr_module(xrParticles ${XR_SRC}/xrParticles/xrParticles.vcxproj)
 
 pkg_check_modules(XR_AUDIO REQUIRED IMPORTED_TARGET openal vorbisfile vorbis ogg)
+pkg_check_modules(XR_MEDIA REQUIRED IMPORTED_TARGET libjpeg theoradec theora icu-uc)
 # guids.cpp: DirectSound GUIDs; NotificationClient.cpp: Windows audio endpoint notifications
 # (OpenAL Soft follows the default device itself).
 xr_module(xrSound ${XR_SRC}/xrSound/xrSound.vcxproj EXCLUDE guids.cpp NotificationClient.cpp)
@@ -132,6 +133,11 @@ target_link_libraries(xrGame PUBLIC xrEngine xrPhysics xrNetServer luabind lua_e
 # --- Stage 1c: renderer (temporary path: D3D11 on dxvk-native) ---
 xr_module(xrRender_R4 ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp)
 target_compile_definitions(xrRender_R4 PRIVATE USE_DX11)
+# D3DX9/D3DX11 functions (Windows-only libraries) and the D3D shader compiler API (vkd3d-utils).
+target_sources(xrRender_R4 PRIVATE ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp
+    ${XR_SRC}/Common/linux/dds_codec.cpp)
+pkg_check_modules(XR_VKD3D_UTILS REQUIRED IMPORTED_TARGET libvkd3d-utils)
+target_link_libraries(xrRender_R4 PUBLIC PkgConfig::XR_VKD3D_UTILS PkgConfig::XR_MEDIA)
 # The DirectX SDK's D3DX10/D3DX11 headers include each other with varying letter case. Expose them
 # under lower-case names in the build tree (symlinks), so every spelling resolves on Linux.
 set(XR_DXSDK_CI ${CMAKE_BINARY_DIR}/dxsdk_ci)
@@ -158,3 +164,32 @@ target_include_directories(xrRender_R4 BEFORE PRIVATE ${XR_DXSDK_CI})
 target_include_directories(xrRender_R4 PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 "${XR_3RD}/imgui")
 target_link_directories(xrRender_R4 PUBLIC ${DXVK_NATIVE_DIR}/lib)
 target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)
+
+# --- libraries the executable needs besides the engine modules ---
+xr_module(xrAPI ${XR_SRC}/Layers/xrAPI/xrAPI.vcxproj)
+target_include_directories(xrAPI PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 ${XR_DXSDK_CI})
+target_compile_definitions(xrAPI PRIVATE USE_DX11)
+# crypto: only the engine wrappers; the bundled OpenSSL 1.0 sources are replaced by the system OpenSSL.
+find_package(OpenSSL REQUIRED COMPONENTS Crypto)
+add_library(crypto STATIC "${XR_3RD}/crypto/crypto.cpp" "${XR_3RD}/crypto/xr_dsa.cpp" "${XR_3RD}/crypto/xr_sha.cpp")
+target_compile_definitions(crypto PRIVATE CRYPTO_BUILD)
+target_compile_options(crypto PRIVATE -Wno-deprecated-declarations) # DSA_*/SHA_* are deprecated in OpenSSL 3
+target_link_libraries(crypto PUBLIC xr_common xrCore OpenSSL::Crypto)
+xr_module(cximage "${XR_3RD}/cximage/cximage.vcxproj")
+target_compile_options(cximage PRIVATE -include ${XR_SRC}/Common/linux/cximage_prelude.h)
+target_link_libraries(cximage PUBLIC PkgConfig::XR_MEDIA)
+target_sources(imgui PRIVATE "${XR_3RD}/imgui/backends/imgui_impl_dx11.cpp") # works on dxvk-native
+target_include_directories(imgui PRIVATE "${XR_3RD}/imgui/backends")
+
+# --- the game executable (all-in-one, like Monolith on Windows) ---
+add_executable(xray ${XR_SRC}/Common/linux/exe_main_stub.cpp ${XR_SRC}/Common/linux/reshade_stub.cpp)
+# Static engine libraries reference each other in cycles; resolve them as one group.
+target_link_libraries(xray PRIVATE
+    -Wl,--start-group
+    xrGame xrRender_R4 xrEngine xrNetServer xrPhysics ode xrSound xrParticles xrCPU_Pipe xrCDB xrXMLParser
+    imgui luabind lua_extensions luajit xrAPI crypto cximage
+    -Wl,--end-group
+    gif dxvk_d3d11 dxvk_dxgi
+    xrCore)
+target_link_options(xray PRIVATE -rdynamic)  # symbol names in xrDebug backtraces
+set_target_properties(xray PROPERTIES BUILD_RPATH "${DXVK_NATIVE_DIR}/lib;$<TARGET_FILE_DIR:xrCore>")

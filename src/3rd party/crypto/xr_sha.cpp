@@ -1,17 +1,31 @@
 #include "xr_sha.h"
+#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+// OpenSSL 1.1+ dropped SHA-0 (what SHA_* computes). Own implementation keeps the digests identical;
+// m_sha_ctx (declared as OpenSSL's SHAstate_st*) only ever points to an xr_sha0_ctx here.
+#include "sha0.h"
+#define SHA_CTX_NEW() reinterpret_cast<SHAstate_st*>(xr_new<xr_sha0_ctx>())
+#define SHA_CTX_DELETE(c) do { xr_sha0_ctx* p_ = reinterpret_cast<xr_sha0_ctx*>(c); xr_delete(p_); c = nullptr; } while (0)
+#define SHA_Init(c) xr_sha0_init(*reinterpret_cast<xr_sha0_ctx*>(c))
+#define SHA_Update(c, d, n) xr_sha0_update(*reinterpret_cast<xr_sha0_ctx*>(c), d, n)
+#define SHA_Final(o, c) xr_sha0_final(o, *reinterpret_cast<xr_sha0_ctx*>(c))
+#else
 #include <openssl/sha.h>
+#define SHA_CTX_NEW() xr_new<SHA_CTX>()
+#define SHA_CTX_DELETE(c) xr_delete(c)
+#endif
 
 namespace crypto
 {
 
 xr_sha256::xr_sha256()
 {
-	m_sha_ctx		= xr_new<SHA_CTX>();
+	m_sha_ctx		= SHA_CTX_NEW();
 }
 
 xr_sha256::~xr_sha256()
 {
-	xr_delete		(m_sha_ctx);
+	SHA_CTX_DELETE(m_sha_ctx);
 }
 
 void	xr_sha256::start_calculate		(u8 const * data, u32 data_size)

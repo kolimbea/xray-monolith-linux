@@ -568,3 +568,8 @@ inline void _tzset() { tzset(); }
 #define WINAPI_INLINE inline // DirectX SDK headers
 #endif
 inline BOOL TerminateProcess(HANDLE, UINT code) { _exit((int)code); } // only used for the current process
+
+// dxvk-native's (mingw) d3d11shader.h defines IID_ID3D11ShaderReflection but no __uuidof mapping, which
+// IID_PPV_ARGS needs. Same GUID as that header picks for D3D_COMPILER_VERSION 47.
+struct ID3D11ShaderReflection;
+DECLARE_UUIDOF_HELPER(ID3D11ShaderReflection, 0x8d536ca1, 0x0cca, 0x4956, 0xa8, 0x37, 0x78, 0x69, 0x63, 0x75, 0x55, 0x84)
