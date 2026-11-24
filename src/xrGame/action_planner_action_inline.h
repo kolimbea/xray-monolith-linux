@@ -62,7 +62,7 @@ TEMPLATE_SPECIALIZATION
 void CPlanner::execute()
 {
 	inherited_action::execute();
-	update();
+	this->update();
 }
 
 TEMPLATE_SPECIALIZATION

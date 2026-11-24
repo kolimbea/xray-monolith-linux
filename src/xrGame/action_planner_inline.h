@@ -95,23 +95,23 @@ void CPlanner::update()
 		show_target_world_state		();
 	}
 #else
-	if (bDbgAct && m_failed && current_action().m_action_name)
+	if (bDbgAct && this->m_failed && current_action().m_action_name)
 		Msg("!ERROR: there is no action sequence, which can transfer current world state to the target one. action[%s]",
 		    current_action().m_action_name);
 #endif
 
 	THROW(!solution().empty());
 	//Alundaio:
-	if (solution().empty())
+	if (this->solution().empty())
 		return;
 	//-Alundaio
 
 	if (initialized())
 	{
-		if (current_action_id() != solution().front() && allow_action_switch(current_action_id(), solution().front()))
+		if (current_action_id() != this->solution().front() && allow_action_switch(current_action_id(), this->solution().front()))
 		{
 			current_action().finalize();
-			m_current_action_id = solution().front();
+			m_current_action_id = this->solution().front();
 			//Alundaio: More detailed logging for initializing action
 			if (bDbgAct == true)
 				Msg("DEBUG: Action [%s] initializing", current_action().m_action_name);
@@ -121,7 +121,7 @@ void CPlanner::update()
 	else
 	{
 		m_initialized = true;
-		m_current_action_id = solution().front();
+		m_current_action_id = this->solution().front();
 		//Alundaio: More detailed logging for initializing action
 		if (bDbgAct == true)
 			Msg("DEBUG: Action [%s] initializing", current_action().m_action_name);
@@ -383,15 +383,15 @@ TEMPLATE_SPECIALIZATION
 IC void CPlanner::save(NET_Packet& packet)
 {
 	{
-		EVALUATORS::iterator I = m_evaluators.begin();
-		EVALUATORS::iterator E = m_evaluators.end();
+		typename EVALUATORS::iterator I = m_evaluators.begin();
+		typename EVALUATORS::iterator E = m_evaluators.end();
 		for (; I != E; ++I)
 			(*I).second->save(packet);
 	}
 
 	{
-		OPERATOR_VECTOR::iterator I = m_operators.begin();
-		OPERATOR_VECTOR::iterator E = m_operators.end();
+		typename OPERATOR_VECTOR::iterator I = m_operators.begin();
+		typename OPERATOR_VECTOR::iterator E = m_operators.end();
 		for (; I != E; ++I)
 			(*I).m_operator->save(packet);
 	}
@@ -413,15 +413,15 @@ TEMPLATE_SPECIALIZATION
 IC void CPlanner::load(IReader& packet)
 {
 	{
-		EVALUATORS::iterator I = m_evaluators.begin();
-		EVALUATORS::iterator E = m_evaluators.end();
+		typename EVALUATORS::iterator I = m_evaluators.begin();
+		typename EVALUATORS::iterator E = m_evaluators.end();
 		for (; I != E; ++I)
 			(*I).second->load(packet);
 	}
 
 	{
-		OPERATOR_VECTOR::iterator I = m_operators.begin();
-		OPERATOR_VECTOR::iterator E = m_operators.end();
+		typename OPERATOR_VECTOR::iterator I = m_operators.begin();
+		typename OPERATOR_VECTOR::iterator E = m_operators.end();
 		for (; I != E; ++I)
 			(*I).m_operator->load(packet);
 	}
