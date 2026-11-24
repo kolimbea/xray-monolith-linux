@@ -134,3 +134,12 @@ int EnumDisplaySettings(const char* device, uint32_t mode, DEVMODE* out); // onl
 #define EnumDisplaySettingsA EnumDisplaySettings
 int DestroyWindow(void* hwnd); // NULL is a no-op; never destroys the engine's main window
 int UpdateWindow(void* hwnd);
+#define SW_RESTORE 9
+#define SW_SHOWNORMAL 1
+#define SW_MAXIMIZE 3
+inline long SetWindowLong(void* hwnd, int index, long value) { return (long)SetWindowLongPtr(hwnd, index, value); }
+#define SetWindowLongA SetWindowLong
+
+inline int SetRect(RECT* r, int l, int t, int rr, int b) { if (!r) return 0; *r = RECT{l, t, rr, b}; return 1; }
+inline intptr_t DefWindowProc(void*, unsigned, uintptr_t, intptr_t) { return 0; } // no Win32 message dispatch
+#define DefWindowProcA DefWindowProc

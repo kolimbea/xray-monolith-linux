@@ -1,5 +1,22 @@
 #ifndef tntQAVIH
 #define tntQAVIH
+#ifdef __linux__
+// Video-for-Windows AVI textures are not available on Linux yet: Load() fails and the texture stays
+// on its fallback, as on Windows when an .avi cannot be opened. (Theora .ogm textures are separate.)
+class ENGINE_API CAviPlayerCustom
+{
+public:
+	DWORD m_dwWidth = 0, m_dwHeight = 0;
+	CAviPlayerCustom() = default;
+	~CAviPlayerCustom() = default;
+	VOID GetSize(DWORD* w, DWORD* h) { if (w) *w = m_dwWidth; if (h) *h = m_dwHeight; }
+	BOOL Load(char*) { return FALSE; }
+	BOOL GetFrame(BYTE**) { return FALSE; }
+	BOOL NeedUpdate() { return FALSE; }
+	INT SetSpeed(INT) { return 100; }
+};
+#else
+
 
 #include <math.h>
 
@@ -102,4 +119,5 @@ public:
 	BOOL NeedUpdate() { return CalcFrame() != m_dwFrameCurrent; }
 	INT SetSpeed(INT nPercent);
 };
+#endif // __linux__
 #endif

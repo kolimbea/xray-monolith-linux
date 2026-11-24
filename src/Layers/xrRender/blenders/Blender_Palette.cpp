@@ -13,7 +13,7 @@ IC bool p_sort(IBlender* A, IBlender* B)
 #ifdef __BORLANDC__
 	#define TYPES_EQUAL(A,B) (typeid(A) == typeid(B))
 #else
-#define TYPES_EQUAL(A,B) (typeid(A).raw_name() == typeid(B).raw_name())
+#define TYPES_EQUAL(A,B) (typeid(A).name() == typeid(B).name())
 #endif
 
 void IBlender::CreatePalette(xr_vector<IBlender*>& palette)

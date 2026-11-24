@@ -564,3 +564,7 @@ typedef struct _OVERLAPPED { uintptr_t Internal, InternalHigh; DWORD Offset, Off
 #define __out_ecount_opt(n)
 #endif
 inline void _tzset() { tzset(); }
+#ifndef WINAPI_INLINE
+#define WINAPI_INLINE inline // DirectX SDK headers
+#endif
+inline BOOL TerminateProcess(HANDLE, UINT code) { _exit((int)code); } // only used for the current process

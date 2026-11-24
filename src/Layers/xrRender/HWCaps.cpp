@@ -4,14 +4,14 @@
 #include "HWCaps.h"
 #include "HW.h"
 
-#ifndef _EDITOR
+#if !defined(_EDITOR) && !defined(__linux__) // NVAPI is Windows-only; Linux reports one GPU
 #include <nvapi.h>
 //	#include "ATI/atimgpud.h"
 #endif
 
 namespace
 {
-#ifndef _EDITOR
+#if !defined(_EDITOR) && !defined(__linux__)
 	u32 GetNVGpuNum()
 	{
 		NvLogicalGpuHandle logicalGPUs[NVAPI_MAX_LOGICAL_GPUS];

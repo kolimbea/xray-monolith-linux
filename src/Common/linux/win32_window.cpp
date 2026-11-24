@@ -202,6 +202,10 @@ int ShowWindow(void *hwnd, int cmd)
         return 0;
     if (cmd == SW_HIDE)
         SDL_HideWindow(w);
+    else if (cmd == SW_RESTORE)
+        SDL_RestoreWindow(w);
+    else if (cmd == SW_MAXIMIZE)
+        SDL_MaximizeWindow(w);
     else if (cmd == SW_MINIMIZE)
         SDL_MinimizeWindow(w);
     else

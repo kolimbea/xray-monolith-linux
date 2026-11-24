@@ -21,6 +21,9 @@ typedef HRESULT (__stdcall *FuncPtrD3D11CreateDeviceAndSwapChain)(
 
 bool TestDX11Present()
 {
+#ifdef __linux__
+	return true; // D3D11 is dxvk-native; there is no separate runtime to probe
+#else
 	HMODULE hD3D11 = LoadLibrary("d3d11.dll");
 
 	if (!hD3D11)
@@ -103,6 +106,7 @@ bool TestDX11Present()
 	DestroyWindow(hWnd);
 
 	return SUCCEEDED(hr);
+#endif
 }
 
 BOOL xrRender_test_hw()
