@@ -24,3 +24,7 @@ struct LogHook
     LogHook() { xrvk::set_log(engine_log); }
 } g_log_hook;
 } // namespace
+
+// Referenced by the link (-Wl,-u, CMakeLists.txt) so this object, and with it the log hook above, is
+// pulled from the static renderer library although nothing else calls into it.
+extern "C" int xrvk_engine_log_hook = 1;

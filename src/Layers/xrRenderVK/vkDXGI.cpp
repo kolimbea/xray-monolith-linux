@@ -6,6 +6,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <cstring>
@@ -272,6 +274,36 @@ namespace xrvk
         }
     };
 } // namespace
+
+namespace xrvk
+{
+    // Frame statistics in the log every 600 presents: frame time (average, 99th percentile), and per
+    // frame the backend's draw count, rendering scopes (each one a full barrier), program binds and the
+    // CPU time spent preparing draws. The baseline of the performance track.
+    void frame_stats(SwapChain *, Context *ctx)
+    {
+        static constexpr uint32_t kStatFrames = 600;
+        static std::vector<double> times;
+        static auto last = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
+        times.push_back(std::chrono::duration<double, std::milli>(now - last).count());
+        last = now;
+        if (times.size() < kStatFrames)
+            return;
+        std::vector<double> sorted = times;
+        std::sort(sorted.begin(), sorted.end());
+        double sum = 0;
+        for (double v : times)
+            sum += v;
+        const double avg = sum / times.size(), p99 = sorted[size_t(sorted.size() * 0.99)];
+        const Context::Stats &s = ctx->stats;
+        log("* vk stats: %.2f ms/frame (%.1f fps), p99 %.2f ms | per frame: %.0f draws, %.1f renderings, %.0f program binds, prepare %.2f ms",
+            avg, 1000.0 / avg, p99, double(s.draws) / times.size(), double(s.renderings) / times.size(),
+            double(s.program_binds) / times.size(), s.prepare_ms / times.size());
+        ctx->stats = {};
+        times.clear();
+    }
+} // namespace xrvk
 
 using namespace xrvk;
 
@@ -547,6 +579,7 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT flags)
     else if (r != VK_SUCCESS)
         fail("vkQueuePresentKHR: %d", int(r));
     shot.write(sc);
+    frame_stats(sc, impl(static_cast<Device *>(sc->device)->immediate));
     ++sc->presents;
     c.next_frame();
     return S_OK;

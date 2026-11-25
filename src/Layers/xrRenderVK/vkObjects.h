@@ -373,6 +373,13 @@ namespace xrvk
 
         std::vector<Query *> active_queries; // occlusion queries between Begin and End (no references)
 
+        // per-frame statistics (logged by Present every kStatFrames frames)
+        struct Stats
+        {
+            uint64_t draws = 0, renderings = 0, program_binds = 0, dispatches = 0, transfers = 0;
+            double prepare_ms = 0; // CPU time in prepare_draw (state, descriptors, vertex input)
+        } stats;
+
         bool is_attachment(const Image *img) const;
         void begin_rendering();
         void end_rendering(VkCommandBuffer cb); // closes open query slots, then vkCmdEndRendering
@@ -382,6 +389,7 @@ namespace xrvk
         void bind_vertex_input(VkCommandBuffer cb);
         void set_dynamic_state(VkCommandBuffer cb);
         bool prepare_draw();
+        bool prepare_draw_impl();
 
         // The frame command buffer with any dynamic-rendering scope ended (for copies, clears, barriers).
         VkCommandBuffer outside_rendering();

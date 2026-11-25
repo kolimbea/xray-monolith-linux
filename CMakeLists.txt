@@ -251,7 +251,7 @@ target_link_libraries(xray_vk PRIVATE
     imgui luabind lua_extensions luajit xrAPI crypto cximage
     -Wl,--end-group
     gif)
-target_link_options(xray_vk PRIVATE -rdynamic)
+target_link_options(xray_vk PRIVATE -rdynamic -Wl,-u,xrvk_engine_log_hook) # backend log -> engine log (vkBase.cpp)
 set_target_properties(xray_vk PROPERTIES BUILD_RPATH "$<TARGET_FILE_DIR:xrCore>")
 
 # Milestone M2 test of the Vulkan device layer (tests/vk_smoke.cpp).

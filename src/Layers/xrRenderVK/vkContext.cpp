@@ -8,6 +8,7 @@
 #include "vkObjects.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 
 #include "vkFormat.h"
@@ -271,6 +272,7 @@ namespace xrvk
 
     void Context::begin_rendering()
     {
+        ++stats.renderings;
         VkCommandBuffer cb = outside_rendering();
         full_barrier(cb);
         VkRenderingAttachmentInfo color[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
@@ -386,6 +388,7 @@ namespace xrvk
             add(VK_SHADER_STAGE_FRAGMENT_BIT, Stage::Pixel);
             c->ext.bind_shaders(cb, n, stages, shaders);
             bound_program = p;
+            ++stats.program_binds;
         }
         return p;
     }
@@ -621,6 +624,15 @@ namespace xrvk
     }
 
     bool Context::prepare_draw()
+    {
+        const auto t0 = std::chrono::steady_clock::now();
+        const bool ok = prepare_draw_impl();
+        stats.prepare_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        ++stats.draws;
+        return ok;
+    }
+
+    bool Context::prepare_draw_impl()
     {
         if (!rendering || targets_changed)
             begin_rendering();
