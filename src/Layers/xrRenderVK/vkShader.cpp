@@ -715,7 +715,7 @@ extern "C" HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const c
     std::string pre, errors;
     if (!dxc::preprocess(std::string(static_cast<const char *>(data), data_size), defs, open, pre, errors))
         return set_error(error_messages, errors);
-    const std::string src = hlsl::rewrite_compat(pre);
+    std::string src = hlsl::rewrite_compat(pre);
 
     std::vector<std::string> args{"-spirv", "-fspv-target-env=vulkan1.3", "-HV", "2018", "-fvk-use-dx-layout",
                                   "-fspv-reflect", "-fvk-use-dx-position-w", "-fvk-auto-shift-bindings", "-E", entrypoint,
@@ -736,7 +736,14 @@ extern "C" HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const c
 
     std::vector<uint32_t> code;
     std::string compile_errors;
-    if (!dxc::compile(src, args, code, compile_errors))
+    bool ok = dxc::compile(src, args, code, compile_errors);
+    // rule 3 reacts to DXC's diagnostics (vkHlslRewrite.h); each pass removes one parameter
+    for (int retry = 0; !ok && retry < 3 && hlsl::drop_unused_duplicate_input(src, compile_errors); ++retry)
+    {
+        compile_errors.clear();
+        ok = dxc::compile(src, args, code, compile_errors);
+    }
+    if (!ok)
         return set_error(error_messages, errors + compile_errors);
     errors += compile_errors;
     std::string fix_error;

@@ -1,6 +1,8 @@
 #include "vkHlslRewrite.h"
 
 #include <cctype>
+#include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <vector>
 
@@ -226,6 +228,146 @@ namespace xrvk::hlsl
             return out;
         }
     } // namespace
+
+    namespace
+    {
+        // offset in `text` of `line` (1-based) of `file` according to the #line markers; npos if absent
+        size_t locate(const std::string &text, const std::string &file, long line)
+        {
+            std::string cur_file;
+            long cur_line = 1;
+            size_t pos = 0;
+            while (pos < text.size())
+            {
+                size_t end = text.find('\n', pos);
+                if (end == std::string::npos)
+                    end = text.size();
+                const size_t k = text.find_first_not_of(" \t", pos);
+                if (k < end && text.compare(k, 5, "#line") == 0)
+                {
+                    long n = 0;
+                    char name[512] = {};
+                    const std::string directive = text.substr(k, end - k);
+                    if (sscanf(directive.c_str(), "#line %ld \"%511[^\"]\"", &n, name) >= 1)
+                    {
+                        cur_line = n;
+                        if (name[0])
+                            cur_file = name;
+                        pos = end + 1;
+                        continue;
+                    }
+                }
+                if (cur_file == file && cur_line == line)
+                    return pos;
+                ++cur_line;
+                pos = end + 1;
+            }
+            return std::string::npos;
+        }
+
+        // index of the bracket matching the one at `open` ('(' or '{'), npos if unbalanced
+        size_t match(const std::string &s, size_t open)
+        {
+            const char o = s[open], c = o == '(' ? ')' : '}';
+            int depth = 0;
+            for (size_t i = open; i < s.size(); ++i)
+            {
+                if (s[i] == o)
+                    ++depth;
+                else if (s[i] == c && --depth == 0)
+                    return i;
+            }
+            return std::string::npos;
+        }
+
+        bool uses_word(const std::string &s, size_t begin, size_t end, const std::string &w)
+        {
+            for (size_t i = s.find(w, begin); i != std::string::npos && i + w.size() <= end; i = s.find(w, i + 1))
+                if ((i == 0 || !ident_char(s[i - 1])) && (i + w.size() >= s.size() || !ident_char(s[i + w.size()])))
+                    return true;
+            return false;
+        }
+    } // namespace
+
+    bool drop_unused_duplicate_input(std::string &text, const std::string &diagnostics)
+    {
+        static const std::string kMarker = ": error: input semantic '";
+        for (size_t m = diagnostics.find(kMarker); m != std::string::npos; m = diagnostics.find(kMarker, m + 1))
+        {
+            // "<file>:<line>:<col>: error: input semantic 'X' used more than once"
+            const size_t ls = diagnostics.rfind('\n', m);
+            const std::string head = diagnostics.substr(ls == std::string::npos ? 0 : ls + 1, m - (ls == std::string::npos ? 0 : ls + 1));
+            const size_t c2 = head.rfind(':'), c1 = c2 == std::string::npos ? c2 : head.rfind(':', c2 - 1);
+            if (c1 == std::string::npos || c1 == 0)
+                continue;
+            const std::string file = head.substr(0, c1);
+            const long line = atol(head.c_str() + c1 + 1), col = atol(head.c_str() + c2 + 1);
+            const size_t le = diagnostics.find('\n', m);
+            if (diagnostics.substr(m, le == std::string::npos ? std::string::npos : le - m).find("used more than once") == std::string::npos)
+                continue;
+            const size_t line_at = locate(text, file, line);
+            if (line_at == std::string::npos || col < 1)
+                continue;
+            const size_t sem = line_at + size_t(col - 1);
+            // the parameter around the semantic: `type name : SEMANTIC`
+            size_t colon = text.rfind(':', sem);
+            if (colon == std::string::npos || colon < line_at)
+                continue;
+            size_t ne = colon;
+            while (ne > 0 && space(text[ne - 1]))
+                --ne;
+            size_t nb = ne;
+            while (nb > 0 && ident_char(text[nb - 1]))
+                --nb;
+            if (nb == ne)
+                continue;
+            const std::string name = text.substr(nb, ne - nb);
+            // parameter bounds at depth 0 of the parameter list
+            size_t pb = nb;
+            int depth = 0;
+            while (pb > 0)
+            {
+                const char ch = text[pb - 1];
+                if (ch == ')' || ch == ']')
+                    ++depth;
+                else if ((ch == '(' || ch == '[') && depth-- == 0)
+                    break;
+                else if (ch == ',' && depth == 0)
+                    break;
+                --pb;
+            }
+            if (pb == 0)
+                continue;
+            size_t pe = sem;
+            depth = 0;
+            while (pe < text.size())
+            {
+                const char ch = text[pe];
+                if (ch == '(' || ch == '[')
+                    ++depth;
+                else if ((ch == ')' || ch == ']') && depth-- == 0)
+                    break;
+                else if (ch == ',' && depth == 0)
+                    break;
+                ++pe;
+            }
+            const size_t list_open = text.rfind('(', pb);
+            const size_t list_close = list_open == std::string::npos ? list_open : match(text, list_open);
+            const size_t body_open = list_close == std::string::npos ? list_close : text.find('{', list_close);
+            const size_t body_close = body_open == std::string::npos ? body_open : match(text, body_open);
+            if (body_close == std::string::npos || uses_word(text, body_open, body_close, name))
+                continue; // the body reads it: not a safe rewrite
+            // remove the parameter with one of its separating commas
+            size_t cut_b = pb, cut_e = pe;
+            if (text[pb - 1] == ',')
+                cut_b = pb - 1;
+            else if (pe < text.size() && text[pe] == ',')
+                cut_e = pe + 1;
+            text.erase(cut_b, cut_e - cut_b);
+            return true;
+        }
+        return false;
+    }
 
     std::string rewrite_compat(const std::string &text)
     {

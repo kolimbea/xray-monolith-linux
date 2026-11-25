@@ -14,4 +14,10 @@ namespace xrvk::hlsl
 {
     // Applies all rules. Lines starting with '#' are left alone (macro bodies, #line markers).
     std::string rewrite_compat(const std::string &text);
+
+    // Rule 3 (DXC rejects an input semantic used twice; FXC lets both read the same register): given
+    // DXC's diagnostics for preprocessed `text` (with `#line N "file"` markers), removes a function
+    // parameter reported as "input semantic 'X' used more than once" if the function body never reads
+    // it. Returns true if the text changed (then compile again).
+    bool drop_unused_duplicate_input(std::string &text, const std::string &diagnostics);
 } // namespace xrvk::hlsl
