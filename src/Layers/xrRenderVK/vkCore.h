@@ -37,11 +37,6 @@ namespace xrvk
     {
         VkCommandPool pool = VK_NULL_HANDLE;
         VkCommandBuffer cmd = VK_NULL_HANDLE;
-        // resource-creation uploads, submitted before `cmd`; recorded on any thread, so from its own pool
-        // (a command pool must not be used by two threads at once)
-        VkCommandPool upload_pool = VK_NULL_HANDLE;
-        VkCommandBuffer upload = VK_NULL_HANDLE;
-        bool upload_recording = false;
         uint64_t done_value = 0; // timeline value signalled when this frame's work completed
     };
     class HostHeap;
@@ -92,7 +87,14 @@ namespace xrvk
         // Called with the frame command buffer right before submit() ends it (the immediate context
         // closes its rendering scope there).
         std::function<void(VkCommandBuffer)> before_submit;
-        std::mutex upload_lock;   // guards upload_cmd() recording (resources may be created on any thread)
+        // Uploads of resource creation are recorded on any thread into command buffers that belong to no
+        // frame slot: submit() takes the open one (submitted before the frame's commands) and it is reused
+        // once the GPU passed that submission. upload_lock guards all of it (and the pool).
+        std::mutex upload_lock;
+        VkCommandPool upload_pool = VK_NULL_HANDLE;
+        VkCommandBuffer upload_open = VK_NULL_HANDLE;
+        std::vector<VkCommandBuffer> upload_free;
+        std::deque<std::pair<uint64_t, VkCommandBuffer>> upload_pending;
 
         // Command buffer of the current frame, begun on first use.
         VkCommandBuffer cmd();

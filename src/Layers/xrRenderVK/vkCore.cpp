@@ -355,9 +355,13 @@ namespace xrvk
             cai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cai.commandBufferCount = 1;
             XRVK_CHECK(vkAllocateCommandBuffers(c.device, &cai, &f.cmd));
-            XRVK_CHECK(vkCreateCommandPool(c.device, &pci, nullptr, &f.upload_pool));
-            cai.commandPool = f.upload_pool;
-            XRVK_CHECK(vkAllocateCommandBuffers(c.device, &cai, &f.upload));
+
+        }
+        {
+            VkCommandPoolCreateInfo pci{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+            pci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            pci.queueFamilyIndex = c.queue_family;
+            XRVK_CHECK(vkCreateCommandPool(c.device, &pci, nullptr, &c.upload_pool));
         }
         // NVIDIA packs its driver version as 10.8.8.6 bits; others use the Vulkan encoding
         const uint32_t dv = c.props.driverVersion;
@@ -383,15 +387,32 @@ namespace xrvk
 
     VkCommandBuffer Core::upload_cmd()
     {
-        Frame &f = frames[frame];
-        if (!f.upload_recording)
+        if (!upload_open)
         {
+            const uint64_t done = completed_value();
+            while (!upload_pending.empty() && upload_pending.front().first <= done)
+            {
+                XRVK_CHECK(vkResetCommandBuffer(upload_pending.front().second, 0));
+                upload_free.push_back(upload_pending.front().second);
+                upload_pending.pop_front();
+            }
+            if (upload_free.empty())
+            {
+                VkCommandBufferAllocateInfo cai{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+                cai.commandPool = upload_pool;
+                cai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                cai.commandBufferCount = 1;
+                VkCommandBuffer cb;
+                XRVK_CHECK(vkAllocateCommandBuffers(device, &cai, &cb));
+                upload_free.push_back(cb);
+            }
+            upload_open = upload_free.back();
+            upload_free.pop_back();
             VkCommandBufferBeginInfo bi{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
             bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            XRVK_CHECK(vkBeginCommandBuffer(f.upload, &bi));
-            f.upload_recording = true;
+            XRVK_CHECK(vkBeginCommandBuffer(upload_open, &bi));
         }
-        return f.upload;
+        return upload_open;
     }
 
     void Core::defer(std::function<void()> fn)
@@ -419,7 +440,7 @@ namespace xrvk
         uint32_t ncb = 0;
         {
             std::lock_guard<std::mutex> g(upload_lock);
-            if (f.upload_recording)
+            if (upload_open)
             {
                 VkMemoryBarrier2 mb{VK_STRUCTURE_TYPE_MEMORY_BARRIER_2};
                 mb.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
@@ -429,10 +450,11 @@ namespace xrvk
                 VkDependencyInfo d{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
                 d.memoryBarrierCount = 1;
                 d.pMemoryBarriers = &mb;
-                vkCmdPipelineBarrier2(f.upload, &d);
-                XRVK_CHECK(vkEndCommandBuffer(f.upload));
-                f.upload_recording = false;
-                cbi[ncb++].commandBuffer = f.upload;
+                vkCmdPipelineBarrier2(upload_open, &d);
+                XRVK_CHECK(vkEndCommandBuffer(upload_open));
+                cbi[ncb++].commandBuffer = upload_open;
+                upload_pending.emplace_back(timeline_value + 1, upload_open); // this submission's value
+                upload_open = VK_NULL_HANDLE;
             }
         }
         cbi[ncb++].commandBuffer = cb;
@@ -470,8 +492,6 @@ namespace xrvk
             XRVK_CHECK(vkWaitSemaphores(device, &wi, UINT64_MAX));
         }
         XRVK_CHECK(vkResetCommandPool(device, f.pool, 0));
-        std::lock_guard<std::mutex> g(upload_lock);
-        XRVK_CHECK(vkResetCommandPool(device, f.upload_pool, 0));
         const uint64_t done = completed_value();
         heap->collect(done);
         std::deque<std::function<void()>> run;
@@ -501,7 +521,7 @@ namespace xrvk
         bool upload;
         {
             std::lock_guard<std::mutex> g(upload_lock);
-            upload = frames[frame].upload_recording;
+            upload = upload_open != VK_NULL_HANDLE;
         }
         if (recording || upload)
         {
@@ -523,9 +543,10 @@ namespace xrvk
             for (Frame &f : c.frames)
             {
                 vkDestroyCommandPool(c.device, f.pool, nullptr);
-                vkDestroyCommandPool(c.device, f.upload_pool, nullptr);
+
             }
             vkDestroySemaphore(c.device, c.timeline, nullptr);
+            vkDestroyCommandPool(c.device, c.upload_pool, nullptr);
             c.heap->destroy(c.vma);
             delete c.heap;
             vmaDestroyAllocator(c.vma);
