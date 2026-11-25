@@ -89,7 +89,11 @@ namespace xrvk
     {
         std::lock_guard<std::mutex> g(m_lock);
         if (size <= kLinearMax)
-            return alloc_linear(size ? size : 1, align);
+        {
+            Slice s = alloc_linear(size ? size : 1, align); // an empty slice still gets a distinct offset
+            s.size = size;
+            return s;
+        }
         VmaVirtualAllocationCreateInfo ci{};
         ci.size = size ? size : 1;
         ci.alignment = align;

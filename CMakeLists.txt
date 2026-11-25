@@ -260,6 +260,9 @@ target_link_libraries(vk_smoke PRIVATE xrVK_core)
 # Milestone M4 test of the draw path (tests/vk_draw.cpp).
 add_executable(vk_draw ${CMAKE_SOURCE_DIR}/../tests/vk_draw.cpp)
 target_link_libraries(vk_draw PRIVATE xrVK_core)
+# Host heap unit test (tests/vk_heap.cpp).
+add_executable(vk_heap ${CMAKE_SOURCE_DIR}/../tests/vk_heap.cpp)
+target_link_libraries(vk_heap PRIVATE xrVK_core)
 # Milestone M3 check: every shader of an exported tree through D3DCompile/D3DReflect (tests/vk_shaders.cpp).
 add_executable(vk_shaders ${CMAKE_SOURCE_DIR}/../tests/vk_shaders.cpp)
 target_link_libraries(vk_shaders PRIVATE xrVK_core)
