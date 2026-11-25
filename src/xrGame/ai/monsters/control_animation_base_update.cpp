@@ -140,7 +140,16 @@ void CControlAnimationBase::clear_override_animation()
 void CControlAnimationBase::set_override_animation(EMotionAnim anim, u32 index)
 {
 	if (m_override_animation == anim) return;
-	if (!m_anim_storage[anim]) return;
+	// eAnimUndefined (u32(-1)) resets the override. Indexing the storage with it read before the vector
+	// with MSVC's int enum (non-null garbage, so the reset happened) and gigabytes past it with clang's
+	// unsigned one (crash in critical_finalize when a monster dies).
+	if (anim == eAnimUndefined)
+	{
+		m_override_animation = eAnimUndefined;
+		m_override_animation_index = index;
+		return;
+	}
+	if (u32(anim) >= m_anim_storage.size() || !m_anim_storage[anim]) return;
 
 	m_override_animation = anim;
 	m_override_animation_index = index;
@@ -150,7 +159,13 @@ void CControlAnimationBase::set_override_animation_script(EMotionAnim anim, u32 
 {
 	if (m_override_animation == anim) return;
 
-	if (!m_anim_storage[anim])
+	if (anim == eAnimUndefined)
+	{
+		m_override_animation = eAnimUndefined;
+		m_override_animation_index = index;
+		return;
+	}
+	if (u32(anim) >= m_anim_storage.size() || !m_anim_storage[anim])
 	{
 		Msg("![CControlAnimationBase] wrong animation id.");
 		return;
