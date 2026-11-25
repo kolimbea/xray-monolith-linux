@@ -46,5 +46,6 @@ list(FILTER LJ_CORE EXCLUDE REGEX "^$")
 enable_language(ASM)
 add_library(luajit STATIC ${LJ_CORE} ${LJ_GEN}/lj_vm.S ${LJ_HDRS})
 target_include_directories(luajit PRIVATE ${LJ_GEN} PUBLIC "${LJ_SRC}")
-target_compile_options(luajit PRIVATE -fno-strict-aliasing -fomit-frame-pointer)
+target_compile_options(luajit PRIVATE -fno-strict-aliasing -fomit-frame-pointer
+    -fno-sanitize=address) # LuaJIT reads strings word-wise past their end by design (ASan builds)
 target_link_libraries(luajit PUBLIC m dl)
