@@ -205,7 +205,8 @@ namespace xrvk
 namespace xrvk
 {
     // XR_VK_SCREENSHOT=<file.png>: the back buffer of presented frame XR_VK_SCREENSHOT_FRAME (default 300)
-    // is written as PNG (screenshot tests; works without looking at the window).
+    // is written as PNG (screenshot tests; works without looking at the window). With
+    // XR_VK_SCREENSHOT_EVERY=<n> every n-th frame is written; "%d" in the path is the frame number.
     struct Screenshot
     {
         VkBuffer buffer = VK_NULL_HANDLE;
@@ -217,7 +218,10 @@ namespace xrvk
         {
             const char *path = getenv("XR_VK_SCREENSHOT");
             const char *at = getenv("XR_VK_SCREENSHOT_FRAME");
-            if (!path || sc->presents != uint64_t(at ? atoll(at) : 300))
+            const char *every = getenv("XR_VK_SCREENSHOT_EVERY");
+            const uint64_t n = every ? uint64_t(atoll(every)) : 0;
+            const bool due = n ? (sc->presents && sc->presents % n == 0) : sc->presents == uint64_t(at ? atoll(at) : 300);
+            if (!path || !due)
                 return;
             Core &c = *core();
             w = sc->back_buffer->desc.Width;
@@ -252,7 +256,9 @@ namespace xrvk
             for (size_t i = 3; i < rgba.size(); i += 4)
                 rgba[i] = 255; // the alpha of a back buffer is not shown
             const std::vector<uint8_t> png = xr_dds::write_png(rgba.data(), w, h);
-            const char *path = getenv("XR_VK_SCREENSHOT");
+            // "%d" in the path: the frame number (XR_VK_SCREENSHOT_EVERY writes a series)
+            char path[1024];
+            snprintf(path, sizeof path, getenv("XR_VK_SCREENSHOT"), int(sc->presents));
             std::ofstream out(path, std::ios::binary);
             out.write(reinterpret_cast<const char *>(png.data()), std::streamsize(png.size()));
             if (out.good())
