@@ -300,9 +300,9 @@ namespace xrvk
         Core &c = *core();
         const double n = double(times.size());
         log("* vk stats: %.2f ms/frame (%.1f fps), p99 %.2f ms | per frame: GPU %.2f ms in %.1f submits, CPU waits for a frame slot %.2f ms, "
-            "%.0f query polls not ready, %.0f draws, %.1f renderings, %.0f program binds, prepare %.2f ms",
+            "%.0f query polls not ready, %.0f draws, %.1f renderings, %.0f program binds, prepare %.2f ms | host heap %llu MB",
             avg, 1000.0 / avg, p99, c.gpu_ms / n, c.submits / n, c.wait_ms / n, c.query_polls / n, s.draws / n, s.renderings / n,
-            s.program_binds / n, s.prepare_ms / n);
+            s.program_binds / n, s.prepare_ms / n, (unsigned long long)(c.heap->bytes_in_pages() >> 20));
         c.gpu_ms = c.wait_ms = 0;
         c.gpu_samples = c.submits = c.query_polls = 0;
         ctx->stats = {};
