@@ -141,8 +141,11 @@ bool UIInvUpgradeInfo::init_upgrade(Upgrade_type* upgr, CInventoryItem* inv_item
 				xr_sprintf(str_res, sizeof(str_res), "%s:\\n%s", CStringTable().translate("st_upgr_disable").c_str(),
 				           m_upgrade->get_prerequisites());
 				if (upg_res == inventory::upgrade::result_e_parents)
-					xr_sprintf(str_res, sizeof(str_res), "%s\\n - %s", str_res,
-					           CStringTable().translate("st_upgr_parents").c_str());
+				{
+					// appended, not sprintf(str_res, "%s..", str_res): overlapping buffers are UB (glibc empties it)
+					xr_strcat(str_res, sizeof(str_res), "\\n - ");
+					xr_strcat(str_res, sizeof(str_res), CStringTable().translate("st_upgr_parents").c_str());
+				}
 
 				if (upg_res == inventory::upgrade::result_e_precondition_money)
 					xr_sprintf(str_res, sizeof(str_res), "%s:\\n - %s",

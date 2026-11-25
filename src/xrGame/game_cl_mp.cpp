@@ -1419,7 +1419,7 @@ void game_cl_mp::LoadBonuses()
 		_GetItem(line, 1, tmp1);
 		if (strstr(name, "kill_in_row"))
 		{
-			xr_sprintf(tmp1, "%s Kill", tmp1);
+			xr_strcat(tmp1, " Kill"); // not sprintf(tmp1, "%s..", tmp1): overlapping buffers are UB
 			xr_sprintf(IconStr, "kill_in_row");
 		}
 		else
