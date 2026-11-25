@@ -37,7 +37,10 @@ namespace xrvk
     {
         VkCommandPool pool = VK_NULL_HANDLE;
         VkCommandBuffer cmd = VK_NULL_HANDLE;
-        VkCommandBuffer upload = VK_NULL_HANDLE; // resource-creation uploads, submitted before `cmd`
+        // resource-creation uploads, submitted before `cmd`; recorded on any thread, so from its own pool
+        // (a command pool must not be used by two threads at once)
+        VkCommandPool upload_pool = VK_NULL_HANDLE;
+        VkCommandBuffer upload = VK_NULL_HANDLE;
         bool upload_recording = false;
         uint64_t done_value = 0; // timeline value signalled when this frame's work completed
     };

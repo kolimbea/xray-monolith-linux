@@ -355,6 +355,8 @@ namespace xrvk
             cai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cai.commandBufferCount = 1;
             XRVK_CHECK(vkAllocateCommandBuffers(c.device, &cai, &f.cmd));
+            XRVK_CHECK(vkCreateCommandPool(c.device, &pci, nullptr, &f.upload_pool));
+            cai.commandPool = f.upload_pool;
             XRVK_CHECK(vkAllocateCommandBuffers(c.device, &cai, &f.upload));
         }
         // NVIDIA packs its driver version as 10.8.8.6 bits; others use the Vulkan encoding
@@ -467,8 +469,9 @@ namespace xrvk
             wi.pValues = &f.done_value;
             XRVK_CHECK(vkWaitSemaphores(device, &wi, UINT64_MAX));
         }
-        std::lock_guard<std::mutex> g(upload_lock); // the pool also holds the upload command buffer
         XRVK_CHECK(vkResetCommandPool(device, f.pool, 0));
+        std::lock_guard<std::mutex> g(upload_lock);
+        XRVK_CHECK(vkResetCommandPool(device, f.upload_pool, 0));
         const uint64_t done = completed_value();
         heap->collect(done);
         std::deque<std::function<void()>> run;
@@ -518,7 +521,10 @@ namespace xrvk
                 d.second();
             c.deferred.clear();
             for (Frame &f : c.frames)
+            {
                 vkDestroyCommandPool(c.device, f.pool, nullptr);
+                vkDestroyCommandPool(c.device, f.upload_pool, nullptr);
+            }
             vkDestroySemaphore(c.device, c.timeline, nullptr);
             c.heap->destroy(c.vma);
             delete c.heap;
