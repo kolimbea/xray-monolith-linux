@@ -134,7 +134,7 @@ IC u32 IReaderBase<T>::find_chunk(u32 ID, BOOL* bCompressed)
 	if (!success)
 	{
 		rewind();
-		while (!eof())
+		while (impl().elapsed() >= 8) // a chunk header is 8 bytes; a shorter tail (some THM files) is not one
 		{
 			dwType = r_u32();
 			dwSize = r_u32();
