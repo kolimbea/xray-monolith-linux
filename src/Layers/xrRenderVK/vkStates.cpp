@@ -187,6 +187,8 @@ using namespace xrvk;
 
 HRESULT ID3D11Device::CreateBlendState(const D3D11_BLEND_DESC *pBlendStateDesc, ID3D11BlendState **ppBlendState)
 {
+    if (ppBlendState)
+        *ppBlendState = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pBlendStateDesc)
         return E_INVALIDARG;
     auto *s = new BlendState();
@@ -205,6 +207,8 @@ HRESULT ID3D11Device::CreateBlendState(const D3D11_BLEND_DESC *pBlendStateDesc, 
 
 HRESULT ID3D11Device::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC *pDepthStencilDesc, ID3D11DepthStencilState **ppDepthStencilState)
 {
+    if (ppDepthStencilState)
+        *ppDepthStencilState = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pDepthStencilDesc)
         return E_INVALIDARG;
     auto *s = new DepthStencilState();
@@ -215,6 +219,8 @@ HRESULT ID3D11Device::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC *pD
 
 HRESULT ID3D11Device::CreateRasterizerState(const D3D11_RASTERIZER_DESC *pRasterizerDesc, ID3D11RasterizerState **ppRasterizerState)
 {
+    if (ppRasterizerState)
+        *ppRasterizerState = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pRasterizerDesc)
         return E_INVALIDARG;
     auto *s = new RasterizerState();
@@ -225,6 +231,8 @@ HRESULT ID3D11Device::CreateRasterizerState(const D3D11_RASTERIZER_DESC *pRaster
 
 HRESULT ID3D11Device::CreateSamplerState(const D3D11_SAMPLER_DESC *pSamplerDesc, ID3D11SamplerState **ppSamplerState)
 {
+    if (ppSamplerState)
+        *ppSamplerState = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pSamplerDesc)
         return E_INVALIDARG;
     const D3D11_SAMPLER_DESC &d = *pSamplerDesc;
@@ -264,6 +272,8 @@ HRESULT ID3D11Device::CreateSamplerState(const D3D11_SAMPLER_DESC *pSamplerDesc,
 HRESULT ID3D11Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs, UINT NumElements,
                                         const void *pShaderBytecodeWithInputSignature, SIZE_T BytecodeLength, ID3D11InputLayout **ppInputLayout)
 {
+    if (ppInputLayout)
+        *ppInputLayout = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     // D3D11 takes either the input signature blob or the whole vertex shader (imgui passes the latter)
     std::vector<ShaderParameter> sig;
     if (is_spirv(pShaderBytecodeWithInputSignature, BytecodeLength))

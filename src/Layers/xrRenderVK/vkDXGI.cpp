@@ -365,6 +365,8 @@ HRESULT IDXGIFactory5::CheckFeatureSupport(DXGI_FEATURE feature, void *support_d
 HRESULT IDXGIFactory2::CreateSwapChainForHwnd(IUnknown *pDevice, HWND hWnd, const DXGI_SWAP_CHAIN_DESC1 *pDesc,
                                               const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *, IDXGIOutput *, IDXGISwapChain1 **ppSwapChain)
 {
+    if (ppSwapChain)
+        *ppSwapChain = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pDevice || !hWnd || !pDesc || !ppSwapChain || !core())
         return E_INVALIDARG;
     auto *sc = new SwapChain();
@@ -689,6 +691,8 @@ HRESULT IDXGIObject::GetParent(REFIID riid, void **parent)
 // The legacy swap-chain call (imgui's multi-viewport windows): same as CreateSwapChainForHwnd.
 HRESULT IDXGIFactory::CreateSwapChain(IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
+    if (swapchain)
+        *swapchain = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!desc || !swapchain)
         return E_INVALIDARG;
     DXGI_SWAP_CHAIN_DESC1 d{};

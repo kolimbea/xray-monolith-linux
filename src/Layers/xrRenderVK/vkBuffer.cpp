@@ -176,6 +176,8 @@ using namespace xrvk;
 
 HRESULT ID3D11Device::CreateBuffer(const D3D11_BUFFER_DESC *pDesc, const D3D11_SUBRESOURCE_DATA *pInitialData, ID3D11Buffer **ppBuffer)
 {
+    if (ppBuffer)
+        *ppBuffer = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pDesc)
         return E_INVALIDARG;
     if (!ppBuffer)

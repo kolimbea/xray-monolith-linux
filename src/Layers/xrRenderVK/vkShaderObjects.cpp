@@ -279,25 +279,37 @@ using namespace xrvk;
 
 HRESULT ID3D11Device::CreateVertexShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *, ID3D11VertexShader **ppVertexShader)
 {
+    if (ppVertexShader)
+        *ppVertexShader = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     return create_shader(this, Stage::Vertex, pShaderBytecode, BytecodeLength, ppVertexShader);
 }
 HRESULT ID3D11Device::CreateHullShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *, ID3D11HullShader **ppHullShader)
 {
+    if (ppHullShader)
+        *ppHullShader = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     return create_shader(this, Stage::Hull, pShaderBytecode, BytecodeLength, ppHullShader);
 }
 HRESULT ID3D11Device::CreateDomainShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *, ID3D11DomainShader **ppDomainShader)
 {
+    if (ppDomainShader)
+        *ppDomainShader = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     return create_shader(this, Stage::Domain, pShaderBytecode, BytecodeLength, ppDomainShader);
 }
 HRESULT ID3D11Device::CreateGeometryShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *, ID3D11GeometryShader **ppGeometryShader)
 {
+    if (ppGeometryShader)
+        *ppGeometryShader = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     return create_shader(this, Stage::Geometry, pShaderBytecode, BytecodeLength, ppGeometryShader);
 }
 HRESULT ID3D11Device::CreatePixelShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *, ID3D11PixelShader **ppPixelShader)
 {
+    if (ppPixelShader)
+        *ppPixelShader = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     return create_shader(this, Stage::Pixel, pShaderBytecode, BytecodeLength, ppPixelShader);
 }
 HRESULT ID3D11Device::CreateComputeShader(const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *, ID3D11ComputeShader **ppComputeShader)
 {
+    if (ppComputeShader)
+        *ppComputeShader = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     return create_shader(this, Stage::Compute, pShaderBytecode, BytecodeLength, ppComputeShader);
 }

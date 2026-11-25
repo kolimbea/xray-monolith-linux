@@ -223,6 +223,8 @@ using namespace xrvk;
 
 HRESULT ID3D11Device::CreateRenderTargetView(ID3D11Resource *pResource, const D3D11_RENDER_TARGET_VIEW_DESC *pDesc, ID3D11RenderTargetView **ppRTView)
 {
+    if (ppRTView)
+        *ppRTView = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     Image *img = image_of(pResource);
     if (!img || !img->image)
     {
@@ -277,6 +279,8 @@ HRESULT ID3D11Device::CreateRenderTargetView(ID3D11Resource *pResource, const D3
 
 HRESULT ID3D11Device::CreateDepthStencilView(ID3D11Resource *pResource, const D3D11_DEPTH_STENCIL_VIEW_DESC *pDesc, ID3D11DepthStencilView **ppDepthStencilView)
 {
+    if (ppDepthStencilView)
+        *ppDepthStencilView = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     Image *img = image_of(pResource);
     if (!img || !img->image || !is_depth(img->format))
     {
@@ -325,6 +329,8 @@ HRESULT ID3D11Device::CreateDepthStencilView(ID3D11Resource *pResource, const D3
 
 HRESULT ID3D11Device::CreateShaderResourceView(ID3D11Resource *pResource, const D3D11_SHADER_RESOURCE_VIEW_DESC *pDesc, ID3D11ShaderResourceView **ppSRView)
 {
+    if (ppSRView)
+        *ppSRView = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pResource)
         return E_INVALIDARG;
     auto *v = new ShaderResourceView();
@@ -379,6 +385,8 @@ HRESULT ID3D11Device::CreateShaderResourceView(ID3D11Resource *pResource, const 
 
 HRESULT ID3D11Device::CreateUnorderedAccessView(ID3D11Resource *pResource, const D3D11_UNORDERED_ACCESS_VIEW_DESC *pDesc, ID3D11UnorderedAccessView **ppUAView)
 {
+    if (ppUAView)
+        *ppUAView = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pResource || !pDesc)
         return E_INVALIDARG;
     auto *v = new UnorderedAccessView();

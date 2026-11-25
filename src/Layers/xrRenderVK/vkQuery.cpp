@@ -42,6 +42,8 @@ using namespace xrvk;
 
 HRESULT ID3D11Device::CreateQuery(const D3D11_QUERY_DESC *pQueryDesc, ID3D11Query **ppQuery)
 {
+    if (ppQuery)
+        *ppQuery = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pQueryDesc)
         return E_INVALIDARG;
     if (pQueryDesc->Query != D3D11_QUERY_EVENT && pQueryDesc->Query != D3D11_QUERY_OCCLUSION)

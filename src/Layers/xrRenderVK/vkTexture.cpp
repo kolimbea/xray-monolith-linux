@@ -448,6 +448,8 @@ using namespace xrvk;
 
 HRESULT ID3D11Device::CreateTexture1D(const D3D11_TEXTURE1D_DESC *pDesc, const D3D11_SUBRESOURCE_DATA *pInitialData, ID3D11Texture1D **ppTexture1D)
 {
+    if (ppTexture1D)
+        *ppTexture1D = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pDesc)
         return E_INVALIDARG;
     if (!ppTexture1D)
@@ -458,6 +460,8 @@ HRESULT ID3D11Device::CreateTexture1D(const D3D11_TEXTURE1D_DESC *pDesc, const D
 
 HRESULT ID3D11Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC *pDesc, const D3D11_SUBRESOURCE_DATA *pInitialData, ID3D11Texture2D **ppTexture2D)
 {
+    if (ppTexture2D)
+        *ppTexture2D = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pDesc)
         return E_INVALIDARG;
     if (!ppTexture2D)
@@ -468,6 +472,8 @@ HRESULT ID3D11Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC *pDesc, const D
 
 HRESULT ID3D11Device::CreateTexture3D(const D3D11_TEXTURE3D_DESC *pDesc, const D3D11_SUBRESOURCE_DATA *pInitialData, ID3D11Texture3D **ppTexture3D)
 {
+    if (ppTexture3D)
+        *ppTexture3D = nullptr; // D3D11 clears the output, so a failed call never hands out garbage
     if (!pDesc)
         return E_INVALIDARG;
     if (!ppTexture3D)
