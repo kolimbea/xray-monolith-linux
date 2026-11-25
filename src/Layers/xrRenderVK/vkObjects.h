@@ -45,13 +45,18 @@ namespace xrvk
         VkFormat format = VK_FORMAT_UNDEFINED;
         uint32_t width = 1, height = 1, depth = 1, mips = 1, layers = 1, samples = 1;
         D3D11_USAGE usage = D3D11_USAGE_DEFAULT;
-        UINT bind = 0, misc = 0;
+        UINT bind = 0, misc = 0, cpu = 0; // D3D11 bind, misc and CPU access flags
         VkImage image = VK_NULL_HANDLE;
         VmaAllocation alloc = nullptr;
+        int mem_kind = 0; // Core::MemKind of alloc
         // Whole-image layout. Engine images go to GENERAL on first use and stay there; hazards between
         // writes and reads are handled with barriers by the context (vkContext.cpp).
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+        // STAGING textures: a mapped Vulkan buffer when the CPU reads them (the GPU copies into it), plain
+        // process memory when it only writes them (the engine's "RAM textures": gigabytes of copies that
+        // wait for their first use; pageable memory, not pinned driver memory)
         VkBuffer staging = VK_NULL_HANDLE;
+        std::vector<uint8_t> host;
         uint8_t *mapped = nullptr;
         std::vector<VkDeviceSize> sub_offset; // packing of staging memory / upload sources
         std::vector<uint32_t> sub_pitch, sub_rows;
@@ -107,6 +112,7 @@ namespace xrvk
         // a slice of the host heap, replaced on every Map(WRITE_DISCARD)
         VkBuffer buffer = VK_NULL_HANDLE;
         VmaAllocation alloc = nullptr;
+        int mem_kind = 0; // Core::MemKind of alloc
         uint8_t *mapped = nullptr; // STAGING
         Slice slice;               // DYNAMIC
         uint64_t version = 0;      // bumped when `slice` changes (contexts re-bind)

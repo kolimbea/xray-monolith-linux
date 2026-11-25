@@ -542,6 +542,16 @@ namespace xrvk
             fn();
     }
 
+    void Core::track(int kind, VmaAllocation a, int sign)
+    {
+        if (!a)
+            return;
+        VmaAllocationInfo info{};
+        vmaGetAllocationInfo(vma, a, &info);
+        mem_bytes[kind] += sign * int64_t(info.size);
+        mem_count[kind] += sign;
+    }
+
     void Core::flush()
     {
         if (recording)

@@ -45,6 +45,7 @@ namespace xrvk
         {
             VkBuffer b = buffer;
             VmaAllocation a = alloc;
+            c->track(mem_kind, a, -1);
             c->defer([c, b, a]
                      {
                          vmaDestroyBuffer(c->vma, b, a);
@@ -80,6 +81,8 @@ namespace xrvk
             ai.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
             VmaAllocationInfo info{};
             XRVK_CHECK(vmaCreateBuffer(c->vma, &bi, &ai, &b->buffer, &b->alloc, &info));
+            b->mem_kind = Core::kMemStagingBuffer;
+            c->track(b->mem_kind, b->alloc, 1);
             b->mapped = static_cast<uint8_t *>(info.pMappedData);
             if (data)
                 memcpy(b->mapped, data, d.ByteWidth);
@@ -103,6 +106,8 @@ namespace xrvk
             VmaAllocationCreateInfo ai{};
             ai.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
             XRVK_CHECK(vmaCreateBuffer(c->vma, &bi, &ai, &b->buffer, &b->alloc, nullptr));
+            b->mem_kind = Core::kMemBuffer;
+            c->track(b->mem_kind, b->alloc, 1);
             if (data)
             {
                 const Slice s = c->heap->alloc(d.ByteWidth);

@@ -1,6 +1,7 @@
 // Vulkan core of xrRender_VK (ADR 0001): instance, GPU, device, VMA, per-frame command recording.
 // Independent of the engine (xrVK_core library) so it can be tested on its own (tests/vk_smoke.cpp).
 #pragma once
+#include <atomic>
 #include <cstdint>
 #include <deque>
 #include <functional>
@@ -8,6 +9,7 @@
 #include <vector>
 
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 struct VmaAllocator_T;
 struct VmaAllocation_T;
@@ -116,6 +118,20 @@ namespace xrvk
             return timeline_value + 1;
         }
         uint64_t completed_value();
+        // live VMA allocations of engine resources by kind (frame statistics; the host heap is separate)
+        enum MemKind
+        {
+            kMemTexture,        // images only sampled (textures)
+            kMemTarget,         // render targets, depth buffers, UAV images
+            kMemStagingTexture, // D3D11_USAGE_STAGING textures (host buffers)
+            kMemBuffer,         // default/immutable buffers
+            kMemStagingBuffer,  // D3D11_USAGE_STAGING buffers
+            kMemKinds
+        };
+        std::atomic<int64_t> mem_bytes[kMemKinds] = {};
+        std::atomic<int32_t> mem_count[kMemKinds] = {};
+        // adds (sign 1) or removes (-1) a live allocation of `kind`
+        void track(int kind, VmaAllocation a, int sign);
         // performance counters, accumulated until read (frame statistics)
         double gpu_ms = 0, wait_ms = 0;
         uint32_t gpu_samples = 0, submits = 0, query_polls = 0; // query_polls: GetData answered "not ready"

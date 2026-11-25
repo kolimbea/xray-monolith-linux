@@ -1316,6 +1316,44 @@ namespace
             r.imageExtent = ext;
             vkCmdCopyImageToBuffer(cb, src->image, VK_IMAGE_LAYOUT_GENERAL, dst->staging, 1, &r);
         }
+        else if (!src->host.empty() && dst->image) // CPU -> GPU from process memory: through a GPU-visible copy
+        {
+            Core *c = core();
+            const VkDeviceSize size = VkDeviceSize(src->sub_pitch[src_sub]) * src->sub_rows[src_sub] * src->mip_depth(sm);
+            const uint8_t *data = src->host.data() + src->sub_offset[src_sub];
+            VkBuffer buffer;
+            VkDeviceSize offset = 0;
+            if (size <= (256u << 10))
+            {
+                const Slice s = c->heap->alloc(size);
+                memcpy(s.ptr, data, size);
+                buffer = s.buffer;
+                offset = s.offset;
+                c->heap->release(s, c->recording_value());
+            }
+            else
+            {
+                // large textures get a buffer of their own, freed after the copy: keeps the host heap from
+                // growing by the size of the largest burst of first uses
+                VkBufferCreateInfo bi{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+                bi.size = size;
+                bi.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+                VmaAllocationCreateInfo ai{};
+                ai.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+                ai.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+                VmaAllocation a;
+                VmaAllocationInfo info{};
+                XRVK_CHECK(vmaCreateBuffer(c->vma, &bi, &ai, &buffer, &a, &info));
+                memcpy(info.pMappedData, data, size);
+                c->defer([c, buffer, a] { vmaDestroyBuffer(c->vma, buffer, a); });
+            }
+            VkBufferImageCopy r{};
+            r.bufferOffset = offset;
+            r.imageSubresource = {dst->copy_aspect() & ~VK_IMAGE_ASPECT_STENCIL_BIT, dm, dl, 1};
+            r.imageOffset = {dx, dy, dz};
+            r.imageExtent = ext;
+            vkCmdCopyBufferToImage(cb, buffer, dst->image, VK_IMAGE_LAYOUT_GENERAL, 1, &r);
+        }
         else if (src->staging && dst->image) // CPU -> GPU
         {
             VkBufferImageCopy r{};

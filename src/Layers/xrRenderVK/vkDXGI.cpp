@@ -317,7 +317,13 @@ namespace xrvk
                      (unsigned long long)(budgets[h].statistics.blockBytes >> 20), (unsigned long long)(budgets[h].budget >> 20));
             heaps += one;
         }
-        log("* vk memory: %s (allocated/budget per heap)", heaps.c_str());
+        auto mb = [&c](int k) { return (long long)(c.mem_bytes[k].load() >> 20); };
+        auto n_ = [&c](int k) { return int(c.mem_count[k].load()); };
+        log("* vk memory: %s (allocated/budget per heap) | textures %lld MB (%d), targets %lld MB (%d), staging textures %lld MB (%d), "
+            "buffers %lld MB (%d), staging buffers %lld MB (%d)",
+            heaps.c_str(), mb(Core::kMemTexture), n_(Core::kMemTexture), mb(Core::kMemTarget), n_(Core::kMemTarget),
+            mb(Core::kMemStagingTexture), n_(Core::kMemStagingTexture), mb(Core::kMemBuffer), n_(Core::kMemBuffer),
+            mb(Core::kMemStagingBuffer), n_(Core::kMemStagingBuffer));
         c.gpu_ms = c.wait_ms = 0;
         c.gpu_samples = c.submits = c.query_polls = 0;
         ctx->stats = {};

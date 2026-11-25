@@ -148,6 +148,17 @@ namespace xrvk
                     total = (total + 15) & ~VkDeviceSize(15);
                 }
 
+            if (img.usage == D3D11_USAGE_STAGING && !(img.cpu & D3D11_CPU_ACCESS_READ))
+            {
+                img.host.resize(total ? total : 16);
+                img.mapped = img.host.data();
+                c.mem_bytes[Core::kMemStagingTexture] += int64_t(img.host.size());
+                c.mem_count[Core::kMemStagingTexture] += 1;
+                if (init)
+                    for (uint32_t s = 0; s < img.subresources(); ++s)
+                        pack(img, s, img.mapped + img.sub_offset[s], init[s].pSysMem, init[s].SysMemPitch, init[s].SysMemSlicePitch);
+                return true;
+            }
             if (img.usage == D3D11_USAGE_STAGING)
             {
                 VkBufferCreateInfo bi{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
@@ -158,6 +169,8 @@ namespace xrvk
                 ai.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
                 VmaAllocationInfo info{};
                 XRVK_CHECK(vmaCreateBuffer(c.vma, &bi, &ai, &img.staging, &img.alloc, &info));
+                img.mem_kind = Core::kMemStagingTexture;
+                c.track(img.mem_kind, img.alloc, 1);
                 img.mapped = static_cast<uint8_t *>(info.pMappedData);
                 if (init)
                     for (uint32_t s = 0; s < img.subresources(); ++s)
@@ -189,6 +202,10 @@ namespace xrvk
             if (img.bind & (D3D11_BIND_RENDER_TARGET | D3D11_BIND_DEPTH_STENCIL))
                 ai.flags |= VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
             XRVK_CHECK(vmaCreateImage(c.vma, &ii, &ai, &img.image, &img.alloc, nullptr));
+            img.mem_kind = img.bind & (D3D11_BIND_RENDER_TARGET | D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_UNORDERED_ACCESS)
+                               ? Core::kMemTarget
+                               : Core::kMemTexture;
+            c.track(img.mem_kind, img.alloc, 1);
 
             std::lock_guard<std::mutex> g(c.upload_lock);
             VkCommandBuffer cb = c.upload_cmd();
@@ -233,9 +250,17 @@ namespace xrvk
             return;
         if (dynamic)
             c->heap->release(dynamic, c->recording_value());
+        if (!host.empty())
+        {
+            // uploads from it went through their own copies (copy_image_region), so it can go now
+            c->mem_bytes[Core::kMemStagingTexture] -= int64_t(host.size());
+            c->mem_count[Core::kMemStagingTexture] -= 1;
+        }
         VkImage i = image;
         VkBuffer b = staging;
         VmaAllocation a = alloc;
+        if (i || b)
+            c->track(mem_kind, a, -1);
         if (i || b)
             c->defer([c, i, b, a]
                      {
@@ -314,6 +339,7 @@ namespace xrvk
         i.usage = d.Usage;
         i.bind = d.BindFlags;
         i.misc = d.MiscFlags;
+        i.cpu = d.CPUAccessFlags;
         return finish(t, init_image(i, init, 0));
     }
 
@@ -336,6 +362,7 @@ namespace xrvk
         i.usage = d.Usage;
         i.bind = d.BindFlags;
         i.misc = d.MiscFlags;
+        i.cpu = d.CPUAccessFlags;
         return finish(t, init_image(i, init, 0));
     }
 
@@ -357,6 +384,7 @@ namespace xrvk
         i.usage = d.Usage;
         i.bind = d.BindFlags;
         i.misc = d.MiscFlags;
+        i.cpu = d.CPUAccessFlags;
         return finish(t, init_image(i, init, 0));
     }
 
