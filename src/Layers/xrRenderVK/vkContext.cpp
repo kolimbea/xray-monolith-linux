@@ -8,6 +8,7 @@
 #include "vkObjects.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <chrono>
 #include <cstring>
 
@@ -26,6 +27,7 @@ namespace xrvk
             kTopology = 16,
             kVertexInput = 32,
             kSamples = 64,
+            kShaders = 128, // a graphics stage's shader changed: look the program up again
             kAll = ~0u
         };
 
@@ -355,6 +357,9 @@ namespace xrvk
     {
         Core *c = core();
         std::shared_ptr<const ShaderModule> set[size_t(Stage::Count)];
+        // the same program as the last draw: skip the copies of the stage modules and the cache lookup
+        if (!compute && bound_program && !(dirty & kShaders))
+            return bound_program;
         if (compute)
             set[size_t(Stage::Compute)] = stage[size_t(Stage::Compute)].module;
         else
@@ -423,6 +428,8 @@ namespace xrvk
             const StageState &st = stage[size_t(s)];
             VkWriteDescriptorSet &w = writes[i];
             w = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            images[i] = {};
+            buffers[i] = {};
             w.dstBinding = b.binding;
             w.descriptorCount = 1;
             w.descriptorType = b.descriptorType;
@@ -453,12 +460,23 @@ namespace xrvk
             case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: {
                 const ShaderResourceView *v = st.srv[slot];
                 VkImageView view = VK_NULL_HANDLE;
+                const bool ms = r.dimension == D3D_SRV_DIMENSION_TEXTURE2DMS || r.dimension == D3D_SRV_DIMENSION_TEXTURE2DMSARRAY;
                 if (v && v->v.view && !is_attachment(v->v.img))
-                    view = v->v.view;
-                else if (r.dimension == D3D_SRV_DIMENSION_TEXTURE2DMS)
-                    view = null.ms_view;
-                else
-                    view = null.views[null_view_type(r.dimension)];
+                {
+                    // a view whose type or sample count differs from the declaration is undefined in Vulkan;
+                    // D3D11 reads zeros, so does the null view of the declared type
+                    if (v->v.type == null_view_type(r.dimension) && (v->v.img->samples > 1) == ms)
+                        view = v->v.view;
+                    else
+                    {
+                        char what[256];
+                        snprintf(what, sizeof(what), "%s (declared dimension %d, bound view type %d with %u samples)", r.name.c_str(),
+                                 int(r.dimension), int(v->v.type), unsigned(v->v.img->samples));
+                        log_once(v, "! vk: texture view does not match its declaration, read as unbound: %s", what);
+                    }
+                }
+                if (!view)
+                    view = r.dimension == D3D_SRV_DIMENSION_TEXTURE2DMS ? null.ms_view : null.views[null_view_type(r.dimension)];
                 images[i] = {VK_NULL_HANDLE, view, VK_IMAGE_LAYOUT_GENERAL};
                 w.pImageInfo = &images[i];
                 break;
@@ -486,6 +504,24 @@ namespace xrvk
                 log_once(p, "! vk: typed buffer views in shaders are not supported yet (%s)", r.name.c_str());
                 return false;
             }
+        }
+        if (bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS)
+        {
+            auto same_image = [](const VkDescriptorImageInfo &a, const VkDescriptorImageInfo &b)
+            {
+                return a.sampler == b.sampler && a.imageView == b.imageView && a.imageLayout == b.imageLayout;
+            };
+            auto same_buffer = [](const VkDescriptorBufferInfo &a, const VkDescriptorBufferInfo &b)
+            {
+                return a.buffer == b.buffer && a.offset == b.offset && a.range == b.range;
+            };
+            if (p == pushed_program && pushed_images.size() == n &&
+                std::equal(images.begin(), images.begin() + n, pushed_images.begin(), same_image) &&
+                std::equal(buffers.begin(), buffers.begin() + n, pushed_buffers.begin(), same_buffer))
+                return true; // the set in the command buffer already holds exactly these
+            pushed_program = p;
+            pushed_images.assign(images.begin(), images.begin() + n);
+            pushed_buffers.assign(buffers.begin(), buffers.begin() + n);
         }
         c->ext.push_descriptor_set(cb, bind_point, p->layout, 0, uint32_t(n), writes.data());
         return true;
@@ -651,6 +687,7 @@ namespace xrvk
             state_cb = cb;
             dirty = kAll;
             bound_program = bound_compute = nullptr;
+            pushed_program = nullptr;
             std::fill(std::begin(bound_vb), std::end(bound_vb), VK_NULL_HANDLE);
             bound_ib = VK_NULL_HANDLE;
         }
@@ -788,6 +825,7 @@ namespace
             st.shader->Release();
         st.shader = child;
         st.module = shader ? static_cast<Shader<I> *>(shader)->module : nullptr;
+        c->dirty |= kShaders;
     }
 
     template <class I>

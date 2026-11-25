@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <cstring>
+#include <string>
 
 #include "vkFormat.h"
 #include "../../Common/linux/dds_codec.h"
@@ -303,6 +304,20 @@ namespace xrvk
             "%.0f query polls not ready, %.0f draws, %.1f renderings, %.0f program binds, prepare %.2f ms | host heap %llu MB",
             avg, 1000.0 / avg, p99, c.gpu_ms / n, c.submits / n, c.wait_ms / n, c.query_polls / n, s.draws / n, s.renderings / n,
             s.program_binds / n, s.prepare_ms / n, (unsigned long long)(c.heap->bytes_in_pages() >> 20));
+        // memory per Vulkan heap: what VMA allocated in it (usage) against what the driver offers (budget);
+        // device-local heaps over budget spill resources into system memory
+        VmaBudget budgets[VK_MAX_MEMORY_HEAPS] = {};
+        vmaGetHeapBudgets(c.vma, budgets);
+        std::string heaps;
+        for (uint32_t h = 0; h < c.mem_props.memoryHeapCount; ++h)
+        {
+            char one[96];
+            snprintf(one, sizeof(one), "%s%s %llu/%llu MB", heaps.empty() ? "" : ", ",
+                     (c.mem_props.memoryHeaps[h].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) ? "VRAM" : "system",
+                     (unsigned long long)(budgets[h].statistics.blockBytes >> 20), (unsigned long long)(budgets[h].budget >> 20));
+            heaps += one;
+        }
+        log("* vk memory: %s (allocated/budget per heap)", heaps.c_str());
         c.gpu_ms = c.wait_ms = 0;
         c.gpu_samples = c.submits = c.query_polls = 0;
         ctx->stats = {};

@@ -89,6 +89,7 @@ namespace xrvk
             if (vkCreateImageView(core()->device, &vi, nullptr, &v.view) != VK_SUCCESS)
                 return false;
             v.range = vi.subresourceRange;
+            v.type = s.type;
             v.extent = {img->mip_width(s.mip), img->mip_height(s.mip)};
             return true;
         }

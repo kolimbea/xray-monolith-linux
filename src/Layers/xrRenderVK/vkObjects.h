@@ -136,6 +136,7 @@ namespace xrvk
     {
         Image *img = nullptr; // null for buffer views
         VkImageView view = VK_NULL_HANDLE;
+        VkImageViewType type = VK_IMAGE_VIEW_TYPE_2D;
         VkImageSubresourceRange range{};
         VkFormat format = VK_FORMAT_UNDEFINED;
         VkExtent2D extent{}; // of the viewed mip (attachments)
@@ -371,6 +372,10 @@ namespace xrvk
         std::vector<VkWriteDescriptorSet> writes; // push_descriptors scratch
         std::vector<VkDescriptorImageInfo> images;
         std::vector<VkDescriptorBufferInfo> buffers;
+        // the graphics descriptors last pushed (in state_cb): an identical push is skipped
+        const Program *pushed_program = nullptr;
+        std::vector<VkDescriptorImageInfo> pushed_images;
+        std::vector<VkDescriptorBufferInfo> pushed_buffers;
         NullResources null;
 
         std::vector<Query *> active_queries; // occlusion queries between Begin and End (no references)
