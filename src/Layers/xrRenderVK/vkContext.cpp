@@ -273,6 +273,14 @@ namespace xrvk
     void Context::begin_rendering()
     {
         ++stats.renderings;
+        // D3D11 drivers submit long frames in parts, so the GPU works while the CPU still records and a
+        // read of a query (the R4 light occlusion tests read theirs in the same frame) waits only for the
+        // tail. Between rendering scopes is the cheap point to cut: no scope or query slot is open.
+        if (Core *c = core(); c->recording && c->part_draws >= kPartDraws)
+        {
+            end_rendering(c->cmd());
+            c->flush();
+        }
         VkCommandBuffer cb = outside_rendering();
         full_barrier(cb);
         VkRenderingAttachmentInfo color[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
@@ -629,6 +637,7 @@ namespace xrvk
         const bool ok = prepare_draw_impl();
         stats.prepare_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
         ++stats.draws;
+        ++core()->part_draws;
         return ok;
     }
 

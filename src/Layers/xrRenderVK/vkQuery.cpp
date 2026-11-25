@@ -132,6 +132,7 @@ HRESULT ID3D11DeviceContext::GetData(ID3D11Asynchronous *pAsync, void *pData, UI
         // D3D11 flushes unless told not to, so a query of the frame being recorded completes eventually
         if (q->end_value == c->recording_value() && !(GetDataFlags & D3D11_ASYNC_GETDATA_DONOTFLUSH))
             c->flush();
+        ++c->query_polls;
         return S_FALSE;
     }
     if (q->desc.Query == D3D11_QUERY_EVENT)

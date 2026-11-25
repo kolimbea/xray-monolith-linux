@@ -18,7 +18,12 @@ void not_implemented(const char* what)
 namespace
 {
 // The Vulkan core logs through the engine log in the game (stderr in standalone tests).
-void engine_log(const char* line) { Msg("%s", line); }
+// Flushed at once: backend lines are rare, and a run that is killed (tests, timeouts) must keep them.
+void engine_log(const char* line)
+{
+    Msg("%s", line);
+    FlushLog();
+}
 struct LogHook
 {
     LogHook() { xrvk::set_log(engine_log); }

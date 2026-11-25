@@ -6,6 +6,7 @@
 
 #include <SDL3/SDL_vulkan.h>
 
+#include <chrono>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -350,12 +351,11 @@ namespace xrvk
             pci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
             pci.queueFamilyIndex = c.queue_family;
             XRVK_CHECK(vkCreateCommandPool(c.device, &pci, nullptr, &f.pool));
-            VkCommandBufferAllocateInfo cai{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-            cai.commandPool = f.pool;
-            cai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            cai.commandBufferCount = 1;
-            XRVK_CHECK(vkAllocateCommandBuffers(c.device, &cai, &f.cmd));
-
+            VkQueryPoolCreateInfo qi{VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO};
+            qi.queryType = VK_QUERY_TYPE_TIMESTAMP;
+            qi.queryCount = 2 * Frame::kTimedParts;
+            XRVK_CHECK(vkCreateQueryPool(c.device, &qi, nullptr, &f.timestamps));
+            vkResetQueryPool(c.device, f.timestamps, 0, qi.queryCount);
         }
         {
             VkCommandPoolCreateInfo pci{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
@@ -377,12 +377,26 @@ namespace xrvk
         Frame &f = frames[frame];
         if (!recording)
         {
+            if (f.used == f.cmds.size())
+            {
+                VkCommandBufferAllocateInfo cai{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+                cai.commandPool = f.pool;
+                cai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                cai.commandBufferCount = 1;
+                VkCommandBuffer cb;
+                XRVK_CHECK(vkAllocateCommandBuffers(device, &cai, &cb));
+                f.cmds.push_back(cb);
+            }
+            VkCommandBuffer cb = f.cmds[f.used++];
             VkCommandBufferBeginInfo bi{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
             bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            XRVK_CHECK(vkBeginCommandBuffer(f.cmd, &bi));
+            XRVK_CHECK(vkBeginCommandBuffer(cb, &bi));
+            if (f.timed < Frame::kTimedParts)
+                vkCmdWriteTimestamp2(cb, VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT, f.timestamps, 2 * f.timed);
             recording = true;
+            part_draws = 0;
         }
-        return f.cmd;
+        return f.cmds[f.used - 1];
     }
 
     VkCommandBuffer Core::upload_cmd()
@@ -433,6 +447,11 @@ namespace xrvk
         VkCommandBuffer cb = cmd(); // an empty frame still submits, so the timeline keeps advancing
         if (before_submit)
             before_submit(cb);
+        if (frames[frame].timed < Frame::kTimedParts)
+        {
+            vkCmdWriteTimestamp2(cb, VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, frames[frame].timestamps, 2 * frames[frame].timed + 1);
+            ++frames[frame].timed;
+        }
         XRVK_CHECK(vkEndCommandBuffer(cb));
         recording = false;
         Frame &f = frames[frame];
@@ -459,6 +478,7 @@ namespace xrvk
         }
         cbi[ncb++].commandBuffer = cb;
         f.done_value = ++timeline_value;
+        ++submits;
 
         VkSemaphoreSubmitInfo waits{VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO};
         waits.semaphore = wait;
@@ -489,9 +509,24 @@ namespace xrvk
             wi.semaphoreCount = 1;
             wi.pSemaphores = &timeline;
             wi.pValues = &f.done_value;
+            const auto t0 = std::chrono::steady_clock::now();
             XRVK_CHECK(vkWaitSemaphores(device, &wi, UINT64_MAX));
+            wait_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        }
+        if (f.timed)
+        {
+            uint64_t ts[2 * Frame::kTimedParts] = {};
+            if (vkGetQueryPoolResults(device, f.timestamps, 0, 2 * f.timed, sizeof(ts), ts, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT) == VK_SUCCESS)
+            {
+                for (uint32_t i = 0; i < f.timed; ++i)
+                    gpu_ms += double(ts[2 * i + 1] - ts[2 * i]) * props.limits.timestampPeriod * 1e-6;
+                ++gpu_samples;
+            }
+            vkResetQueryPool(device, f.timestamps, 0, 2 * f.timed);
+            f.timed = 0;
         }
         XRVK_CHECK(vkResetCommandPool(device, f.pool, 0));
+        f.used = 0;
         const uint64_t done = completed_value();
         heap->collect(done);
         std::deque<std::function<void()>> run;
@@ -510,10 +545,7 @@ namespace xrvk
     void Core::flush()
     {
         if (recording)
-        {
             submit();
-            next_frame();
-        }
     }
 
     void Core::flush_and_wait()
@@ -542,6 +574,7 @@ namespace xrvk
             c.deferred.clear();
             for (Frame &f : c.frames)
             {
+                vkDestroyQueryPool(c.device, f.timestamps, nullptr);
                 vkDestroyCommandPool(c.device, f.pool, nullptr);
 
             }

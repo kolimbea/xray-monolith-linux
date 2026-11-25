@@ -321,6 +321,8 @@ namespace xrvk
         // engine calls it from worker threads, e.g. texture loads in CResourceManager::DeferredUpload
         // (tbb::parallel_for_each -> UpdateSubresource / Map). Every context method holds this lock.
         std::recursive_mutex lock;
+        // draws after which the command buffer is submitted at the next rendering scope (begin_rendering)
+        static constexpr uint32_t kPartDraws = 512;
         std::unique_lock<std::recursive_mutex> guard()
         {
             return std::unique_lock<std::recursive_mutex>(lock);

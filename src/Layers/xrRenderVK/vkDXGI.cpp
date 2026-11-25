@@ -297,9 +297,14 @@ namespace xrvk
             sum += v;
         const double avg = sum / times.size(), p99 = sorted[size_t(sorted.size() * 0.99)];
         const Context::Stats &s = ctx->stats;
-        log("* vk stats: %.2f ms/frame (%.1f fps), p99 %.2f ms | per frame: %.0f draws, %.1f renderings, %.0f program binds, prepare %.2f ms",
-            avg, 1000.0 / avg, p99, double(s.draws) / times.size(), double(s.renderings) / times.size(),
-            double(s.program_binds) / times.size(), s.prepare_ms / times.size());
+        Core &c = *core();
+        const double n = double(times.size());
+        log("* vk stats: %.2f ms/frame (%.1f fps), p99 %.2f ms | per frame: GPU %.2f ms in %.1f submits, CPU waits for a frame slot %.2f ms, "
+            "%.0f query polls not ready, %.0f draws, %.1f renderings, %.0f program binds, prepare %.2f ms",
+            avg, 1000.0 / avg, p99, c.gpu_ms / n, c.submits / n, c.wait_ms / n, c.query_polls / n, s.draws / n, s.renderings / n,
+            s.program_binds / n, s.prepare_ms / n);
+        c.gpu_ms = c.wait_ms = 0;
+        c.gpu_samples = c.submits = c.query_polls = 0;
         ctx->stats = {};
         times.clear();
     }

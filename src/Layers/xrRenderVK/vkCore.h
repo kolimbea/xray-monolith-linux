@@ -33,11 +33,17 @@ namespace xrvk
 
     constexpr uint32_t kFramesInFlight = 3;
 
+    // A frame slot. A frame's commands may be submitted in several parts (flush() mid-frame lets the GPU
+    // start early): each part is one command buffer of the slot's pool, reset together in next_frame().
     struct Frame
     {
+        static constexpr uint32_t kTimedParts = 32; // parts with GPU timestamps (the rest is not timed)
         VkCommandPool pool = VK_NULL_HANDLE;
-        VkCommandBuffer cmd = VK_NULL_HANDLE;
-        uint64_t done_value = 0; // timeline value signalled when this frame's work completed
+        std::vector<VkCommandBuffer> cmds; // allocated on demand, reused every use of the slot
+        uint32_t used = 0;                 // command buffers begun since the slot was reset
+        uint64_t done_value = 0;           // timeline value signalled by the slot's last submitted part
+        VkQueryPool timestamps = VK_NULL_HANDLE; // (start, end) per timed part
+        uint32_t timed = 0;                      // parts whose two timestamps were written
     };
     class HostHeap;
 
@@ -96,8 +102,10 @@ namespace xrvk
         std::vector<VkCommandBuffer> upload_free;
         std::deque<std::pair<uint64_t, VkCommandBuffer>> upload_pending;
 
-        // Command buffer of the current frame, begun on first use.
+        // Command buffer of the current frame, begun on first use (after a flush(), a new one).
         VkCommandBuffer cmd();
+        // Submits the recorded part when it holds `draws` draws or more (keeps the GPU busy mid-frame).
+        uint32_t part_draws = 0;
         // Upload command buffer of the current frame: initial data of new resources. Runs before the
         // frame's cmd() in the same submit and ends with a barrier making its writes visible to it.
         // The caller holds upload_lock.
@@ -108,6 +116,9 @@ namespace xrvk
             return timeline_value + 1;
         }
         uint64_t completed_value();
+        // performance counters, accumulated until read (frame statistics)
+        double gpu_ms = 0, wait_ms = 0;
+        uint32_t gpu_samples = 0, submits = 0, query_polls = 0; // query_polls: GetData answered "not ready"
         // Runs `fn` (destroying Vulkan objects) once the GPU finished every frame recorded so far.
         // Thread-safe.
         void defer(std::function<void()> fn);
@@ -120,7 +131,8 @@ namespace xrvk
         void next_frame();
         // Submits pending work and waits for the GPU to finish everything (readbacks, teardown).
         void flush_and_wait();
-        // Submits the work recorded so far without waiting (D3D11's implicit flush in GetData).
+        // Submits the work recorded so far without waiting and stays in the frame slot (D3D11's implicit
+        // flush in GetData; a driver submitting large frames in parts).
         void flush();
     };
 
