@@ -80,7 +80,14 @@ void xrServer::SendConnectionData(IClient* _CL)
 	// Replicate current entities on to this client
 	xrS_entities::iterator I = entities.begin(), E = entities.end();
 	for (; I != E; ++I) I->second->net_Processed = FALSE;
-	for (I = entities.begin(); I != E; ++I) Perform_connect_spawn(I->second, CL, P);
+	// In ID order: the actor (ID 0) must reach the client before the objects whose loading refers to it
+	// (CInventoryOwner::load -> Actor()). MSVC's hash_map happened to iterate small IDs in ascending
+	// order; std::unordered_map does not, so the order is made explicit.
+	xr_vector<CSE_Abstract*> ordered;
+	ordered.reserve(entities.size());
+	for (I = entities.begin(); I != E; ++I) ordered.push_back(I->second);
+	std::sort(ordered.begin(), ordered.end(), [](const CSE_Abstract* a, const CSE_Abstract* b) { return a->ID < b->ID; });
+	for (CSE_Abstract* e : ordered) Perform_connect_spawn(e, CL, P);
 
 	// Start to send server logo and rules
 	SendServerInfoToClient(CL->ID);
