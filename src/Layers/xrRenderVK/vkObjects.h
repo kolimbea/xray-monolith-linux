@@ -273,11 +273,19 @@ namespace xrvk
     };
     struct ProgramCache;
 
+    // IDXGIDevice of a D3D11 device (a separate object here); its parent is the adapter.
+    struct DXGIDevice final : public IDXGIDevice
+    {
+        bool has_interface(REFIID riid) const override;
+    };
+
     struct Device final : public ID3D11Device2
     {
         ID3D11DeviceContext *immediate = nullptr;
         std::unique_ptr<ProgramCache> programs;
+        DXGIDevice *dxgi = nullptr;
         bool has_interface(REFIID riid) const override;
+        HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **out) override;
         Device();
         ~Device() override;
         // The program of these stages (null where a stage is unbound; compute alone or graphics without
@@ -394,6 +402,7 @@ namespace xrvk
         VkPresentModeKHR mode = VK_PRESENT_MODE_FIFO_KHR;
         Texture2D *back_buffer = nullptr; // buffer 0 as the engine sees it; blitted on Present
         ID3D11Device *device = nullptr; // holds a reference
+        uint64_t presents = 0;          // frames presented (XR_VK_SCREENSHOT)
 
         ~SwapChain() override;
         bool has_interface(REFIID riid) const override;

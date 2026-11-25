@@ -70,7 +70,7 @@ namespace xrvk
             uint32_t mip = 0, mips = 1, layer = 0, layers = 1;
         };
 
-        bool image_view(ViewData &v, Image *img, const Subset &s, VkFormat fmt, VkImageAspectFlags aspect)
+        bool image_view(ViewData &v, Image *img, const Subset &s, VkFormat fmt, VkImageAspectFlags aspect, VkComponentMapping swizzle = {})
         {
             if (!img || !img->image)
                 return false;
@@ -80,6 +80,7 @@ namespace xrvk
             vi.image = img->image;
             vi.viewType = s.type;
             vi.format = fmt;
+            vi.components = swizzle;
             const uint32_t mips = s.mips == UINT32_MAX || s.mip + s.mips > img->mips ? img->mips - s.mip : s.mips;
             const uint32_t layers = s.layers == UINT32_MAX || s.layer + s.layers > img->layers ? img->layers - s.layer : s.layers;
             vi.subresourceRange = {aspect, s.mip, mips, s.layer, layers};
@@ -362,7 +363,8 @@ HRESULT ID3D11Device::CreateShaderResourceView(ID3D11Resource *pResource, const 
         v->desc = pDesc ? *pDesc : default_srv(pResource);
         if (v->desc.Format == DXGI_FORMAT_UNKNOWN)
             v->desc.Format = img->dxgi;
-        if (!image_view(v->v, img, srv_subset(v->desc), view_format(v->desc.Format, img->format), read_aspect(v->desc.Format, img->format)))
+        if (!image_view(v->v, img, srv_subset(v->desc), view_format(v->desc.Format, img->format), read_aspect(v->desc.Format, img->format),
+                        view_swizzle(v->desc.Format)))
         {
             log("! vk: CreateShaderResourceView: view dimension %d, format %u failed", int(v->desc.ViewDimension), unsigned(v->desc.Format));
             delete v;

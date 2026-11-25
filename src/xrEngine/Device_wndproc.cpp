@@ -18,6 +18,10 @@ void CRenderDevice::on_sdl_event(const SDL_Event& ev)
 	case SDL_EVENT_MOUSE_BUTTON_UP:
 		dinput_sdl_feed(ev);
 		break;
+	case SDL_EVENT_WINDOW_SHOWN:
+		// On Windows the window shown at startup is activated (WM_ACTIVATE) and the engine starts
+		// rendering. On Wayland a Vulkan window is not mapped until its first frame is presented, so it
+		// cannot get focus before rendering starts: activate on show as Windows does.
 	case SDL_EVENT_WINDOW_FOCUS_GAINED:
 		OnWM_Activate(MAKEWPARAM(WA_ACTIVE, 0), 0);
 		break;

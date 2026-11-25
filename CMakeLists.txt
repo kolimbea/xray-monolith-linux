@@ -36,7 +36,10 @@ set(XR_3RD "${XR_SRC}/3rd party")
 add_library(xr_common INTERFACE)
 target_compile_options(xr_common INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:-fms-extensions -fno-operator-names -Wno-register -fdelayed-template-parsing>
-    -fno-strict-aliasing -msse4.2)
+    -fno-strict-aliasing -msse4.2
+    # X-Ray tests `this` against null in places (ShaderElement::equal, ...); MSVC keeps those checks,
+    # clang drops them unless told not to assume pointers (and `this`) are non-null.
+    -fno-delete-null-pointer-checks)
 target_compile_definitions(xr_common INTERFACE NDEBUG _CRT_SECURE_NO_WARNINGS)
 target_include_directories(xr_common INTERFACE
     ${XR_SRC}/Common/linux/include ${XR_SRC} ${CMAKE_SOURCE_DIR}/sdk/include ${XR_3RD}
@@ -171,7 +174,7 @@ target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)
 # objects themselves are implemented by Layers/xrRenderVK (ADR 0001 refinement). Not linked against dxvk.
 xr_module(xrRender_VK ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj
     EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp
-    EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/dds_codec.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp)
+    EXTRA ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_SRC}/Common/linux/d3dx11_tex_linux.cpp)
 target_compile_definitions(xrRender_VK PRIVATE USE_DX11 USE_VK)
 find_package(Vulkan REQUIRED)
 # Shader toolchain of the Vulkan renderer (tools/fetch_deps.sh puts both into build/deps):
@@ -195,7 +198,7 @@ target_link_libraries(xrVK_shaderc PRIVATE dxcompiler)
 # xrVK_core: the Vulkan device layer, independent of the engine (tests/vk_smoke.cpp links it alone).
 set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp vkShader.cpp vkReflection.cpp vkShaderObjects.cpp vkHeap.cpp vkBuffer.cpp vkTexture.cpp vkViews.cpp vkStates.cpp vkContext.cpp vkQuery.cpp)
 list(TRANSFORM XR_VK_CORE_SRC PREPEND ${XR_SRC}/Layers/xrRenderVK/)
-add_library(xrVK_core STATIC ${XR_VK_CORE_SRC})
+add_library(xrVK_core STATIC ${XR_VK_CORE_SRC} ${XR_SRC}/Common/linux/dds_codec.cpp)
 target_include_directories(xrVK_core BEFORE PUBLIC ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)
 target_link_libraries(xrVK_core PUBLIC xr_common Vulkan::Vulkan SDL3::SDL3 PRIVATE xrVK_shaderc spirv_reflect dxcompiler)
 file(GLOB XR_VK_SRC CONFIGURE_DEPENDS ${XR_SRC}/Layers/xrRenderVK/*.cpp)

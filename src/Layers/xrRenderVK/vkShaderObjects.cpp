@@ -25,6 +25,8 @@ namespace xrvk
 
     Device::~Device()
     {
+        if (dxgi)
+            dxgi->Release();
         if (Core *c = core(); c && !programs->programs.empty())
             vkQueueWaitIdle(c->queue); // programs may still be referenced by recorded work
     }

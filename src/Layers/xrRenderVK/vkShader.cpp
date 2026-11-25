@@ -700,9 +700,12 @@ extern "C" HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const c
             text.assign(std::istreambuf_iterator<char>(f), {});
             return true;
         }
+        // the engine's includer resolves Windows paths (what FXC passes); DXC on Linux hands "/" separators
+        std::string win = name;
+        std::replace(win.begin(), win.end(), '/', '\\');
         const void *p = nullptr;
         UINT n = 0;
-        if (!include || FAILED(include->Open(D3D_INCLUDE_LOCAL, name.c_str(), nullptr, &p, &n)))
+        if (!include || FAILED(include->Open(D3D_INCLUDE_LOCAL, win.c_str(), nullptr, &p, &n)))
             return false;
         text.assign(static_cast<const char *>(p), n);
         include->Close(p);

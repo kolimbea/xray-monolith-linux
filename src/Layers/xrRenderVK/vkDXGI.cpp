@@ -6,9 +6,12 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include <cstdlib>
+#include <fstream>
 #include <cstring>
 
 #include "vkFormat.h"
+#include "../../Common/linux/dds_codec.h"
 
 namespace xrvk
 {
@@ -198,6 +201,71 @@ namespace xrvk
             device->Release();
     }
 } // namespace xrvk
+
+namespace xrvk
+{
+    // XR_VK_SCREENSHOT=<file.png>: the back buffer of presented frame XR_VK_SCREENSHOT_FRAME (default 300)
+    // is written as PNG (screenshot tests; works without looking at the window).
+    struct Screenshot
+    {
+        VkBuffer buffer = VK_NULL_HANDLE;
+        VmaAllocation alloc = nullptr;
+        void *ptr = nullptr;
+        uint32_t w = 0, h = 0;
+
+        void record(VkCommandBuffer cb, SwapChain *sc)
+        {
+            const char *path = getenv("XR_VK_SCREENSHOT");
+            const char *at = getenv("XR_VK_SCREENSHOT_FRAME");
+            if (!path || sc->presents != uint64_t(at ? atoll(at) : 300))
+                return;
+            Core &c = *core();
+            w = sc->back_buffer->desc.Width;
+            h = sc->back_buffer->desc.Height;
+            VkBufferCreateInfo bi{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+            bi.size = VkDeviceSize(w) * h * 4;
+            bi.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            VmaAllocationCreateInfo ai{};
+            ai.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+            ai.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+            VmaAllocationInfo info{};
+            XRVK_CHECK(vmaCreateBuffer(c.vma, &bi, &ai, &buffer, &alloc, &info));
+            ptr = info.pMappedData;
+            VkBufferImageCopy r{};
+            r.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+            r.imageExtent = {w, h, 1};
+            vkCmdCopyImageToBuffer(cb, sc->back_buffer->img.image, VK_IMAGE_LAYOUT_GENERAL, buffer, 1, &r);
+        }
+
+        void write(SwapChain *sc)
+        {
+            if (!buffer)
+                return;
+            Core &c = *core();
+            vkQueueWaitIdle(c.queue);
+            std::vector<uint8_t> rgba(size_t(w) * h * 4);
+            memcpy(rgba.data(), ptr, rgba.size());
+            const DXGI_FORMAT f = sc->back_buffer->desc.Format;
+            if (f == DXGI_FORMAT_B8G8R8A8_UNORM || f == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB)
+                for (size_t i = 0; i < rgba.size(); i += 4)
+                    std::swap(rgba[i], rgba[i + 2]);
+            for (size_t i = 3; i < rgba.size(); i += 4)
+                rgba[i] = 255; // the alpha of a back buffer is not shown
+            const std::vector<uint8_t> png = xr_dds::write_png(rgba.data(), w, h);
+            const char *path = getenv("XR_VK_SCREENSHOT");
+            std::ofstream out(path, std::ios::binary);
+            out.write(reinterpret_cast<const char *>(png.data()), std::streamsize(png.size()));
+            if (out.good())
+            {
+                log("* vk: screenshot of frame %llu written to %s", (unsigned long long)sc->presents, path);
+            }
+            else
+                log("! vk: cannot write the screenshot %s", path);
+            vmaDestroyBuffer(c.vma, buffer, alloc);
+            buffer = VK_NULL_HANDLE;
+        }
+    };
+} // namespace
 
 using namespace xrvk;
 
@@ -390,9 +458,13 @@ HRESULT IDXGISwapChain::GetBuffer(UINT buffer_idx, REFIID riid, void **surface)
     return sc->back_buffer->QueryInterface(riid, surface);
 }
 
-HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT)
+HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT flags)
 {
     auto *sc = static_cast<SwapChain *>(static_cast<IDXGISwapChain4 *>(this));
+    // DXGI_PRESENT_TEST only asks whether presenting would be visible (the engine does it every frame);
+    // nothing is presented. A minimised window answers "occluded" like DXGI.
+    if (flags & DXGI_PRESENT_TEST)
+        return (SDL_GetWindowFlags(sc->window) & SDL_WINDOW_MINIMIZED) ? DXGI_STATUS_OCCLUDED : S_OK;
     Core &c = *core();
     const VkPresentModeKHR want = pick_mode(c.phys, sc->surface, sync_interval);
     if (want != sc->mode || !sc->swapchain)
@@ -423,6 +495,8 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT)
     VkCommandBuffer cb = impl(static_cast<Device *>(sc->device)->immediate)->outside_rendering();
     transition(cb, &sc->back_buffer->img, VK_IMAGE_LAYOUT_GENERAL);
     transfer_barrier(cb, true);
+    Screenshot shot;
+    shot.record(cb, sc);
     VkImageMemoryBarrier2 b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
     b.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
     b.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
@@ -465,6 +539,8 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT)
     }
     else if (r != VK_SUCCESS)
         fail("vkQueuePresentKHR: %d", int(r));
+    shot.write(sc);
+    ++sc->presents;
     c.next_frame();
     return S_OK;
 }
@@ -546,12 +622,20 @@ HRESULT IDXGISwapChain3::SetColorSpace1(DXGI_COLOR_SPACE_TYPE colour_space)
 
 // ---- the rest of DXGI the engine and imgui touch -------------------------------------------------------
 
-// The parent of an adapter is a factory (as in DXGI); other objects have none here.
+// Parents as in DXGI: device -> adapter -> factory; other objects have none here.
 HRESULT IDXGIObject::GetParent(REFIID riid, void **parent)
 {
     if (!parent)
         return E_INVALIDARG;
     *parent = nullptr;
+    if (has_interface(__uuidof(IDXGIDevice))) // a device's parent: the adapter of its GPU
+    {
+        auto *a = new Adapter();
+        a->phys = core() ? core()->phys : preferred_physical_device();
+        const HRESULT hr = a->QueryInterface(riid, parent);
+        a->Release();
+        return hr;
+    }
     if (!has_interface(__uuidof(IDXGIAdapter)))
         return E_NOINTERFACE;
     return CreateDXGIFactory2(0, riid, parent);

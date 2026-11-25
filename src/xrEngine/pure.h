@@ -2,11 +2,11 @@
 #define _PURE_H_AAA_
 
 // messages
-#define REG_PRIORITY_LOW 0x11111111ul
-#define REG_PRIORITY_NORMAL 0x22222222ul
-#define REG_PRIORITY_HIGH 0x33333333ul
-#define REG_PRIORITY_CAPTURE 0x7ffffffful
-#define REG_PRIORITY_INVALID 0xfffffffful
+#define REG_PRIORITY_LOW 0x11111111u // u, not ul: Prio is an int; with 64-bit long (LP64) INVALID never compared equal
+#define REG_PRIORITY_NORMAL 0x22222222u
+#define REG_PRIORITY_HIGH 0x33333333u
+#define REG_PRIORITY_CAPTURE 0x7fffffffu
+#define REG_PRIORITY_INVALID 0xffffffffu
 
 typedef void __fastcall RP_FUNC(void* obj);
 #define DECLARE_MESSAGE_CL(name,calling) extern ENGINE_API RP_FUNC rp_##name; class ENGINE_API pure##name { public: virtual void calling On##name(void)=0; }

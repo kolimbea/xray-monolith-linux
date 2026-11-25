@@ -230,6 +230,20 @@ namespace xrvk
         }
     }
 
+    VkComponentMapping view_swizzle(uint32_t f)
+    {
+        switch (f)
+        {
+        case DXGI_FORMAT_A8_UNORM:
+            return {VK_COMPONENT_SWIZZLE_ZERO, VK_COMPONENT_SWIZZLE_ZERO, VK_COMPONENT_SWIZZLE_ZERO, VK_COMPONENT_SWIZZLE_R};
+        case DXGI_FORMAT_B8G8R8X8_UNORM:
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+            return {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_ONE};
+        default:
+            return {};
+        }
+    }
+
     VkFormat view_format(uint32_t f, VkFormat image_format)
     {
         switch (DXGI_FORMAT(f))

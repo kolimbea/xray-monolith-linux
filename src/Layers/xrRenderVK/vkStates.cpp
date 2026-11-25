@@ -264,10 +264,24 @@ HRESULT ID3D11Device::CreateSamplerState(const D3D11_SAMPLER_DESC *pSamplerDesc,
 HRESULT ID3D11Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs, UINT NumElements,
                                         const void *pShaderBytecodeWithInputSignature, SIZE_T BytecodeLength, ID3D11InputLayout **ppInputLayout)
 {
+    // D3D11 takes either the input signature blob or the whole vertex shader (imgui passes the latter)
     std::vector<ShaderParameter> sig;
-    if (!parse_input_signature(pShaderBytecodeWithInputSignature, BytecodeLength, sig))
+    if (is_spirv(pShaderBytecodeWithInputSignature, BytecodeLength))
     {
-        log("! vk: CreateInputLayout: the signature is not from D3DGetInputSignatureBlob of this backend");
+        ShaderInfo info;
+        std::string error;
+        if (!reflect_spirv(pShaderBytecodeWithInputSignature, BytecodeLength, info, error))
+        {
+            log("! vk: CreateInputLayout: %s", error.c_str());
+            return E_INVALIDARG;
+        }
+        for (const ShaderParameter &p : info.inputs)
+            if (!p.builtin)
+                sig.push_back(p);
+    }
+    else if (!parse_input_signature(pShaderBytecodeWithInputSignature, BytecodeLength, sig))
+    {
+        log("! vk: CreateInputLayout: neither a vertex shader nor a signature of this backend");
         return E_INVALIDARG;
     }
     auto *l = new InputLayout();

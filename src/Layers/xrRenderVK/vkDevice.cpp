@@ -11,6 +11,24 @@ namespace xrvk
     {
         return iid_in(r, {__uuidof(ID3D11Device), __uuidof(ID3D11Device1), __uuidof(ID3D11Device2)});
     }
+    bool DXGIDevice::has_interface(REFIID r) const
+    {
+        return iid_in(r, {__uuidof(IDXGIObject), __uuidof(IDXGIDevice)});
+    }
+
+    HRESULT Device::QueryInterface(REFIID riid, void **out)
+    {
+        if (out && riid == __uuidof(IDXGIDevice))
+        {
+            if (!dxgi)
+                dxgi = new DXGIDevice();
+            dxgi->AddRef();
+            *out = static_cast<IDXGIDevice *>(dxgi);
+            return S_OK;
+        }
+        return ComBase::QueryInterface(riid, out);
+    }
+
     bool Context::has_interface(REFIID r) const
     {
         return iid_in(r, {__uuidof(ID3D11DeviceChild), __uuidof(ID3D11DeviceContext), __uuidof(ID3D11DeviceContext1),
