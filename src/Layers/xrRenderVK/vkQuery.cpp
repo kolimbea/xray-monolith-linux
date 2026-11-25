@@ -73,6 +73,7 @@ UINT ID3D11Asynchronous::GetDataSize()
 
 void ID3D11DeviceContext::Begin(ID3D11Asynchronous *pAsync)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     auto *q = static_cast<Query *>(static_cast<ID3D11Query *>(pAsync));
     if (!q || q->desc.Query != D3D11_QUERY_OCCLUSION)
@@ -101,6 +102,7 @@ void ID3D11DeviceContext::Begin(ID3D11Asynchronous *pAsync)
 
 void ID3D11DeviceContext::End(ID3D11Asynchronous *pAsync)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     auto *q = static_cast<Query *>(static_cast<ID3D11Query *>(pAsync));
     if (!q)
@@ -120,6 +122,7 @@ void ID3D11DeviceContext::End(ID3D11Asynchronous *pAsync)
 
 HRESULT ID3D11DeviceContext::GetData(ID3D11Asynchronous *pAsync, void *pData, UINT DataSize, UINT GetDataFlags)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *q = static_cast<Query *>(static_cast<ID3D11Query *>(pAsync));
     if (!q || q->active || !q->end_value)
         return DXGI_ERROR_INVALID_CALL;

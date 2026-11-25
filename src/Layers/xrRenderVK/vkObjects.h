@@ -6,6 +6,7 @@
 
 #include <initializer_list>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "vkCore.h"
@@ -316,6 +317,14 @@ namespace xrvk
 
     struct Context final : public ID3D11DeviceContext2
     {
+        // D3D11 serialises the immediate context (multithread protection; dxvk does the same): the
+        // engine calls it from worker threads, e.g. texture loads in CResourceManager::DeferredUpload
+        // (tbb::parallel_for_each -> UpdateSubresource / Map). Every context method holds this lock.
+        std::recursive_mutex lock;
+        std::unique_lock<std::recursive_mutex> guard()
+        {
+            return std::unique_lock<std::recursive_mutex>(lock);
+        }
         // ---- D3D11 state ----
         InputLayout *layout = nullptr;
         D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;

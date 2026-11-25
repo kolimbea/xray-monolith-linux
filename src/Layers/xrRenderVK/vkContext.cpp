@@ -654,6 +654,7 @@ using namespace xrvk;
 
 void ID3D11DeviceContext::IASetInputLayout(ID3D11InputLayout *pInputLayout)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     InputLayout *l = impl_of<InputLayout>(pInputLayout);
     if (c->layout != l)
@@ -664,6 +665,7 @@ void ID3D11DeviceContext::IASetInputLayout(ID3D11InputLayout *pInputLayout)
 void ID3D11DeviceContext::IASetVertexBuffers(UINT StartSlot, UINT NumBuffers, ID3D11Buffer *const *ppVertexBuffers, const UINT *pStrides,
                                              const UINT *pOffsets)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     for (UINT i = 0; i < NumBuffers && StartSlot + i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
     {
@@ -679,6 +681,7 @@ void ID3D11DeviceContext::IASetVertexBuffers(UINT StartSlot, UINT NumBuffers, ID
 
 void ID3D11DeviceContext::IASetIndexBuffer(ID3D11Buffer *pIndexBuffer, DXGI_FORMAT Format, UINT Offset)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     set_ref(c->ib, impl_of<Buffer>(pIndexBuffer));
     c->ib_format = Format;
@@ -687,6 +690,7 @@ void ID3D11DeviceContext::IASetIndexBuffer(ID3D11Buffer *pIndexBuffer, DXGI_FORM
 
 void ID3D11DeviceContext::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (c->topology != Topology)
         c->dirty |= kTopology;
@@ -695,6 +699,7 @@ void ID3D11DeviceContext::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topolo
 
 void ID3D11DeviceContext::IAGetInputLayout(ID3D11InputLayout **ppInputLayout)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (c->layout)
         c->layout->AddRef();
@@ -703,6 +708,7 @@ void ID3D11DeviceContext::IAGetInputLayout(ID3D11InputLayout **ppInputLayout)
 
 void ID3D11DeviceContext::IAGetVertexBuffers(UINT StartSlot, UINT NumBuffers, ID3D11Buffer **ppVertexBuffers, UINT *pStrides, UINT *pOffsets)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     for (UINT i = 0; i < NumBuffers; ++i)
     {
@@ -723,6 +729,7 @@ void ID3D11DeviceContext::IAGetVertexBuffers(UINT StartSlot, UINT NumBuffers, ID
 
 void ID3D11DeviceContext::IAGetIndexBuffer(ID3D11Buffer **pIndexBuffer, DXGI_FORMAT *Format, UINT *Offset)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (pIndexBuffer)
     {
@@ -738,6 +745,7 @@ void ID3D11DeviceContext::IAGetIndexBuffer(ID3D11Buffer **pIndexBuffer, DXGI_FOR
 
 void ID3D11DeviceContext::IAGetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY *pTopology)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     *pTopology = impl(this)->topology;
 }
 
@@ -748,6 +756,7 @@ namespace
     template <class I>
     void set_shader(Context *c, Stage s, I *shader)
     {
+        auto lk = c->guard();
         StageState &st = c->stage[size_t(s)];
         ID3D11DeviceChild *child = shader;
         if (st.shader == child)
@@ -763,6 +772,7 @@ namespace
     template <class I>
     void get_shader(Context *c, Stage s, I **out)
     {
+        auto lk = c->guard();
         StageState &st = c->stage[size_t(s)];
         *out = static_cast<I *>(st.shader);
         if (*out)
@@ -771,6 +781,7 @@ namespace
 
     void set_cbs(Context *c, Stage s, UINT start, UINT n, ID3D11Buffer *const *bufs)
     {
+        auto lk = c->guard();
         StageState &st = c->stage[size_t(s)];
         for (UINT i = 0; i < n && start + i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
             set_ref(st.cb[start + i], bufs ? impl_of<Buffer>(bufs[i]) : nullptr);
@@ -778,6 +789,7 @@ namespace
 
     void set_srvs(Context *c, Stage s, UINT start, UINT n, ID3D11ShaderResourceView *const *views)
     {
+        auto lk = c->guard();
         StageState &st = c->stage[size_t(s)];
         for (UINT i = 0; i < n && start + i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
             set_ref(st.srv[start + i], views ? impl_of<ShaderResourceView>(views[i]) : nullptr);
@@ -785,6 +797,7 @@ namespace
 
     void set_samplers(Context *c, Stage s, UINT start, UINT n, ID3D11SamplerState *const *samplers)
     {
+        auto lk = c->guard();
         StageState &st = c->stage[size_t(s)];
         for (UINT i = 0; i < n && start + i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
             set_ref(st.sampler[start + i], samplers ? impl_of<SamplerState>(samplers[i]) : nullptr);
@@ -793,42 +806,51 @@ namespace
 
 void ID3D11DeviceContext::VSSetShader(ID3D11VertexShader *p, ID3D11ClassInstance *const *, UINT)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     set_shader(impl(this), Stage::Vertex, p);
 }
 void ID3D11DeviceContext::HSSetShader(ID3D11HullShader *p, ID3D11ClassInstance *const *, UINT)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     set_shader(impl(this), Stage::Hull, p);
 }
 void ID3D11DeviceContext::DSSetShader(ID3D11DomainShader *p, ID3D11ClassInstance *const *, UINT)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     set_shader(impl(this), Stage::Domain, p);
 }
 void ID3D11DeviceContext::GSSetShader(ID3D11GeometryShader *p, ID3D11ClassInstance *const *, UINT)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     set_shader(impl(this), Stage::Geometry, p);
 }
 void ID3D11DeviceContext::PSSetShader(ID3D11PixelShader *p, ID3D11ClassInstance *const *, UINT)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     set_shader(impl(this), Stage::Pixel, p);
 }
 void ID3D11DeviceContext::CSSetShader(ID3D11ComputeShader *p, ID3D11ClassInstance *const *, UINT)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     set_shader(impl(this), Stage::Compute, p);
 }
 void ID3D11DeviceContext::VSGetShader(ID3D11VertexShader **pp, ID3D11ClassInstance **, UINT *n)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     get_shader(impl(this), Stage::Vertex, pp);
     if (n)
         *n = 0;
 }
 void ID3D11DeviceContext::GSGetShader(ID3D11GeometryShader **pp, ID3D11ClassInstance **, UINT *n)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     get_shader(impl(this), Stage::Geometry, pp);
     if (n)
         *n = 0;
 }
 void ID3D11DeviceContext::PSGetShader(ID3D11PixelShader **pp, ID3D11ClassInstance **, UINT *n)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     get_shader(impl(this), Stage::Pixel, pp);
     if (n)
         *n = 0;
@@ -857,6 +879,7 @@ XRVK_STAGE_SETTERS(CS, Compute)
 
 void ID3D11DeviceContext::VSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, ID3D11Buffer **pp)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     for (UINT i = 0; i < NumBuffers; ++i)
     {
@@ -869,6 +892,7 @@ void ID3D11DeviceContext::VSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, 
 
 void ID3D11DeviceContext::PSGetShaderResources(UINT StartSlot, UINT NumViews, ID3D11ShaderResourceView **pp)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     for (UINT i = 0; i < NumViews; ++i)
     {
@@ -881,6 +905,7 @@ void ID3D11DeviceContext::PSGetShaderResources(UINT StartSlot, UINT NumViews, ID
 
 void ID3D11DeviceContext::PSGetSamplers(UINT StartSlot, UINT NumSamplers, ID3D11SamplerState **pp)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     for (UINT i = 0; i < NumSamplers; ++i)
     {
@@ -893,6 +918,7 @@ void ID3D11DeviceContext::PSGetSamplers(UINT StartSlot, UINT NumSamplers, ID3D11
 
 void ID3D11DeviceContext::CSSetUnorderedAccessViews(UINT StartSlot, UINT NumUAVs, ID3D11UnorderedAccessView *const *pp, const UINT *pUAVInitialCounts)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (pUAVInitialCounts)
         for (UINT i = 0; i < NumUAVs; ++i)
@@ -906,6 +932,7 @@ void ID3D11DeviceContext::CSSetUnorderedAccessViews(UINT StartSlot, UINT NumUAVs
 
 void ID3D11DeviceContext::RSSetState(ID3D11RasterizerState *pRasterizerState)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     set_ref(c->rasterizer, impl_of<RasterizerState>(pRasterizerState));
     c->dirty |= kRaster;
@@ -913,6 +940,7 @@ void ID3D11DeviceContext::RSSetState(ID3D11RasterizerState *pRasterizerState)
 
 void ID3D11DeviceContext::RSGetState(ID3D11RasterizerState **ppRasterizerState)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     *ppRasterizerState = c->rasterizer;
     if (c->rasterizer)
@@ -921,6 +949,7 @@ void ID3D11DeviceContext::RSGetState(ID3D11RasterizerState **ppRasterizerState)
 
 void ID3D11DeviceContext::RSSetViewports(UINT NumViewports, const D3D11_VIEWPORT *pViewports)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     c->num_viewports = std::min<UINT>(NumViewports, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE);
     for (UINT i = 0; i < c->num_viewports; ++i)
@@ -930,6 +959,7 @@ void ID3D11DeviceContext::RSSetViewports(UINT NumViewports, const D3D11_VIEWPORT
 
 void ID3D11DeviceContext::RSGetViewports(UINT *pNumViewports, D3D11_VIEWPORT *pViewports)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (pViewports)
         for (UINT i = 0; i < *pNumViewports && i < c->num_viewports; ++i)
@@ -939,6 +969,7 @@ void ID3D11DeviceContext::RSGetViewports(UINT *pNumViewports, D3D11_VIEWPORT *pV
 
 void ID3D11DeviceContext::RSSetScissorRects(UINT NumRects, const D3D11_RECT *pRects)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     c->num_scissors = std::min<UINT>(NumRects, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE);
     for (UINT i = 0; i < c->num_scissors; ++i)
@@ -948,6 +979,7 @@ void ID3D11DeviceContext::RSSetScissorRects(UINT NumRects, const D3D11_RECT *pRe
 
 void ID3D11DeviceContext::RSGetScissorRects(UINT *pNumRects, D3D11_RECT *pRects)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (pRects)
         for (UINT i = 0; i < *pNumRects && i < c->num_scissors; ++i)
@@ -957,6 +989,7 @@ void ID3D11DeviceContext::RSGetScissorRects(UINT *pNumRects, D3D11_RECT *pRects)
 
 void ID3D11DeviceContext::OMSetRenderTargets(UINT NumViews, ID3D11RenderTargetView *const *ppRenderTargetViews, ID3D11DepthStencilView *pDepthStencilView)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     bool changed = c->dsv != pDepthStencilView;
     for (UINT i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
@@ -972,6 +1005,7 @@ void ID3D11DeviceContext::OMSetRenderTargets(UINT NumViews, ID3D11RenderTargetVi
 
 void ID3D11DeviceContext::OMGetRenderTargets(UINT NumViews, ID3D11RenderTargetView **ppRenderTargetViews, ID3D11DepthStencilView **ppDepthStencilView)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (ppRenderTargetViews)
         for (UINT i = 0; i < NumViews; ++i)
@@ -990,6 +1024,7 @@ void ID3D11DeviceContext::OMGetRenderTargets(UINT NumViews, ID3D11RenderTargetVi
 
 void ID3D11DeviceContext::OMSetBlendState(ID3D11BlendState *pBlendState, const FLOAT BlendFactor[4], UINT SampleMask)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     set_ref(c->blend, impl_of<BlendState>(pBlendState));
     for (int i = 0; i < 4; ++i)
@@ -1000,6 +1035,7 @@ void ID3D11DeviceContext::OMSetBlendState(ID3D11BlendState *pBlendState, const F
 
 void ID3D11DeviceContext::OMGetBlendState(ID3D11BlendState **ppBlendState, FLOAT BlendFactor[4], UINT *pSampleMask)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (ppBlendState)
     {
@@ -1015,6 +1051,7 @@ void ID3D11DeviceContext::OMGetBlendState(ID3D11BlendState **ppBlendState, FLOAT
 
 void ID3D11DeviceContext::OMSetDepthStencilState(ID3D11DepthStencilState *pDepthStencilState, UINT StencilRef)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     set_ref(c->depth_stencil, impl_of<DepthStencilState>(pDepthStencilState));
     c->stencil_ref = StencilRef;
@@ -1023,6 +1060,7 @@ void ID3D11DeviceContext::OMSetDepthStencilState(ID3D11DepthStencilState *pDepth
 
 void ID3D11DeviceContext::OMGetDepthStencilState(ID3D11DepthStencilState **ppDepthStencilState, UINT *pStencilRef)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (ppDepthStencilState)
     {
@@ -1036,6 +1074,7 @@ void ID3D11DeviceContext::OMGetDepthStencilState(ID3D11DepthStencilState **ppDep
 
 void ID3D11DeviceContext::ClearState()
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     c->outside_rendering();
     set_ref(c->layout, (InputLayout *)nullptr);
@@ -1078,6 +1117,7 @@ void ID3D11DeviceContext::ClearState()
 
 void ID3D11DeviceContext::Draw(UINT VertexCount, UINT StartVertexLocation)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (!VertexCount || !c->prepare_draw())
         return;
@@ -1086,6 +1126,7 @@ void ID3D11DeviceContext::Draw(UINT VertexCount, UINT StartVertexLocation)
 
 void ID3D11DeviceContext::DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (!IndexCount || !c->ib || !c->prepare_draw())
         return;
@@ -1105,6 +1146,7 @@ void ID3D11DeviceContext::DrawIndexed(UINT IndexCount, UINT StartIndexLocation, 
 
 void ID3D11DeviceContext::Dispatch(UINT ThreadGroupCountX, UINT ThreadGroupCountY, UINT ThreadGroupCountZ)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     VkCommandBuffer cb = c->outside_rendering();
     if (cb != c->state_cb)
@@ -1129,6 +1171,7 @@ void ID3D11DeviceContext::Dispatch(UINT ThreadGroupCountX, UINT ThreadGroupCount
 
 void ID3D11DeviceContext::ClearRenderTargetView(ID3D11RenderTargetView *pRenderTargetView, const FLOAT ColorRGBA[4])
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     auto *v = impl_of<RenderTargetView>(pRenderTargetView);
     if (!v)
@@ -1154,6 +1197,7 @@ void ID3D11DeviceContext::ClearRenderTargetView(ID3D11RenderTargetView *pRenderT
 
 void ID3D11DeviceContext::ClearDepthStencilView(ID3D11DepthStencilView *pDepthStencilView, UINT ClearFlags, FLOAT Depth, UINT8 Stencil)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     auto *v = impl_of<DepthStencilView>(pDepthStencilView);
     if (!v)
@@ -1244,6 +1288,7 @@ namespace
 
 void ID3D11DeviceContext::CopyResource(ID3D11Resource *pDstResource, ID3D11Resource *pSrcResource)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (!pDstResource || !pSrcResource || pDstResource->xrvk_dimension != pSrcResource->xrvk_dimension)
         return;
@@ -1266,6 +1311,7 @@ void ID3D11DeviceContext::CopyResource(ID3D11Resource *pDstResource, ID3D11Resou
 void ID3D11DeviceContext::CopySubresourceRegion(ID3D11Resource *pDstResource, UINT DstSubresource, UINT DstX, UINT DstY, UINT DstZ,
                                                 ID3D11Resource *pSrcResource, UINT SrcSubresource, const D3D11_BOX *pSrcBox)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (!pDstResource || !pSrcResource)
         return;
@@ -1286,6 +1332,7 @@ void ID3D11DeviceContext::CopySubresourceRegion(ID3D11Resource *pDstResource, UI
 void ID3D11DeviceContext::ResolveSubresource(ID3D11Resource *pDstResource, UINT DstSubresource, ID3D11Resource *pSrcResource, UINT SrcSubresource,
                                              DXGI_FORMAT)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     Image *dst = image_of(pDstResource), *src = image_of(pSrcResource);
     if (!dst || !src || !dst->image || !src->image)
@@ -1308,6 +1355,7 @@ void ID3D11DeviceContext::ResolveSubresource(ID3D11Resource *pDstResource, UINT 
 void ID3D11DeviceContext::UpdateSubresource(ID3D11Resource *pDstResource, UINT DstSubresource, const D3D11_BOX *pDstBox, const void *pSrcData,
                                             UINT SrcRowPitch, UINT SrcDepthPitch)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (!pDstResource)
         return;
@@ -1319,6 +1367,7 @@ void ID3D11DeviceContext::UpdateSubresource(ID3D11Resource *pDstResource, UINT D
 
 HRESULT ID3D11DeviceContext::Map(ID3D11Resource *pResource, UINT Subresource, D3D11_MAP MapType, UINT, D3D11_MAPPED_SUBRESOURCE *pMappedResource)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     auto *c = impl(this);
     if (!pResource || !pMappedResource)
         return E_INVALIDARG;
@@ -1330,6 +1379,7 @@ HRESULT ID3D11DeviceContext::Map(ID3D11Resource *pResource, UINT Subresource, D3
 
 void ID3D11DeviceContext::Unmap(ID3D11Resource *pResource, UINT Subresource)
 {
+    auto lk = static_cast<Context *>(this)->guard();
     if (Image *img = image_of(pResource))
         unmap_texture(impl(this), img, Subresource);
     // buffers and staging memory are persistently mapped and coherent

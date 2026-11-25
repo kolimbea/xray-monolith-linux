@@ -472,6 +472,7 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT flags)
     if (flags & DXGI_PRESENT_TEST)
         return (SDL_GetWindowFlags(sc->window) & SDL_WINDOW_MINIMIZED) ? DXGI_STATUS_OCCLUDED : S_OK;
     Core &c = *core();
+    auto lk = impl(static_cast<Device *>(sc->device)->immediate)->guard(); // the frame's commands are the context's
     const VkPresentModeKHR want = pick_mode(c.phys, sc->surface, sync_interval);
     if (want != sc->mode || !sc->swapchain)
     {
