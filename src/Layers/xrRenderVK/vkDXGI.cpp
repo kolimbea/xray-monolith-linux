@@ -97,7 +97,14 @@ namespace xrvk
         if (caps.currentExtent.width != UINT32_MAX)
             extent = caps.currentExtent;
         else
-            extent = {width, height};
+        {
+            // The surface takes its size from the swapchain (Wayland): match the window, so a back
+            // buffer smaller than the window (a lower vid_mode in full screen) is scaled by the present
+            // pass (FSR) instead of the compositor.
+            uint32_t pw = 0, ph = 0;
+            window_pixels(window, pw, ph);
+            extent = (pw > 1 && ph > 1) ? VkExtent2D{pw, ph} : VkExtent2D{width, height};
+        }
         if (!extent.width || !extent.height)
             return; // minimised; recreated on the next Present/ResizeBuffers
 
@@ -154,7 +161,10 @@ namespace xrvk
         for (VkSemaphore &s : acquired)
             if (!s)
                 XRVK_CHECK(vkCreateSemaphore(c.device, &si, nullptr, &s));
-        log("* vk: swapchain %ux%u, %u images, present mode %d", extent.width, extent.height, n, int(mode));
+        uint32_t win_w = 0, win_h = 0;
+        window_pixels(window, win_w, win_h);
+        log("* vk: swapchain %ux%u, %u images, present mode %d (window %ux%u px, surface extent %d x %d)", extent.width, extent.height, n,
+            int(mode), win_w, win_h, int(caps.currentExtent.width), int(caps.currentExtent.height));
     }
 
     void SwapChain::destroy_swapchain()
@@ -221,7 +231,7 @@ namespace xrvk
         bool swap_rb = false; // the source is BGRA
 
         // `image`: what goes to the screen (the back buffer, or the present pass output when active)
-        void record(VkCommandBuffer cb, SwapChain *sc, VkImage image, bool bgra)
+        void record(VkCommandBuffer cb, SwapChain *sc, VkImage image, uint32_t width, uint32_t height, bool bgra)
         {
             const char *path = getenv("XR_VK_SCREENSHOT");
             const char *at = getenv("XR_VK_SCREENSHOT_FRAME");
@@ -231,8 +241,8 @@ namespace xrvk
             if (!path || !due)
                 return;
             Core &c = *core();
-            w = sc->back_buffer->desc.Width;
-            h = sc->back_buffer->desc.Height;
+            w = width;
+            h = height;
             VkBufferCreateInfo bi{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
             bi.size = VkDeviceSize(w) * h * 4;
             bi.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -581,14 +591,16 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT flags)
     vkCmdPipelineBarrier2(cb, &dep);
     VkImageBlit blit{};
     blit.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    blit.srcOffsets[1] = {int32_t(sc->back_buffer->desc.Width), int32_t(sc->back_buffer->desc.Height), 1};
+    // gamma curve and upscaling, if active (vkPresent.cpp); otherwise the back buffer itself
+    const PresentPass::Result shown = present_pass().record(cb, sc->back_buffer->img, sc->extent);
+    blit.srcOffsets[1] = {int32_t(shown.width), int32_t(shown.height), 1};
     blit.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
     blit.dstOffsets[1] = {int32_t(sc->extent.width), int32_t(sc->extent.height), 1};
-    const bool same = sc->back_buffer->desc.Width == sc->extent.width && sc->back_buffer->desc.Height == sc->extent.height;
-    const VkImage present_src = present_pass().record(cb, sc->back_buffer->img); // gamma curve, if any
+    const bool same = shown.width == sc->extent.width && shown.height == sc->extent.height;
+    const VkImage present_src = shown.image;
     const DXGI_FORMAT bf = sc->back_buffer->desc.Format;
     Screenshot shot;
-    shot.record(cb, sc, present_src,
+    shot.record(cb, sc, present_src, shown.width, shown.height,
                 present_src == sc->back_buffer->img.image && (bf == DXGI_FORMAT_B8G8R8A8_UNORM || bf == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB));
     vkCmdBlitImage(cb, present_src, VK_IMAGE_LAYOUT_GENERAL, sc->images[idx],
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, same ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
