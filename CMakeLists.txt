@@ -28,6 +28,10 @@ if(NOT EXISTS "${DXVK_NATIVE_DIR}/include/dxvk/windows_base.h")
     message(FATAL_ERROR "dxvk-native not found in ${DXVK_NATIVE_DIR} (run tools/fetch_deps.sh)")
 endif()
 set(XR_3RD "${XR_SRC}/3rd party")
+# The stage-1c renderer (R4 on dxvk-native's D3D11, shader compiler on vkd3d-shader) and its `xray`
+# executable. Superseded by xray_vk; kept buildable for comparisons. Needs dxvk-native's libraries and
+# libvkd3d-shader. (dxvk-native's headers are always needed: they provide the Win32 base types.)
+option(XR_BUILD_DXVK_RENDERER "Build the dxvk-native renderer path (xrRender_R4, xray)" OFF)
 
 # Flags every engine module shares: MSVC extensions the code base relies on (__super, __declspec,
 # __forceinline, MS builtins), `or`/`and` used as identifiers, C++17-removed `register`, and
@@ -133,6 +137,7 @@ target_include_directories(xrGame PRIVATE ${XR_SRC}/xrServerEntities "${XR_3RD}/
     "${XR_3RD}/cximage")
 target_link_libraries(xrGame PUBLIC xrEngine xrPhysics xrNetServer luabind lua_extensions)
 
+if(XR_BUILD_DXVK_RENDERER)
 # --- Stage 1c: renderer (temporary path: D3D11 on dxvk-native) ---
 xr_module(xrRender_R4 ${XR_SRC}/Layers/xrRenderPC_R4/xrRender_R4.vcxproj EXCLUDE ai_script_lua_debug.cpp ai_script_lua_extension.cpp)
 target_compile_definitions(xrRender_R4 PRIVATE USE_DX11)
@@ -142,6 +147,7 @@ target_sources(xrRender_R4 PRIVATE ${XR_SRC}/Common/linux/d3dx9_linux.cpp ${XR_S
     ${XR_SRC}/Common/linux/dds_codec.cpp ${XR_SRC}/Common/linux/d3dcompiler_linux.cpp)
 pkg_check_modules(XR_VKD3D_SHADER REQUIRED IMPORTED_TARGET libvkd3d-shader)
 target_link_libraries(xrRender_R4 PUBLIC PkgConfig::XR_VKD3D_SHADER PkgConfig::XR_MEDIA)
+endif()
 # The DirectX SDK's D3DX10/D3DX11 headers include each other with varying letter case. Expose them
 # under lower-case names in the build tree (symlinks), so every spelling resolves on Linux.
 set(XR_DXSDK_CI ${CMAKE_BINARY_DIR}/dxsdk_ci)
@@ -164,10 +170,12 @@ foreach(h ${_d3dx_hdrs})
         endif()
     endforeach()
 endforeach()
-target_include_directories(xrRender_R4 BEFORE PRIVATE ${XR_DXSDK_CI})
-target_include_directories(xrRender_R4 PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 "${XR_3RD}/imgui")
-target_link_directories(xrRender_R4 PUBLIC ${DXVK_NATIVE_DIR}/lib)
-target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)
+if(XR_BUILD_DXVK_RENDERER)
+    target_include_directories(xrRender_R4 BEFORE PRIVATE ${XR_DXSDK_CI})
+    target_include_directories(xrRender_R4 PRIVATE ${XR_SRC}/Layers/xrRender ${XR_SRC}/Layers/xrRenderDX10 "${XR_3RD}/imgui")
+    target_link_directories(xrRender_R4 PUBLIC ${DXVK_NATIVE_DIR}/lib)
+    target_link_libraries(xrRender_R4 PUBLIC xrEngine dxvk_d3d11 dxvk_dxgi)
+endif()
 
 # --- Stage 2: own Vulkan renderer (ADR 0001). Same R4 pipeline + shared layer sources, compiled with
 # USE_VK (and USE_DX11 for the R3/R4 pipeline logic). all of xrRenderDX10 is reused; the D3D11/DXGI
@@ -225,11 +233,16 @@ xr_module(cximage "${XR_3RD}/cximage/cximage.vcxproj")
 target_compile_options(cximage PRIVATE -include ${XR_SRC}/Common/linux/cximage_prelude.h)
 target_link_libraries(cximage PUBLIC PkgConfig::XR_MEDIA)
 # The imgui D3D11 backend is compiled into each renderer against that renderer's D3D11 types.
-foreach(r xrRender_R4 xrRender_VK)
+set(_xr_renderers xrRender_VK)
+if(XR_BUILD_DXVK_RENDERER)
+    list(APPEND _xr_renderers xrRender_R4)
+endif()
+foreach(r ${_xr_renderers})
     target_sources(${r} PRIVATE "${XR_3RD}/imgui/backends/imgui_impl_dx11.cpp")
     target_include_directories(${r} PRIVATE "${XR_3RD}/imgui/backends")
 endforeach()
 
+if(XR_BUILD_DXVK_RENDERER)
 # --- the game executable (all-in-one, like Monolith on Windows) ---
 add_executable(xray ${XR_SRC}/Common/linux/exe_main_stub.cpp ${XR_SRC}/Common/linux/reshade_stub.cpp)
 # Static engine libraries reference each other in cycles; resolve them as one group.
@@ -242,6 +255,7 @@ target_link_libraries(xray PRIVATE
     xrCore)
 target_link_options(xray PRIVATE -rdynamic)  # symbol names in xrDebug backtraces
 set_target_properties(xray PROPERTIES BUILD_RPATH "${DXVK_NATIVE_DIR}/lib;$<TARGET_FILE_DIR:xrCore>")
+endif()
 
 # The same game linked with the Vulkan renderer instead of R4-on-dxvk (stage 2, ADR 0001).
 add_executable(xray_vk ${XR_SRC}/Common/linux/exe_main_stub.cpp ${XR_SRC}/Common/linux/reshade_stub.cpp)
