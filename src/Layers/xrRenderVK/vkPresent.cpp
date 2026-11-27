@@ -59,6 +59,8 @@ void main(uint3 id : SV_DispatchThreadID)
             }
             m_lut[i * 4 + 3] = 1.f;
         }
+        if (m_gamma_active != !identity)
+            log("* vk: gamma curve %s", identity ? "identity (present pass off)" : "set (present pass on)");
         m_gamma_active = !identity;
     }
 
