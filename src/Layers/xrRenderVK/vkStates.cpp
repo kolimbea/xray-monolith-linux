@@ -365,6 +365,14 @@ HRESULT ID3D11Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC *pInputEl
                 fed[k] = true;
             }
     }
+    if (l->attributes.size() > D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT)
+    {
+        // the draw path keeps the attributes in fixed arrays of this size (32 input registers in D3D11)
+        log("! vk: CreateInputLayout: %zu attributes, more than the %d vertex shader inputs", l->attributes.size(),
+            D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT);
+        l->Release();
+        return E_INVALIDARG;
+    }
     for (size_t k = 0; k < sig.size(); ++k)
         if (!fed[k])
         {

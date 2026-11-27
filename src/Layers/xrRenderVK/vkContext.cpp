@@ -356,18 +356,31 @@ namespace xrvk
     const Program *Context::bind_program(VkCommandBuffer cb, bool compute)
     {
         Core *c = core();
-        std::shared_ptr<const ShaderModule> set[size_t(Stage::Count)];
-        // the same program as the last draw: skip the copies of the stage modules and the cache lookup
+        // the same program as the last draw: skip the cache lookup
         if (!compute && bound_program && !(dirty & kShaders))
             return bound_program;
+        if (!stage[size_t(compute ? Stage::Compute : Stage::Vertex)].module)
+            return nullptr;
+        // the context's own cache by module ids: no shared_ptr copies (atomics) and no device lock
+        std::array<uint64_t, size_t(Stage::Count)> key{};
+        bool present[size_t(Stage::Count)] = {};
         if (compute)
-            set[size_t(Stage::Compute)] = stage[size_t(Stage::Compute)].module;
+            present[size_t(Stage::Compute)] = true;
         else
             for (Stage s : {Stage::Vertex, Stage::Hull, Stage::Domain, Stage::Geometry, Stage::Pixel})
-                set[size_t(s)] = stage[size_t(s)].module;
-        if (!set[size_t(compute ? Stage::Compute : Stage::Vertex)])
-            return nullptr;
-        const Program *p = static_cast<Device *>(xrvk_device)->program(set);
+                present[size_t(s)] = bool(stage[size_t(s)].module);
+        for (size_t s = 0; s < size_t(Stage::Count); ++s)
+            key[s] = present[s] ? stage[s].module->id : 0;
+        auto cached = program_cache.find(key);
+        if (cached == program_cache.end())
+        {
+            std::shared_ptr<const ShaderModule> set[size_t(Stage::Count)];
+            for (size_t s = 0; s < size_t(Stage::Count); ++s)
+                if (present[s])
+                    set[s] = stage[s].module;
+            cached = program_cache.emplace(key, static_cast<Device *>(xrvk_device)->program(set)).first;
+        }
+        const Program *p = cached->second;
         if (!p)
             return nullptr;
         if (compute)
@@ -406,55 +419,65 @@ namespace xrvk
         return p;
     }
 
-    // Writes every binding of the program into its push-descriptor set; false if a binding cannot be
-    // expressed yet (logged once).
+    // Writes the program's bindings into its push-descriptor set; false if a binding cannot be
+    // expressed yet (logged once). Graphics pushes only the bindings that differ from the last push of
+    // the same program in this command buffer (push descriptors are updated incrementally).
     bool Context::push_descriptors(VkCommandBuffer cb, const Program *p, VkPipelineBindPoint bind_point)
     {
         Core *c = core();
         const size_t n = p->bindings.size();
         if (!n)
             return true;
-        writes.resize(n);
-        images.resize(n);
-        buffers.resize(n);
+        const bool graphics = bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS;
+        const bool all = !graphics || p != pushed_program;
+        if (writes.size() < n)
+        {
+            writes.resize(n);
+            images.resize(n);
+            buffers.resize(n);
+        }
+        if (graphics)
+        {
+            if (pushed_images.size() < n)
+            {
+                pushed_images.resize(n);
+                pushed_buffers.resize(n);
+            }
+            // a failed binding below leaves the record half-updated: nothing pushed is assumed then
+            pushed_program = nullptr;
+        }
+        uint32_t count = 0;
         for (size_t i = 0; i < n; ++i)
         {
             const VkDescriptorSetLayoutBinding &b = p->bindings[i];
             const ShaderResource &r = *p->resources[i];
-            Stage s;
-            RegClass cls;
-            uint32_t slot;
-            decode_binding(b.binding, s, cls, slot);
-            const StageState &st = stage[size_t(s)];
-            VkWriteDescriptorSet &w = writes[i];
-            w = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-            images[i] = {};
-            buffers[i] = {};
-            w.dstBinding = b.binding;
-            w.descriptorCount = 1;
-            w.descriptorType = b.descriptorType;
+            const Program::Slot &sl = p->slots[i];
+            const StageState &st = stage[size_t(sl.stage)];
+            const uint32_t slot = sl.reg;
             if (b.descriptorCount != 1)
             {
                 log_once(p, "! vk: resource arrays in shaders are not supported yet (%s)", r.name.c_str());
                 return false;
             }
+            VkDescriptorImageInfo img{};
+            VkDescriptorBufferInfo buf{};
+            bool is_image = false;
             switch (b.descriptorType)
             {
             case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
-                const Buffer *buf = slot < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT ? st.cb[slot] : nullptr;
-                if (!buf)
-                    buf = null.buffer;
-                VkDeviceSize range = buf->desc.ByteWidth;
+                const Buffer *cbuf = slot < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT ? st.cb[slot] : nullptr;
+                if (!cbuf)
+                    cbuf = null.buffer;
+                VkDeviceSize range = cbuf->desc.ByteWidth;
                 if (range > c->props.limits.maxUniformBufferRange)
                     range = c->props.limits.maxUniformBufferRange;
-                buffers[i] = {buf->vk(), buf->base(), range};
-                w.pBufferInfo = &buffers[i];
+                buf = {cbuf->vk(), cbuf->base(), range};
                 break;
             }
             case VK_DESCRIPTOR_TYPE_SAMPLER: {
                 const SamplerState *sm = slot < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT ? st.sampler[slot] : nullptr;
-                images[i] = {sm ? sm->sampler : null.sampler, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
-                w.pImageInfo = &images[i];
+                img = {sm ? sm->sampler : null.sampler, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED};
+                is_image = true;
                 break;
             }
             case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: {
@@ -477,53 +500,67 @@ namespace xrvk
                 }
                 if (!view)
                     view = r.dimension == D3D_SRV_DIMENSION_TEXTURE2DMS ? null.ms_view : null.views[null_view_type(r.dimension)];
-                images[i] = {VK_NULL_HANDLE, view, VK_IMAGE_LAYOUT_GENERAL};
-                w.pImageInfo = &images[i];
+                img = {VK_NULL_HANDLE, view, VK_IMAGE_LAYOUT_GENERAL};
+                is_image = true;
                 break;
             }
             case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
-                const UnorderedAccessView *u = cls == RegClass::UAV && s == Stage::Compute ? cs_uav[slot] : nullptr;
-                images[i] = {VK_NULL_HANDLE, u && u->v.view ? u->v.view : null.views[null_view_type(r.dimension)], VK_IMAGE_LAYOUT_GENERAL};
-                w.pImageInfo = &images[i];
+                const UnorderedAccessView *u = sl.cls == RegClass::UAV && sl.stage == Stage::Compute ? cs_uav[slot] : nullptr;
+                img = {VK_NULL_HANDLE, u && u->v.view ? u->v.view : null.views[null_view_type(r.dimension)], VK_IMAGE_LAYOUT_GENERAL};
+                is_image = true;
                 break;
             }
             case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
                 const ViewData *v = nullptr;
-                if (cls == RegClass::UAV)
-                    v = s == Stage::Compute && cs_uav[slot] ? &cs_uav[slot]->v : nullptr;
+                if (sl.cls == RegClass::UAV)
+                    v = sl.stage == Stage::Compute && cs_uav[slot] ? &cs_uav[slot]->v : nullptr;
                 else if (st.srv[slot])
                     v = &st.srv[slot]->v;
                 if (v && v->buffer)
-                    buffers[i] = {v->buffer->vk(), v->buffer->base() + v->offset, v->size};
+                    buf = {v->buffer->vk(), v->buffer->base() + v->offset, v->size};
                 else
-                    buffers[i] = {null.buffer->vk(), 0, VK_WHOLE_SIZE};
-                w.pBufferInfo = &buffers[i];
+                    buf = {null.buffer->vk(), 0, VK_WHOLE_SIZE};
                 break;
             }
             default:
                 log_once(p, "! vk: typed buffer views in shaders are not supported yet (%s)", r.name.c_str());
                 return false;
             }
+            if (graphics)
+            {
+                if (!all)
+                {
+                    const VkDescriptorImageInfo &pi = pushed_images[i];
+                    const VkDescriptorBufferInfo &pb = pushed_buffers[i];
+                    const bool same = is_image ? pi.sampler == img.sampler && pi.imageView == img.imageView && pi.imageLayout == img.imageLayout
+                                               : pb.buffer == buf.buffer && pb.offset == buf.offset && pb.range == buf.range;
+                    if (same)
+                        continue;
+                }
+                pushed_images[i] = img;
+                pushed_buffers[i] = buf;
+            }
+            VkWriteDescriptorSet &w = writes[count];
+            w = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            w.dstBinding = b.binding;
+            w.descriptorCount = 1;
+            w.descriptorType = b.descriptorType;
+            if (is_image)
+            {
+                images[count] = img;
+                w.pImageInfo = &images[count];
+            }
+            else
+            {
+                buffers[count] = buf;
+                w.pBufferInfo = &buffers[count];
+            }
+            ++count;
         }
-        if (bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS)
-        {
-            auto same_image = [](const VkDescriptorImageInfo &a, const VkDescriptorImageInfo &b)
-            {
-                return a.sampler == b.sampler && a.imageView == b.imageView && a.imageLayout == b.imageLayout;
-            };
-            auto same_buffer = [](const VkDescriptorBufferInfo &a, const VkDescriptorBufferInfo &b)
-            {
-                return a.buffer == b.buffer && a.offset == b.offset && a.range == b.range;
-            };
-            if (p == pushed_program && pushed_images.size() == n &&
-                std::equal(images.begin(), images.begin() + n, pushed_images.begin(), same_image) &&
-                std::equal(buffers.begin(), buffers.begin() + n, pushed_buffers.begin(), same_buffer))
-                return true; // the set in the command buffer already holds exactly these
+        if (graphics)
             pushed_program = p;
-            pushed_images.assign(images.begin(), images.begin() + n);
-            pushed_buffers.assign(buffers.begin(), buffers.begin() + n);
-        }
-        c->ext.push_descriptor_set(cb, bind_point, p->layout, 0, uint32_t(n), writes.data());
+        if (count)
+            c->ext.push_descriptor_set(cb, bind_point, p->layout, 0, count, writes.data());
         return true;
     }
 
@@ -532,21 +569,24 @@ namespace xrvk
         Core *c = core();
         if (dirty & kVertexInput)
         {
-            std::vector<VkVertexInputBindingDescription2EXT> bindings;
-            std::vector<VkVertexInputAttributeDescription2EXT> attrs;
+            // fixed arrays: this runs on every input layout or stride change
+            VkVertexInputBindingDescription2EXT bindings[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+            // one attribute per vertex shader input register (32 in D3D11; CreateInputLayout checks)
+            VkVertexInputAttributeDescription2EXT attrs[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+            uint32_t nb = 0, na = 0;
+            uint32_t known = 0; // bit per input slot (D3D11 has 32)
             if (layout)
                 for (const InputLayout::Attribute &a : layout->attributes)
                 {
-                    attrs.push_back({VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT, nullptr, a.location, a.slot, a.format, a.offset});
-                    const bool known = std::any_of(bindings.begin(), bindings.end(), [&](const auto &b)
-                                                   {
-                                                       return b.binding == a.slot;
-                                                   });
-                    if (!known)
-                        bindings.push_back({VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT, nullptr, a.slot, vb_stride[a.slot],
-                                            a.per_instance ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX, 1});
+                    attrs[na++] = {VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT, nullptr, a.location, a.slot, a.format, a.offset};
+                    if (!(known & (1u << a.slot)))
+                    {
+                        known |= 1u << a.slot;
+                        bindings[nb++] = {VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT, nullptr, a.slot, vb_stride[a.slot],
+                                          a.per_instance ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX, 1};
+                    }
                 }
-            c->ext.set_vertex_input(cb, uint32_t(bindings.size()), bindings.data(), uint32_t(attrs.size()), attrs.data());
+            c->ext.set_vertex_input(cb, nb, bindings, na, attrs);
         }
         // vertex buffers: re-bound when the D3D binding or a dynamic buffer's current slice changed
         if (layout)

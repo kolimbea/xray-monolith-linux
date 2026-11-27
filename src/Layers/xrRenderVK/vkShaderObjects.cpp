@@ -153,8 +153,11 @@ namespace xrvk
                     b.descriptorType = r.descriptor;
                     b.descriptorCount = r.count;
                     b.stageFlags = vk_stage(Stage(s));
+                    Program::Slot slot{};
+                    decode_binding(b.binding, slot.stage, slot.cls, slot.reg);
                     p->bindings.push_back(b);
                     p->resources.push_back(&r);
+                    p->slots.push_back(slot);
                     descriptors += r.count;
                 }
             }

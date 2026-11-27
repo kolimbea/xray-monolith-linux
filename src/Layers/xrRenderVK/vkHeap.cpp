@@ -1,5 +1,8 @@
 #include "vkHeap.h"
 
+#include <cstdlib>
+#include <cstring>
+
 #include "vkCore.h"
 
 namespace xrvk
@@ -17,13 +20,34 @@ namespace xrvk
         bi.size = size;
         bi.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        // System memory (write-combined), not the device-local host-visible window VMA would pick: the
+        // engine rewrites constant buffers before nearly every draw, and those writes through the PCIe BAR
+        // stalled the main thread (GTX 1650 Ti, GAMMA level: 28.5-32.5 -> 27.1-27.8 ms per frame, GPU
+        // time unchanged). XR_VK_HOST_HEAP=bar restores VMA's choice, =cached asks for CPU-cached memory.
         VmaAllocationCreateInfo ai{};
-        ai.usage = VMA_MEMORY_USAGE_AUTO;
+        ai.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
         ai.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        static const char *mode = getenv("XR_VK_HOST_HEAP");
+        if (mode && !strcmp(mode, "bar"))
+            ai.usage = VMA_MEMORY_USAGE_AUTO;
+        else if (mode && !strcmp(mode, "cached"))
+        {
+            ai.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+            ai.requiredFlags = VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        }
         VmaAllocationInfo info{};
         if (vmaCreateBuffer(m_vma, &bi, &ai, &buffer, &alloc, &info) != VK_SUCCESS)
             return false;
         ptr = static_cast<uint8_t *>(info.pMappedData);
+        static bool logged = false;
+        if (!logged)
+        {
+            logged = true;
+            VkMemoryPropertyFlags f = 0;
+            vmaGetMemoryTypeProperties(m_vma, info.memoryType, &f);
+            log("* vk: host heap in memory type %u (%s%s%s)", info.memoryType, (f & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) ? "device-local " : "",
+                (f & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) ? "cached " : "uncached ", "host-visible");
+        }
         m_total += size;
         return true;
     }

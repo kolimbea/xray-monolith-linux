@@ -4,9 +4,11 @@
 #include "../../xrCore/xrCore_platform.h"
 #include "vkCommonTypes.h"
 
+#include <array>
 #include <initializer_list>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 #include "vkCore.h"
@@ -277,6 +279,14 @@ namespace xrvk
         VkPipelineLayout layout = VK_NULL_HANDLE;
         std::vector<VkDescriptorSetLayoutBinding> bindings;
         std::vector<const ShaderResource *> resources; // the reflection of each binding (owned by `modules`)
+        // each binding decoded once (push_descriptors runs per draw)
+        struct Slot
+        {
+            Stage stage;
+            RegClass cls;
+            uint32_t reg;
+        };
+        std::vector<Slot> slots;
         ~Program();
     };
     struct ProgramCache;
@@ -378,11 +388,24 @@ namespace xrvk
         std::vector<VkWriteDescriptorSet> writes; // push_descriptors scratch
         std::vector<VkDescriptorImageInfo> images;
         std::vector<VkDescriptorBufferInfo> buffers;
-        // the graphics descriptors last pushed (in state_cb): an identical push is skipped
+        // the graphics descriptors last pushed (in state_cb), per binding of pushed_program: only the
+        // bindings that changed are pushed again (push descriptors can be updated incrementally)
         const Program *pushed_program = nullptr;
         std::vector<VkDescriptorImageInfo> pushed_images;
         std::vector<VkDescriptorBufferInfo> pushed_buffers;
         NullResources null;
+        // programs by stage module ids, without the device cache's lock and shared_ptr copies
+        struct ProgramKeyHash
+        {
+            size_t operator()(const std::array<uint64_t, size_t(Stage::Count)> &k) const
+            {
+                uint64_t h = 0x9e3779b97f4a7c15ull;
+                for (uint64_t v : k)
+                    h = (h ^ v) * 0xff51afd7ed558ccdull;
+                return size_t(h ^ (h >> 32));
+            }
+        };
+        std::unordered_map<std::array<uint64_t, size_t(Stage::Count)>, const Program *, ProgramKeyHash> program_cache;
 
         std::vector<Query *> active_queries; // occlusion queries between Begin and End (no references)
 
