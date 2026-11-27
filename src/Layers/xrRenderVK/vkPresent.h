@@ -34,6 +34,8 @@ namespace xrvk
         // returns the image the final blit must read. `cb` is outside any rendering scope.
         Result record(VkCommandBuffer cb, const Image &src, VkExtent2D out);
         void destroy();
+        // The back buffer was recreated: drop the cached view of it (a new image can get the old handle).
+        void reset_source();
 
     private:
         struct Target

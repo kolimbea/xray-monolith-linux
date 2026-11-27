@@ -182,6 +182,7 @@ namespace xrvk
 
     void SwapChain::create_back_buffer()
     {
+        present_pass().reset_source();
         if (back_buffer)
             back_buffer->Release();
         D3D11_TEXTURE2D_DESC d{};
@@ -275,7 +276,9 @@ namespace xrvk
             const std::vector<uint8_t> png = xr_dds::write_png(rgba.data(), w, h);
             // "%d" in the path: the frame number (XR_VK_SCREENSHOT_EVERY writes a series)
             char path[1024];
-            snprintf(path, sizeof path, getenv("XR_VK_SCREENSHOT"), int(sc->presents));
+            // numbered across swapchains (a level load creates a new one) so a series is never overwritten
+            static int series = 0;
+            snprintf(path, sizeof path, getenv("XR_VK_SCREENSHOT"), getenv("XR_VK_SCREENSHOT_EVERY") ? series++ : int(sc->presents));
             std::ofstream out(path, std::ios::binary);
             out.write(reinterpret_cast<const char *>(png.data()), std::streamsize(png.size()));
             if (out.good())

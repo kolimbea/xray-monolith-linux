@@ -377,6 +377,17 @@ void main(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_GroupID
         return r;
     }
 
+    void PresentPass::reset_source()
+    {
+        Core *c = core();
+        if (!c || !m_src_view)
+            return;
+        vkDeviceWaitIdle(c->device);
+        vkDestroyImageView(c->device, m_src_view, nullptr);
+        m_src_view = VK_NULL_HANDLE;
+        m_src_image = VK_NULL_HANDLE;
+    }
+
     void PresentPass::destroy()
     {
         Core *c = core();
