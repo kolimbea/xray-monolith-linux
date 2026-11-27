@@ -119,7 +119,7 @@ IC u32 IReaderBase<T>::find_chunk(u32 ID, BOOL* bCompressed)
 
 	bool success = false;
 
-	if (m_last_pos != 0)
+	if (m_last_pos != 0 && m_last_pos + 8 <= (u32)impl().length()) // a chunk header fits after the cached position
 	{
 		impl().seek(m_last_pos);
 		dwType = r_u32();

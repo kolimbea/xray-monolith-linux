@@ -106,7 +106,9 @@ bool CSoundRender_Source::LoadWave(LPCSTR pName)
 	fTimeTotal = s_f_def_source_footer + dwBytesTotal / float(m_wformat.nAvgBytesPerSec);
 
 	vorbis_comment* ovm = ov_comment(&ovf, -1);
-	if (ovm->comments)
+	// X-Ray keeps its parameters as a binary first comment; other tools leave text comments, some
+	// shorter than the version field (read past their end before)
+	if (ovm->comments && ovm->comment_lengths[0] >= 4)
 	{
 		IReader F(ovm->user_comments[0], ovm->comment_lengths[0]);
 		u32 vers = F.r_u32();
