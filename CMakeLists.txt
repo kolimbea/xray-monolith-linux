@@ -32,6 +32,13 @@ set(XR_3RD "${XR_SRC}/3rd party")
 # executable. Superseded by xray_vk; kept buildable for comparisons. Needs dxvk-native's libraries and
 # libvkd3d-shader. (dxvk-native's headers are always needed: they provide the Win32 base types.)
 option(XR_BUILD_DXVK_RENDERER "Build the dxvk-native renderer path (xrRender_R4, xray)" OFF)
+# ThinLTO for release/player builds: measured 2026-11-27, GAMMA Bar 720p, A/B twice: 30.05/29.05 ->
+# 28.72/27.52 ms/frame (~4.5 %). Needs clang's LLVMgold plugin for GNU ld/ar (bfd-plugins) or lld.
+option(XR_THINLTO "Build with -flto=thin" OFF)
+if(XR_THINLTO)
+    add_compile_options(-flto=thin)
+    add_link_options(-flto=thin)
+endif()
 
 # Flags every engine module shares: MSVC extensions the code base relies on (__super, __declspec,
 # __forceinline, MS builtins), `or`/`and` used as identifiers, C++17-removed `register`, and
