@@ -21,11 +21,22 @@ static string_path logFName = "engine.log";
 static string_path log_file_name = "engine.log";
 static BOOL no_log = TRUE;
 #ifdef PROFILE_CRITICAL_SECTIONS
-static xrCriticalSection logCS(MUTEX_PROFILE_ID(log));
+// Never destroyed: threads still running at process exit may log after static destructors ran
+// (a destroyed mutex crashed them at exit, seen on Linux).
+static xrCriticalSection& logCS = *new xrCriticalSection(MUTEX_PROFILE_ID(log));
 #else // PROFILE_CRITICAL_SECTIONS
-static xrCriticalSection logCS;
+// Never destroyed: threads still running at process exit may log after static destructors ran
+// (a destroyed mutex crashed them at exit, seen on Linux).
+static xrCriticalSection& logCS = *new xrCriticalSection;
 #endif // PROFILE_CRITICAL_SECTIONS
 xr_vector<xr_string> LogFile;
+// Static destructors run in reverse order: this one runs before LogFile's, so log calls from threads
+// that outlive main() stop touching LogFile once it is about to be destroyed.
+static bool g_log_alive = true;
+static struct LogLifetime
+{
+	~LogLifetime() { g_log_alive = false; }
+} g_log_lifetime;
 static LogCallback LogCB = 0;
 
 void FlushLog()
@@ -90,6 +101,8 @@ extern bool is_console_mark(Console_mark type);
 
 void AddOne(const char* split)
 {
+	if (!g_log_alive)
+		return;
 
 	logCS.Enter();
 
