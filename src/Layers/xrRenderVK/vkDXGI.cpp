@@ -222,7 +222,8 @@ namespace xrvk
 {
     // XR_VK_SCREENSHOT=<file.png>: the back buffer of presented frame XR_VK_SCREENSHOT_FRAME (default 300)
     // is written as PNG (screenshot tests; works without looking at the window). With
-    // XR_VK_SCREENSHOT_EVERY=<n> every n-th frame is written; "%d" in the path is the frame number.
+    // XR_VK_SCREENSHOT_EVERY=<n> every n-th frame is written; "%d" in the path is the series number.
+    // XR_VK_SCREENSHOT_FROM=<f> starts that series at the f-th present of the process, _COUNT=<k> stops it.
     struct Screenshot
     {
         VkBuffer buffer = VK_NULL_HANDLE;
@@ -238,7 +239,16 @@ namespace xrvk
             const char *at = getenv("XR_VK_SCREENSHOT_FRAME");
             const char *every = getenv("XR_VK_SCREENSHOT_EVERY");
             const uint64_t n = every ? uint64_t(atoll(every)) : 0;
-            const bool due = n ? (sc->presents && sc->presents % n == 0) : sc->presents == uint64_t(at ? atoll(at) : 300);
+            // XR_VK_SCREENSHOT_FROM / _COUNT bound a series (consecutive frames of one window: flicker checks)
+            const char *from_s = getenv("XR_VK_SCREENSHOT_FROM");
+            const char *count_s = getenv("XR_VK_SCREENSHOT_COUNT");
+            static uint64_t total = 0; // all presents, across swapchains
+            ++total;
+            const uint64_t from = from_s ? uint64_t(atoll(from_s)) : 0;
+            const uint64_t count = count_s ? uint64_t(atoll(count_s)) : ~0ull;
+            const bool in_window = total >= from && (total - from) / (n ? n : 1) < count;
+            const bool due = n ? (in_window && sc->presents && (from_s ? (total - from) % n == 0 : sc->presents % n == 0))
+                               : sc->presents == uint64_t(at ? atoll(at) : 300);
             if (!path || !due)
                 return;
             Core &c = *core();
