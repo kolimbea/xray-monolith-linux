@@ -99,16 +99,19 @@ int __cdecl Lua::LuaOut(Lua::ELuaMessageType tLuaMessageType, LPCSTR caFormat, .
 
 	va_list l_tMarker;
 
+	// formatted twice: each pass gets its own va_list (one can be consumed only once on x86-64 SysV)
 	va_start(l_tMarker, caFormat);
 
 	xr_strcpy(S2, S);
 	S1 = S2 + xr_strlen(S);
-	int l_iResult = vsprintf(S1, caFormat, l_tMarker);
+	int l_iResult = vsnprintf(S1, sizeof(S2) - (S1 - S2), caFormat, l_tMarker);
+	va_end(l_tMarker);
 	Msg("%s", S2);
 
 	xr_strcpy(S2, SS);
 	S1 = S2 + xr_strlen(SS);
-	vsprintf(S1, caFormat, l_tMarker);
+	va_start(l_tMarker, caFormat);
+	vsnprintf(S1, sizeof(S2) - (S1 - S2), caFormat, l_tMarker);
 
 #ifdef ENGINE_BUILD
 	// Msg("[LUA Output] : %s",S2);

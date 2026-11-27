@@ -629,14 +629,22 @@ int CScriptStorage::vscript_log(ScriptStorage::ELuaMessageType tLuaMessageType, 
 	default: NODEFAULT;
 	}
 
+	// The arguments are formatted twice: a va_list can be consumed once (on x86-64 SysV it is passed by
+	// reference, so the second pass read garbage and crashed) — format from a copy each time. Bounded
+	// by the buffer: Lua stack dumps can be longer than 4 KB.
+	va_list args;
 	xr_strcpy(S2, S);
 	S1 = S2 + xr_strlen(S);
-	int l_iResult = vsprintf(S1, caFormat, marker);
+	va_copy(args, marker);
+	int l_iResult = vsnprintf(S1, sizeof(S2) - (S1 - S2), caFormat, args);
+	va_end(args);
 	Msg("%s", S2);
 
 	xr_strcpy(S2, SS);
 	S1 = S2 + xr_strlen(SS);
-	vsprintf(S1, caFormat, marker);
+	va_copy(args, marker);
+	vsnprintf(S1, sizeof(S2) - (S1 - S2) - 2, caFormat, args);
+	va_end(args);
 	xr_strcat(S2, "\r\n");
 
 #ifdef LUA_DEBUG_PRINT //DEBUG
