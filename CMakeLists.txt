@@ -196,7 +196,7 @@ target_include_directories(xrVK_shaderc PUBLIC ${XR_SRC}/Layers/xrRenderVK)
 target_link_libraries(xrVK_shaderc PRIVATE dxcompiler)
 
 # xrVK_core: the Vulkan device layer, independent of the engine (tests/vk_smoke.cpp links it alone).
-set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp vkShader.cpp vkReflection.cpp vkShaderObjects.cpp vkHeap.cpp vkBuffer.cpp vkTexture.cpp vkViews.cpp vkStates.cpp vkContext.cpp vkQuery.cpp)
+set(XR_VK_CORE_SRC vkCore.cpp vkFormat.cpp vkObjects.cpp vkDevice.cpp vkDXGI.cpp vkShader.cpp vkReflection.cpp vkShaderObjects.cpp vkHeap.cpp vkBuffer.cpp vkTexture.cpp vkViews.cpp vkStates.cpp vkContext.cpp vkQuery.cpp vkPresent.cpp)
 list(TRANSFORM XR_VK_CORE_SRC PREPEND ${XR_SRC}/Layers/xrRenderVK/)
 add_library(xrVK_core STATIC ${XR_VK_CORE_SRC} ${XR_SRC}/Common/linux/dds_codec.cpp)
 target_include_directories(xrVK_core BEFORE PUBLIC ${XR_SRC}/Layers/xrRenderVK/include ${XR_SRC}/Layers/xrRenderVK)

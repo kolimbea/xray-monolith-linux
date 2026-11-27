@@ -2,6 +2,7 @@
 // The swap chain's buffer 0 is an own texture that Present blits into the acquired swapchain image,
 // which also converts between the engine's format and the surface's (e.g. RGBA -> BGRA).
 #include "vkObjects.h"
+#include "vkPresent.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -192,6 +193,7 @@ namespace xrvk
         if (!core())
             return;
         destroy_swapchain();
+        present_pass().destroy();
         Core &c = *core();
         for (VkSemaphore s : acquired)
             if (s)
@@ -216,8 +218,10 @@ namespace xrvk
         VmaAllocation alloc = nullptr;
         void *ptr = nullptr;
         uint32_t w = 0, h = 0;
+        bool swap_rb = false; // the source is BGRA
 
-        void record(VkCommandBuffer cb, SwapChain *sc)
+        // `image`: what goes to the screen (the back buffer, or the present pass output when active)
+        void record(VkCommandBuffer cb, SwapChain *sc, VkImage image, bool bgra)
         {
             const char *path = getenv("XR_VK_SCREENSHOT");
             const char *at = getenv("XR_VK_SCREENSHOT_FRAME");
@@ -241,7 +245,8 @@ namespace xrvk
             VkBufferImageCopy r{};
             r.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
             r.imageExtent = {w, h, 1};
-            vkCmdCopyImageToBuffer(cb, sc->back_buffer->img.image, VK_IMAGE_LAYOUT_GENERAL, buffer, 1, &r);
+            vkCmdCopyImageToBuffer(cb, image, VK_IMAGE_LAYOUT_GENERAL, buffer, 1, &r);
+            swap_rb = bgra;
         }
 
         void write(SwapChain *sc)
@@ -252,8 +257,7 @@ namespace xrvk
             vkQueueWaitIdle(c.queue);
             std::vector<uint8_t> rgba(size_t(w) * h * 4);
             memcpy(rgba.data(), ptr, rgba.size());
-            const DXGI_FORMAT f = sc->back_buffer->desc.Format;
-            if (f == DXGI_FORMAT_B8G8R8A8_UNORM || f == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB)
+            if (swap_rb)
                 for (size_t i = 0; i < rgba.size(); i += 4)
                     std::swap(rgba[i], rgba[i + 2]);
             for (size_t i = 3; i < rgba.size(); i += 4)
@@ -562,8 +566,6 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT flags)
     VkCommandBuffer cb = impl(static_cast<Device *>(sc->device)->immediate)->outside_rendering();
     transition(cb, &sc->back_buffer->img, VK_IMAGE_LAYOUT_GENERAL);
     transfer_barrier(cb, true);
-    Screenshot shot;
-    shot.record(cb, sc);
     VkImageMemoryBarrier2 b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
     b.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
     b.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
@@ -583,7 +585,12 @@ HRESULT IDXGISwapChain::Present(UINT sync_interval, UINT flags)
     blit.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
     blit.dstOffsets[1] = {int32_t(sc->extent.width), int32_t(sc->extent.height), 1};
     const bool same = sc->back_buffer->desc.Width == sc->extent.width && sc->back_buffer->desc.Height == sc->extent.height;
-    vkCmdBlitImage(cb, sc->back_buffer->img.image, VK_IMAGE_LAYOUT_GENERAL, sc->images[idx],
+    const VkImage present_src = present_pass().record(cb, sc->back_buffer->img); // gamma curve, if any
+    const DXGI_FORMAT bf = sc->back_buffer->desc.Format;
+    Screenshot shot;
+    shot.record(cb, sc, present_src,
+                present_src == sc->back_buffer->img.image && (bf == DXGI_FORMAT_B8G8R8A8_UNORM || bf == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB));
+    vkCmdBlitImage(cb, present_src, VK_IMAGE_LAYOUT_GENERAL, sc->images[idx],
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, same ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
     b.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
     b.dstAccessMask = 0;
@@ -746,15 +753,32 @@ HRESULT IDXGISwapChain::GetContainingOutput(IDXGIOutput **output)
     return S_OK;
 }
 
-// Hardware gamma ramps: DXGI offers them only to a full-screen exclusive swap chain and answers
-// DXGI_ERROR_NOT_CURRENTLY_AVAILABLE otherwise, which the engine (CGammaControl) handles by skipping the
-// ramp. The Vulkan swap chain is never exclusive, so that is the answer here too. (Applying the engine's
-// gamma/brightness/contrast in the final blit is a later feature.)
-HRESULT IDXGIOutput::GetGammaControlCapabilities(DXGI_GAMMA_CONTROL_CAPABILITIES *)
+// Gamma control: DXGI applies the curve with the display's hardware ramp (exclusive full screen only).
+// Here the engine's curve (CGammaControl: gamma, brightness, contrast, colour balance) is applied by a
+// compute pass at Present (vkPresent.cpp), in windowed mode too.
+HRESULT IDXGIOutput::GetGammaControlCapabilities(DXGI_GAMMA_CONTROL_CAPABILITIES *caps)
 {
-    return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+    if (!caps)
+        return E_INVALIDARG;
+    caps->ScaleAndOffsetSupported = FALSE;
+    caps->MinConvertedValue = 0.f;
+    caps->MaxConvertedValue = 1.f;
+    caps->NumGammaControlPoints = PresentPass::kGammaPoints;
+    for (uint32_t i = 0; i < PresentPass::kGammaPoints; ++i)
+        caps->ControlPointPositions[i] = float(i) / float(PresentPass::kGammaPoints - 1);
+    return S_OK;
 }
-HRESULT IDXGIOutput::SetGammaControl(const DXGI_GAMMA_CONTROL *)
+HRESULT IDXGIOutput::SetGammaControl(const DXGI_GAMMA_CONTROL *control)
 {
-    return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+    if (!control)
+        return E_INVALIDARG;
+    float rgb[PresentPass::kGammaPoints][3];
+    for (uint32_t i = 0; i < PresentPass::kGammaPoints; ++i)
+    {
+        rgb[i][0] = control->GammaCurve[i].Red;
+        rgb[i][1] = control->GammaCurve[i].Green;
+        rgb[i][2] = control->GammaCurve[i].Blue;
+    }
+    present_pass().set_gamma(rgb);
+    return S_OK;
 }
