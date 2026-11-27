@@ -383,6 +383,9 @@ static int resolve_path_then_call(lua_State* L)
 	if (lua_type(L, 1) == LUA_TSTRING)
 	{
 		const std::string resolved = xr_resolve_path(lua_tostring(L, 1));
+		// io.open(path, "w"/"a"/"r+"): never write through the overlay's symlinks into a mod folder
+		if (lua_type(L, 2) == LUA_TSTRING && strpbrk(lua_tostring(L, 2), "wa+"))
+			xr_detach_for_write(resolved, strpbrk(lua_tostring(L, 2), "a+") != nullptr);
 		lua_pushlstring(L, resolved.c_str(), resolved.size());
 		lua_replace(L, 1);
 	}

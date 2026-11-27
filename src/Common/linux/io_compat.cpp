@@ -106,6 +106,8 @@ long _filelength(int fd)
 FILE* xr_linux_fopen(const char* path, const char* mode)
 {
     const std::string real = xr_resolve_path(path);
+    if (strpbrk(mode, "wa+"))
+        xr_detach_for_write(real, strpbrk(mode, "a+") != nullptr);
     FILE* f = ::fopen(real.c_str(), mode);
     if (f && (strchr(mode, 'w') || strchr(mode, 'a')))
         xr_resolve_invalidate(real.c_str());
@@ -115,6 +117,8 @@ FILE* xr_linux_fopen(const char* path, const char* mode)
 int xr_linux_open(const char* path, int flags, int mode)
 {
     const std::string real = xr_resolve_path(path);
+    if (flags & (O_WRONLY | O_RDWR))
+        xr_detach_for_write(real, !(flags & O_TRUNC));
     const int fd = ::open(real.c_str(), flags, mode);
     if (fd >= 0 && (flags & O_CREAT))
         xr_resolve_invalidate(real.c_str());

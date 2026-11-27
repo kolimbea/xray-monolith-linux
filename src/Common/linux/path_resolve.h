@@ -16,3 +16,9 @@ std::string xr_resolve_path(const char* path);
 // Drops cached listings (all, or the directory containing `path`) after the engine creates or
 // removes entries, so later lookups see them.
 void xr_resolve_invalidate(const char* path = nullptr);
+
+// The game directory of the port is an overlay of symlinks into the mod folders (Mod Organizer 2
+// layout); MO2 sends writes to its overwrite folder instead of the mod. Before a file is opened for
+// writing, a symlink at `real` (an already resolved path) is replaced by a regular file — with the
+// target's content when `keep_content` (append / read-write) — so the write never reaches the mod.
+void xr_detach_for_write(const std::string& real, bool keep_content);

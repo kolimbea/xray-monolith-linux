@@ -1,4 +1,6 @@
 #include "path_resolve.h"
+#include <cstdio>
+#include <unistd.h>
 
 #include <cctype>
 #include <dirent.h>
@@ -130,4 +132,27 @@ void xr_resolve_invalidate(const char* path)
     std::string norm = normalize(path);
     const size_t slash = norm.rfind('/');
     g_dirs.erase(slash == std::string::npos ? "." : norm.substr(0, slash));
+}
+
+void xr_detach_for_write(const std::string& real, bool keep_content)
+{
+    struct stat sb;
+    if (lstat(real.c_str(), &sb) != 0 || !S_ISLNK(sb.st_mode))
+        return;
+    std::string content;
+    if (keep_content)
+        if (FILE* in = ::fopen(real.c_str(), "rb"))
+        {
+            char buf[65536];
+            for (size_t n; (n = fread(buf, 1, sizeof(buf), in)) > 0;)
+                content.append(buf, n);
+            fclose(in);
+        }
+    if (unlink(real.c_str()) != 0)
+        return;
+    if (FILE* out = ::fopen(real.c_str(), "wb"))
+    {
+        fwrite(content.data(), 1, content.size(), out);
+        fclose(out);
+    }
 }
