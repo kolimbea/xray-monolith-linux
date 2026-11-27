@@ -11,6 +11,11 @@ void set_viewport(ID3DDeviceContext* dev, float w, float h)
 
 void CRenderTarget::phase_ssao()
 {
+	// rt_ssao_temp exists only with HDAO at ultra quality (r4_rendertarget.cpp), but r2_ssao_blur reaches
+	// this pass with any SSAO mode: skip it instead of dereferencing a null target.
+	if (!rt_ssao_temp)
+		return;
+
 	u32 Offset = 0;
 
 	FLOAT ColorRGBA[4] = {0.0f, 0.0f, 0.0f, 0.0f};

@@ -184,12 +184,59 @@ namespace xrvk::hlsl
                     continue;
                 out.append(s, pos, k - pos);
                 out += kind->first + ".Load((" + trim(args[0]) + ") + ";
-                out += kind->second == "Texture2D" ? "int3((" + trim(args[1]) + "), 0))"
-                                                   : "int4((" + trim(args[1]) + "), 0, 0))";
+                // the (int2) cast also widens a scalar offset, which FXC splats (`MSAA_SAMPLE_INDEX` = `( 0 )`)
+                out += kind->second == "Texture2D" ? "int3((int2)(" + trim(args[1]) + "), 0))"
+                                                   : "int4((int2)(" + trim(args[1]) + "), 0, 0))";
                 pos = end;
                 i = end - 1;
             }
             out.append(s, pos, std::string::npos);
+            return out;
+        }
+
+        // Rule 4: FXC takes the lowercase DX9-era spellings `texture2D` / `texture3D` / `textureCube` as the
+        // SM4 object types (Anomaly's r3 ssao_hbao.ps declares `uniform texture2D jitter4;` and calls .Load on
+        // it); DXC knows only the capitalised names.
+        std::string rule_legacy_texture_types(const std::string &s)
+        {
+            static const char *const from[] = {"texture2D", "texture3D", "textureCube", "textureCUBE"};
+            static const char *const to[] = {"Texture2D", "Texture3D", "TextureCube", "TextureCube"};
+            std::string out;
+            out.reserve(s.size());
+            for (size_t i = 0; i < s.size();)
+            {
+                bool replaced = false;
+                if (s[i] == 't')
+                    for (size_t k = 0; k < 4; ++k)
+                        if (word_at(s, i, from[k]) && !in_directive_line(s, i))
+                        {
+                            out += to[k];
+                            i += std::char_traits<char>::length(from[k]);
+                            replaced = true;
+                            break;
+                        }
+                if (!replaced)
+                    out += s[i++];
+            }
+            return out;
+        }
+
+        // Rule 5: hull shader `[partitioning("pow2")]` has no Vulkan equivalent (DXC refuses it); "integer"
+        // tessellates at the same integer levels without rounding them up to a power of two.
+        std::string rule_pow2_partitioning(const std::string &s)
+        {
+            std::string out = s;
+            for (size_t i = out.find("partitioning"); i != std::string::npos; i = out.find("partitioning", i + 1))
+            {
+                if (!word_at(out, i, "partitioning") || in_directive_line(out, i))
+                    continue;
+                size_t j = skip_space(out, i + 12);
+                if (j >= out.size() || out[j] != '(')
+                    continue;
+                j = skip_space(out, j + 1);
+                if (out.compare(j, 6, "\"pow2\"") == 0)
+                    out.replace(j, 6, "\"integer\"");
+            }
             return out;
         }
 
@@ -371,6 +418,7 @@ namespace xrvk::hlsl
 
     std::string rewrite_compat(const std::string &text)
     {
-        return rule_loop_attribute(rule_load_offset(text));
+        // rule 4 first: rule 1 looks for Texture2D declarations
+        return rule_pow2_partitioning(rule_loop_attribute(rule_load_offset(rule_legacy_texture_types(text))));
     }
 } // namespace xrvk::hlsl

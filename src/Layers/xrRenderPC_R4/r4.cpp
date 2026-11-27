@@ -443,6 +443,15 @@ void CRender::create()
 
 	o.dx11_enable_tessellation = HW.FeatureLevel >= D3D_FEATURE_LEVEL_11_0 && ps_r2_ls_flags_ext.test(
 		R2FLAGEXT_ENABLE_TESSELLATION);
+#ifdef USE_VK
+	// The Vulkan backend has no hull/domain shader stages yet (patch constants); the D3D11 path would fail
+	// to create the tessellation shaders and stop the game.
+	if (o.dx11_enable_tessellation)
+	{
+		Msg("! r4_enable_tessellation is not supported by the Vulkan renderer yet; tessellation is off");
+		o.dx11_enable_tessellation = FALSE;
+	}
+#endif
 
 	if (o.dx10_minmax_sm == MMSM_AUTODETECT)
 	{
