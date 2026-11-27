@@ -24,6 +24,7 @@
 
 #include <luabind/config.hpp>
 
+#include <limits> // std::numeric_limits (not pulled in transitively by GCC 14's libstdc++)
 #include <typeinfo>
 
 #include <luabind/detail/class_rep.hpp>

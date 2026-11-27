@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <atomic>
 #include "../xrCDB/Frustum.h"
 #include "XR_IOConsole.h"
 #include "xr_input.h"
@@ -366,6 +367,11 @@ extern int ps_framelimiter;
 extern u32 g_screenmode;
 
 CTimer FreezeTimer;
+// Set when the main loop has ended: from then on the main thread no longer ticks FreezeTimer while it
+// tears the engine down, and a "freeze" FlushLog would write through a file system being destroyed
+// (SIGSEGV at exit in CLocatorAPI::Register / xr_resolve_invalidate).
+static std::atomic<bool> g_freeze_watch_stopped{false};
+
 void mt_FreezeThread(void *ptr) {
 	float freezetime = 0.f;
 	float repeatcheck = 500.f;
@@ -381,6 +387,8 @@ void mt_FreezeThread(void *ptr) {
 
 		repeatcheck = 500.f;
 
+		if (g_freeze_watch_stopped.load(std::memory_order_relaxed))
+			return;
 		START_PROFILE("Check timer");
 		if (FreezeTimer.GetElapsed_sec()*1000.f > freezetime)
 		{
@@ -690,6 +698,7 @@ void CRenderDevice::Run()
 	m_pRender->ClearTarget();
 	SetForegroundWindow(m_hWnd);
 	message_loop();
+	g_freeze_watch_stopped = true;
 	seqAppEnd.Process(rp_AppEnd);
 	// Stop Balance-Thread
 	mt_bMustExit = TRUE;

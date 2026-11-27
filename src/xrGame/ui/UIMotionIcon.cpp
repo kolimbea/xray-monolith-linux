@@ -2,7 +2,9 @@
 #include "UIMainIngameWnd.h"
 #include "UIMotionIcon.h"
 #include "UIXmlInit.h"
-#include "../Actor.cpp"
+// Actor.cpp was #included here for this one function, which defined CActor a second time (lld:
+// duplicate symbols; ld.bfd happened to skip the archive member).
+float GetActorVisibility(); // Actor.cpp
 
 const LPCSTR MOTION_ICON_XML = "motion_icon.xml";
 
