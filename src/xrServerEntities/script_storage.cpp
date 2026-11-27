@@ -340,6 +340,58 @@ void disable_os_funcs(lua_State* L)
 	lua_pop(L, 1);
 }
 
+#ifdef __linux__
+// Mods extend package.path with Windows paths (".\\gamedata\\scripts\\?.lua") and then call require
+// ("illish.lib.util"). On Windows that opens gamedata\scripts\illish\lib\util.lua on disk relative to
+// the game root. On Linux '\\' is no directory separator and file names are case-sensitive, so Lua's
+// own searcher finds nothing. This searcher opens the same file through the compat fopen ('\\'
+// separators, case-insensitive names). Loose files only, like the Windows path.
+static int script_fs_searcher(lua_State* L)
+{
+	const char* name = luaL_checkstring(L, 1);
+	string_path rel, path;
+	xr_strconcat(rel, "scripts\\", name, ".lua");
+	for (char* c = rel + 8; c < rel + xr_strlen(rel) - 4; ++c)
+		if (*c == '.')
+			*c = '\\';
+	FS.update_path(path, "$game_data$", rel);
+	FILE* f = fopen(path, "rb");
+	if (!f)
+	{
+		lua_pushfstring(L, "\n\tno file '%s'", path);
+		return 1;
+	}
+	xr_vector<char> text;
+	char buf[16384];
+	for (size_t n; (n = fread(buf, 1, sizeof(buf), f)) > 0;)
+		text.insert(text.end(), buf, buf + n);
+	fclose(f);
+	string_path chunk;
+	xr_strconcat(chunk, "@", path);
+	if (luaL_loadbuffer(L, text.data(), text.size(), chunk))
+		return luaL_error(L, "error loading module '%s' from '%s':\n\t%s", name, path, lua_tostring(L, -1));
+	return 1;
+}
+
+// Inserts script_fs_searcher right after the preload searcher (package.loaders[2]).
+static void add_script_fs_searcher(lua_State* L)
+{
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, "loaders");
+	if (lua_istable(L, -1))
+	{
+		for (int i = (int)lua_objlen(L, -1); i >= 2; --i)
+		{
+			lua_rawgeti(L, -1, i);
+			lua_rawseti(L, -2, i + 1);
+		}
+		lua_pushcfunction(L, script_fs_searcher);
+		lua_rawseti(L, -2, 2);
+	}
+	lua_pop(L, 2);
+}
+#endif
+
 bool LoadKernelScriptToGlobal(lua_State* L, const char* name)
 {
 	string_path FileName;
@@ -443,6 +495,9 @@ void CScriptStorage::reinit()
 	}
 
 #endif //!USE_LUAJIT_ONE
+#ifdef __linux__
+	add_script_fs_searcher(lua());
+#endif
 	bool isDebugEnabled = lua_debug;
 	luaopen_lua_extensions(lua(), isDebugEnabled);
 	disable_os_funcs(lua());
