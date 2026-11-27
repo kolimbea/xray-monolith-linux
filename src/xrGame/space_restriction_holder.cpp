@@ -29,6 +29,14 @@ CSpaceRestrictionHolder::~CSpaceRestrictionHolder()
 
 void CSpaceRestrictionHolder::clear()
 {
+	// A composition bridge holds intrusive_ptrs to other bridges of this map. Deleting the bridges in
+	// map order (shared_str keys: string address order) could free a bridge before a composition that
+	// still referenced it, whose destructor then decremented the freed counter — heap corruption on every
+	// level unload (found with ASan on Linux; the order on Windows happened to be harmless). Destroy all
+	// implementations first, while every bridge is alive (the counters only reach zero, nothing is
+	// deleted by them: intrusive_base_deferred), then the bridges.
+	for (auto& it : m_restrictions)
+		it.second->change_implementation(nullptr);
 	delete_data(m_restrictions);
 	m_default_out_restrictions = "";
 	m_default_in_restrictions = "";
