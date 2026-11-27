@@ -62,7 +62,7 @@ PROTECT_API void CRenderDevice::Initialize()
 			FATAL(make_string("SDL_CreateWindow failed: %s", SDL_GetError()).c_str());
 		m_hWnd = w;
 		xr_linux_set_main_window(w);
-		SDL_StartTextInput(w); // SDL3 delivers SDL_EVENT_TEXT_INPUT (WM_CHAR) only after this
+		// SDL text input (SDL_EVENT_TEXT_INPUT, WM_CHAR) is started only while imgui edits text (imgui_base.cpp)
 	}
 	m_dwWindowStyle = WS_BORDER | WS_DLGFRAME;
 	SetWindowLongPtr(m_hWnd, GWL_STYLE, m_dwWindowStyle);

@@ -2,6 +2,9 @@
 #include "imgui_base.h"
 #include <imgui.h>
 #include <imgui/IconsFontAwesome6.h>
+#ifdef __linux__
+#include <SDL3/SDL_keyboard.h>
+#endif
 #include "device.h"
 #include "IGame_Persistent.h"
 
@@ -181,6 +184,21 @@ namespace xr_imgui
             ClientToScreen(Device.m_hWnd, &pos);
             SetCursorPos(pos.x, pos.y);
         }
+
+#ifdef __linux__
+        // SDL text input only while an imgui text field wants characters: when it is always on, an
+        // input method (IBus on GNOME, Fcitx) receives the letter keys and the game may not see them.
+        // The engine's own console and edit boxes take characters from key presses (dik_to_text).
+        static bool text_input = false;
+        if (io.WantTextInput != text_input)
+        {
+            text_input = io.WantTextInput;
+            if (text_input)
+                SDL_StartTextInput(static_cast<SDL_Window*>(Device.m_hWnd));
+            else
+                SDL_StopTextInput(static_cast<SDL_Window*>(Device.m_hWnd));
+        }
+#endif
 
         const bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
         const bool double_click = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
