@@ -17,6 +17,8 @@ void XRCORE_API LogWinErr(LPCSTR msg, long err_code);
 typedef void (*LogCallback)(LPCSTR string);
 LogCallback XRCORE_API SetLogCB(LogCallback cb);
 void XRCORE_API CreateLog(BOOL no_log = FALSE);
+// Full path of the log file of this run (after CreateLog).
+XRCORE_API const char* log_file_path();
 void InitLog();
 void CloseLog();
 void XRCORE_API FlushLog();

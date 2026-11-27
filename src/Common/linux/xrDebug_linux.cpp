@@ -8,6 +8,9 @@
 #include "os_clipboard.h"
 
 #include <csignal>
+#include <fcntl.h>
+#include <ctime>
+#include <string>
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <new>
@@ -35,6 +38,7 @@ extern void printLuaStack();
 
 namespace
 {
+void save_crash_log(); // below
 // Logs the native call stack. Symbol names need -rdynamic at link time; addresses always print.
 void log_native_stack(int skip)
 {
@@ -217,6 +221,7 @@ void xrDebug::backend(const char* expression, const char* description, const cha
 		handler();
 
 	FlushLog();
+	save_crash_log();
 	MessageBox(NULL, assertion_info, "Fatal Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
 
 	CS.Leave();
@@ -358,15 +363,119 @@ XRCORE_API string_path g_bug_report_file;
 
 namespace
 {
+// Crash report: logs/crash_<unix time>.log next to the engine log. The engine log is renamed to .bkp on
+// the next start and that backup is overwritten on the start after, so without this the log of a
+// crashed run is gone after two launches. A signal can arrive with the heap lock held (malloc_printerr
+// -> abort), so the first part of the report uses async-signal-safe calls only: open/write and
+// backtrace_symbols_fd (backtrace() is primed at start-up so it does not load libgcc then). The copy
+// of the engine log is appended afterwards.
+int g_crash_fd = -1;
+
+void write_str(int fd, const char* s)
+{
+	size_t n = 0;
+	while (s[n])
+		++n;
+	(void)!write(fd, s, n);
+}
+
+void write_num(int fd, unsigned long long v)
+{
+	char buf[24];
+	int i = sizeof(buf);
+	buf[--i] = 0;
+	do
+	{
+		buf[--i] = char('0' + v % 10);
+		v /= 10;
+	} while (v && i);
+	write_str(fd, buf + i);
+}
+
+// Opens the report (once) and writes the native stack; async-signal-safe.
+void open_crash_report(const char* what, int sig)
+{
+	if (g_crash_fd >= 0)
+		return;
+	const char* log = log_file_path();
+	static char path[4096];
+	size_t n = 0, dir_end = 0;
+	for (; log && log[n] && n < sizeof(path) - 64; ++n)
+	{
+		path[n] = log[n] == '\\' ? '/' : log[n];
+		if (path[n] == '/')
+			dir_end = n + 1;
+	}
+	if (!dir_end)
+		return;
+	const char prefix[] = "crash_";
+	size_t p = dir_end;
+	for (const char* c = prefix; *c; ++c)
+		path[p++] = *c;
+	unsigned long long t = (unsigned long long)time(nullptr);
+	char digits[24];
+	int d = 0;
+	do
+	{
+		digits[d++] = char('0' + t % 10);
+		t /= 10;
+	} while (t);
+	while (d)
+		path[p++] = digits[--d];
+	for (const char* c = ".log"; *c; ++c)
+		path[p++] = *c;
+	path[p] = 0;
+	g_crash_fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+	if (g_crash_fd < 0)
+		return;
+	write_str(g_crash_fd, "X-Ray crash report: ");
+	write_str(g_crash_fd, what);
+	if (sig)
+	{
+		write_str(g_crash_fd, " ");
+		write_num(g_crash_fd, (unsigned long long)sig);
+	}
+	write_str(g_crash_fd, "\nnative stack:\n");
+	void* frames[64];
+	const int count = backtrace(frames, 64);
+	backtrace_symbols_fd(frames, count, g_crash_fd);
+	write_str(g_crash_fd, "\n--- engine log ---\n");
+}
+
+// Appends the (flushed) engine log to the report. Not async-signal-safe (stdio); runs after the safe part.
+void save_crash_log()
+{
+	if (g_crash_fd < 0)
+		open_crash_report("fatal error", 0);
+	if (g_crash_fd < 0)
+		return;
+	const char* log = log_file_path();
+	FILE* in = (log && *log) ? fopen(log, "rb") : nullptr;
+	if (in)
+	{
+		char buf[65536];
+		for (size_t n; (n = fread(buf, 1, sizeof(buf), in)) > 0;)
+			(void)!write(g_crash_fd, buf, n);
+		fclose(in);
+	}
+	close(g_crash_fd);
+	g_crash_fd = -1;
+}
+
 void fatal_signal(int sig, siginfo_t* info, void*)
 {
 	// Restore the default action first so a fault inside this handler terminates normally.
 	signal(sig, SIG_DFL);
+	// Anything below may deadlock (e.g. malloc after heap corruption): never outlive 10 s.
+	alarm(10);
+	open_crash_report(sig == SIGSEGV ? "SIGSEGV" : sig == SIGABRT ? "SIGABRT" : sig == SIGBUS ? "SIGBUS" : sig == SIGFPE ? "SIGFPE"
+	                  : sig == SIGILL ? "SIGILL" : "signal", sig); // no strsignal: it may allocate
 	if (shared_str_initialized)
 	{
 		Msg("! FATAL: signal %d (%s), address %p", sig, strsignal(sig), info ? info->si_addr : nullptr);
 		LogStackTrace("stack trace:", true);
 		FlushLog();
+		save_crash_log();
 	}
 	crash_saving::save();
 	raise(sig);
@@ -392,6 +501,8 @@ void xrDebug::_initialize(const bool& dedicated)
 	sigemptyset(&sa.sa_mask);
 	for (int sig : {SIGSEGV, SIGBUS, SIGFPE, SIGILL, SIGABRT})
 		sigaction(sig, &sa, nullptr);
+	void* prime[1];
+	backtrace(prime, 1); // loads the unwinder now, not inside a signal handler
 
 	// An alternate stack lets the handler run after a stack overflow.
 	static char altstack[64 * 1024];

@@ -300,6 +300,11 @@ void CreateLog(BOOL nl)
 	}
 }
 
+const char* log_file_path()
+{
+	return logFName;
+}
+
 void CloseLog(void)
 {
 	FlushLog();
