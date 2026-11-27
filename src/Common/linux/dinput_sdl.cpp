@@ -55,6 +55,7 @@ namespace
 
     class Device final : public IDirectInputDevice8
     {
+        unsigned long m_refs = 1;
     public:
         explicit Device(int kind) : kind_(kind)
         {
@@ -143,8 +144,16 @@ namespace
             return DI_OK;
         }
 
+        // COM reference counting: the engine probes counts with AddRef/Release (_SHOW_REF) before the
+        // final _RELEASE, so Release must not delete while references remain
+        unsigned long AddRef() override
+        {
+            return ++m_refs;
+        }
         unsigned long Release() override
         {
+            if (--m_refs)
+                return m_refs;
             delete this;
             return 0;
         }
@@ -157,6 +166,7 @@ namespace
 
     class DirectInput final : public IDirectInput8
     {
+        unsigned long m_refs = 1;
     public:
         long CreateDevice(const DIGUID_ &guid, LPDIRECTINPUTDEVICE8 *out, void *) override
         {
@@ -165,8 +175,16 @@ namespace
             *out = new Device(guid.Data1);
             return DI_OK;
         }
+        // COM reference counting: the engine probes counts with AddRef/Release (_SHOW_REF) before the
+        // final _RELEASE, so Release must not delete while references remain
+        unsigned long AddRef() override
+        {
+            return ++m_refs;
+        }
         unsigned long Release() override
         {
+            if (--m_refs)
+                return m_refs;
             delete this;
             return 0;
         }
