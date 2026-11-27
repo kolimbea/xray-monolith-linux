@@ -78,10 +78,19 @@ namespace xr_imgui
 
         string_path fName;
         FS.update_path(fName, "$app_data_root$", io.IniFilename);
+#ifdef __linux__
+        // imgui opens the file with the C library: give it a path the OS understands ('/' separators)
+        io.IniFilename = xr_strdup(xr_resolve_path(fName).c_str());
+#else
         io.IniFilename = xr_strdup(fName);
+#endif
 
         FS.update_path(fName, "$logs$", io.LogFilename);
+#ifdef __linux__
+        io.LogFilename = xr_strdup(xr_resolve_path(fName).c_str());
+#else
         io.LogFilename = xr_strdup(fName);
+#endif
 
         string_path configPath;
         FS.update_path(configPath, "$game_textures$", "fonts\\$default.ltx");

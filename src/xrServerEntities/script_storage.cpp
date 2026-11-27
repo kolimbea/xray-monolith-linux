@@ -373,6 +373,42 @@ static int script_fs_searcher(lua_State* L)
 	return 1;
 }
 
+// Scripts build file paths with the engine (getFS():update_path -> "...\\appdata\\savedgames\\x.scoc") and
+// pass them to io.open / lfs. LuaJIT calls the C library directly, so on Linux those names were taken
+// literally: mod data (save extensions, settings caches) went to files with '\\' in their names in the
+// parent directory and was never found again. The path argument is resolved like every engine path
+// ('\\' separators, case-insensitive names) before the original function runs.
+static int resolve_path_then_call(lua_State* L)
+{
+	if (lua_type(L, 1) == LUA_TSTRING)
+	{
+		const std::string resolved = xr_resolve_path(lua_tostring(L, 1));
+		lua_pushlstring(L, resolved.c_str(), resolved.size());
+		lua_replace(L, 1);
+	}
+	lua_pushvalue(L, lua_upvalueindex(1));
+	lua_insert(L, 1);
+	lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
+	return lua_gettop(L);
+}
+
+static void resolve_paths_of(lua_State* L, const char* lib, const char* fn)
+{
+	lua_getglobal(L, lib);
+	if (lua_istable(L, -1))
+	{
+		lua_getfield(L, -1, fn);
+		if (lua_isfunction(L, -1))
+		{
+			lua_pushcclosure(L, resolve_path_then_call, 1);
+			lua_setfield(L, -2, fn);
+		}
+		else
+			lua_pop(L, 1);
+	}
+	lua_pop(L, 1);
+}
+
 // Inserts script_fs_searcher right after the preload searcher (package.loaders[2]).
 static void add_script_fs_searcher(lua_State* L)
 {
@@ -500,6 +536,12 @@ void CScriptStorage::reinit()
 #endif
 	bool isDebugEnabled = lua_debug;
 	luaopen_lua_extensions(lua(), isDebugEnabled);
+#ifdef __linux__
+	for (const char* fn : {"open", "lines"})
+		resolve_paths_of(lua(), "io", fn);
+	for (const char* fn : {"mkdir", "rmdir", "attributes", "dir", "touch", "symlinkattributes"})
+		resolve_paths_of(lua(), "lfs", fn);
+#endif
 	disable_os_funcs(lua());
 
 	if (isDebugEnabled)
