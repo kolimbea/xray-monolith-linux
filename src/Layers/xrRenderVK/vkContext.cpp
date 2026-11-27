@@ -669,9 +669,19 @@ namespace xrvk
 
     bool Context::prepare_draw()
     {
+        // Every 32nd draw is timed and counted 32 times: reading the clock twice per draw cost ~20 ms
+        // per frame on a machine whose kernel fell back to the HPET clocksource (clock_gettime becomes
+        // a system call), and noticeable time even with the TSC.
+        constexpr uint32_t kSampleEvery = 32;
+        if (stats.draws % kSampleEvery)
+        {
+            ++stats.draws;
+            ++core()->part_draws;
+            return prepare_draw_impl();
+        }
         const auto t0 = std::chrono::steady_clock::now();
         const bool ok = prepare_draw_impl();
-        stats.prepare_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        stats.prepare_ms += kSampleEvery * std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
         ++stats.draws;
         ++core()->part_draws;
         return ok;
