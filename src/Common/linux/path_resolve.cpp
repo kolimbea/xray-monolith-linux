@@ -13,8 +13,10 @@ namespace
 {
 using Listing = std::unordered_map<std::string, std::string>; // lower-case name -> real name
 
-std::mutex g_lock;
-std::unordered_map<std::string, Listing> g_dirs; // real directory path -> listing
+// Never destroyed: engine threads (the freeze watchdog flushing the log) still resolve paths while
+// static destructors run at exit; a destroyed map crashed there (SIGSEGV in xr_resolve_invalidate).
+std::mutex& g_lock = *new std::mutex;
+std::unordered_map<std::string, Listing>& g_dirs = *new std::unordered_map<std::string, Listing>; // real dir -> listing
 
 std::string lower(std::string s)
 {

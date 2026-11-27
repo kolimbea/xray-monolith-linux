@@ -64,7 +64,10 @@ void CUIGameCustom::OnFrame()
 	{
 		return s1->IsActual() > s2->IsActual();
 	};
-	std::sort(CustomStatics.begin(), CustomStatics.end(), comparer);
+	// Stable: the draw order of the statics is their insertion order, and overlapping HUD widgets
+	// (GAMMA's Body Health System bars) depend on it. MSVC's std::sort happens to keep equal elements in
+	// place for small ranges; libstdc++'s reorders them above 16 elements and the widgets flickered.
+	std::stable_sort(CustomStatics.begin(), CustomStatics.end(), comparer);
 	while (!CustomStatics.empty() && !CustomStatics.back()->IsActual())
 	{
 		delete_data(CustomStatics.back());
