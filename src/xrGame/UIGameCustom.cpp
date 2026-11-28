@@ -52,7 +52,16 @@ bool g_b_ClearGameCaptions = false;
 CUIGameCustom::~CUIGameCustom()
 {
 	delete_data(CustomStatics);
+	delete_data(m_retiredMainIngameWnds);
 	g_b_ClearGameCaptions = false;
+}
+
+void CUIGameCustom::RetireMainIngameWnd()
+{
+	if (!UIMainIngameWnd)
+		return;
+	m_retiredMainIngameWnds.push_back(UIMainIngameWnd);
+	UIMainIngameWnd = nullptr;
 }
 
 void CUIGameCustom::OnFrame()

@@ -443,6 +443,10 @@ void CHUDManager::OnScreenResolutionChanged()
 	xr_delete(pWpnScopeXml);
 	xr_delete(g_uiSpotXml);
 
+	// Mods attach their own windows to the main HUD window (ActorMenu.get_maingame()) and keep using them
+	// from timers after this point (e.g. ui_circular_progress:SetProgressPos -> Show). Freeing that window
+	// here turns those calls into use-after-free: a SIGSEGV on every resolution change with GAMMA.
+	pUIGame->RetireMainIngameWnd();
 	pUIGame->UnLoad();
 
 	Level().MapManager().ReloadSpots();

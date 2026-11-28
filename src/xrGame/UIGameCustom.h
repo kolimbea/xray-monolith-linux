@@ -94,6 +94,15 @@ public:
 	CUIMainIngameWnd* UIMainIngameWnd;
 	CUIMessagesWindow* m_pMessagesWnd;
 
+	// Keeps the current main HUD window alive (detached, neither updated nor drawn) until this object dies,
+	// so a following UnLoad() does not free it. Script windows anchored to it stay valid.
+	void RetireMainIngameWnd();
+
+private:
+	xr_vector<CUIMainIngameWnd*> m_retiredMainIngameWnds;
+
+public:
+
 	CUIGameCustom();
 	virtual ~CUIGameCustom();
 	virtual void SetClGame(game_cl_GameState* gameState);
