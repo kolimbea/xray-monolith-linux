@@ -79,6 +79,14 @@ IC u64 btwCount1(u64 v)
 }
 
 
+#if defined(__GNUC__) || defined(__clang__)
+// The bit tricks below shift by negative counts and by 32 or more: undefined behaviour that MSVC on x86
+// happens to turn into the intended result, while GCC/Clang fold it into garbage once the argument is a
+// compile-time constant (the clouds' wind direction became random colours every frame). With SSE4.1
+// these compile to a single roundss.
+ICF int iFloor(float x) { return int(__builtin_floorf(x)); }
+ICF int iCeil(float x) { return int(__builtin_ceilf(x)); }
+#else
 ICF int iFloor(float x)
 {
 	int a = *(const int*)(&x);
@@ -118,6 +126,7 @@ ICF int iCeil(float x)
 	}
 	return r; /* r = (int)(ceil(f)) */
 }
+#endif
 
 // Validity checks
 IC bool fis_gremlin(const float& f)
