@@ -82,7 +82,12 @@ namespace xrvk
             vi.format = fmt;
             vi.components = swizzle;
             const uint32_t mips = s.mips == UINT32_MAX || s.mip + s.mips > img->mips ? img->mips - s.mip : s.mips;
-            const uint32_t layers = s.layers == UINT32_MAX || s.layer + s.layers > img->layers ? img->layers - s.layer : s.layers;
+            // 2D views of a 3D image (render targets of its slices) count depth slices as layers
+            const bool slices = img->dim == D3D11_RESOURCE_DIMENSION_TEXTURE3D && s.type != VK_IMAGE_VIEW_TYPE_3D;
+            const uint32_t have = slices ? img->mip_depth(s.mip) : img->layers;
+            if (s.layer >= have)
+                return false;
+            const uint32_t layers = s.layers == UINT32_MAX || s.layer + s.layers > have ? have - s.layer : s.layers;
             vi.subresourceRange = {aspect, s.mip, mips, s.layer, layers};
             if (s.type == VK_IMAGE_VIEW_TYPE_3D)
                 vi.subresourceRange.layerCount = 1;
@@ -260,6 +265,14 @@ HRESULT ID3D11Device::CreateRenderTargetView(ID3D11Resource *pResource, const D3
         break;
     case D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY:
         s = {VK_IMAGE_VIEW_TYPE_2D_ARRAY, 0, 1, d.Texture2DMSArray.FirstArraySlice, d.Texture2DMSArray.ArraySize};
+        break;
+    case D3D11_RTV_DIMENSION_TEXTURE3D: // slices of a 3D image as a 2D array (2D_ARRAY_COMPATIBLE, vkTexture.cpp)
+        if (img->dim != D3D11_RESOURCE_DIMENSION_TEXTURE3D)
+        {
+            log("! vk: CreateRenderTargetView: TEXTURE3D view of a texture that is not 3D");
+            return E_INVALIDARG;
+        }
+        s = {VK_IMAGE_VIEW_TYPE_2D_ARRAY, d.Texture3D.MipSlice, 1, d.Texture3D.FirstWSlice, d.Texture3D.WSize}; // WSize -1: all
         break;
     default:
         log("! vk: CreateRenderTargetView: view dimension %d is not supported", int(d.ViewDimension));
