@@ -297,7 +297,7 @@ public:
 	virtual float GetWeaponAccuracy() const;
 	virtual bool unlimited_ammo();
 	virtual void spawn_supplies();
-	IC CAgentManager& agent_manager() const;
+	CAgentManager& agent_manager() const; // out of line: many files call it without ai_stalker_impl.h
 
 	virtual bool human_being() const
 	{

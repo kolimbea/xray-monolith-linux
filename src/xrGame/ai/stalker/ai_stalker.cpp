@@ -1793,3 +1793,10 @@ bool CAI_Stalker::use_HolderEx(CHolderCustom *object)
 	return true;
 }
 #endif
+
+// Defined here, not inline in ai_stalker_impl.h: a dozen files call it without including that header,
+// which links only while every call happens to be inlined (it failed with -fprofile-generate).
+CAgentManager& CAI_Stalker::agent_manager() const
+{
+	return (Level().seniority_holder().team(g_Team()).squad(g_Squad()).group(g_Group()).agent_manager());
+}
